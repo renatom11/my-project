@@ -1,6 +1,6 @@
 # WO-0004: P1 spec testability countersignature, and the OQ-1 adjudication
 
-- **State**: ISSUED
+- **State**: **RETURNED** 2026-08-05 (see Return log)
 - **From** / **To**: orchestrator → dv_lead
 - **Spec basis**: `docs/specs/SPEC-P1-core-cpu.md` at `54a7221` (DRAFT) —
   90 `REQ-###` ids, an 8-state multicycle FSM, an exhaustive decode
@@ -94,3 +94,64 @@ and yours is the review that makes the weaker regime defensible.
 ---
 
 ## Return / verdict log
+
+### RETURNED — dv_lead, 2026-08-05 · `J-dv_lead-0001`
+
+**Report**: `docs/reports/dv/DV-P1-testability.md`
+**Spec graded**: `docs/specs/SPEC-P1-core-cpu.md` at `54a7221`
+**Spawn short-id**: `WO-0004/2026-08-05T16:52Z`
+
+#### Verdict
+
+> **NOT COUNTERSIGNED at `54a7221`.**
+
+Seven clauses are false, self-contradictory, or unsatisfiable as written, and
+each would need a post-freeze spec diff plus an ADR (§13) to repair. They are
+written out as six ready-to-apply amendments **A-1 … A-6** in report §8. This
+is not a rejection of the spec's substance: no error was found in any
+instruction semantic, cycle count, fault definition, or the decode partition,
+and **68 of the 90 requirements are testable from the document alone today**
+(T 68 · T-conditional 8 · not-bench-derivable 14).
+
+**Pre-commitment**: on a revision carrying A-1 … A-6 my confirmatory pass is
+limited to the amended text — the other 84 requirements and the §4 port
+tables are graded and I will not re-open them. The countersignature issues as
+`J-dv_lead-0002`.
+
+#### DoD, item by item
+
+| WO §2 item | Status |
+|---|---|
+| 1 — grade §4's port tables line by line | **Met.** Report §3: 30 distinct ports across M01/M02/M04 plus M03, graded on signal, direction, width, meaning. Four defects (F-2, F-3, F-4, F-5); all in the width and parameter columns; none in direction or meaning. **Ports I need that are absent: none** — §3.5 states what I decline to request and why. |
+| 2 — per-requirement testability, all 90 | **Met.** Report §4, one row per REQ id with its grade, its bench boundary, and what is missing where the answer is no. |
+| 3 — adjudicate OQ-1 | **Met.** Report §5: **HALT upheld**; the two classes and two error codes **preserved**; five reasons, the losing side's strongest argument stated and priced, and three obligations I take on in return. |
+| 4 — is the decode partition testable, not just sound | **Met.** Report §6: totals independently re-derived by a different decomposition; **exhaustive classification coverage of all 65536 encodings committed**, with the reason it is affordable here and nowhere else, and the finding that **uniform sampling would be near-worthless** because the information lives entirely in thin class boundaries. |
+| 5 — what I need that does not exist yet | **Met.** Report §9. Notable: **`rtl/chip8_pkg.sv` (D-3) is not on my critical path** once A-5 lands — that is what A-5 is for. Also flagged: `build.yml`'s source guard couples rtl_lead's first module and my first bench into one commit. |
+| 6 — do not countersign around a gap | **Honored.** The gap is named and the signature is withheld. |
+
+#### Carried to the orchestrator
+
+- **F-11 — P1 has no external anchor available** (report §10). Every CHIP-8
+  reference at the B3 intake is *consult-only*, the independence rider bars
+  deriving the model from an interpreter, and the free-use test ROMs cannot
+  run in P1 (§8: no ROM executes). Charter §3's anchor-before-judge rule
+  therefore has nothing to anchor against. **Not freeze-blocking**; it must be
+  settled before the first `SO-` PASS. Three options with a recommendation are
+  in report §10; option (a) is **E3**-shaped.
+- **F-6** — fifteen REQs carry an "inspection" hook with no named performer,
+  and five of those inspect **RTL**. If the performer is dv_lead it is a
+  charter violation; recommend rtl_lead + auditor, with the machine-checkable
+  subset converted to CI.
+- **Three NO-VERDICT items** (report §11), all discharged by one spike:
+  Verilator hierarchical access to `mem`; sweep wall-clock; package-parameter
+  override behaviour. **Nothing in this report is measured** — there is no RTL
+  and no bench to run.
+- **D-5 recommendation** (non-blocking): require the P2/P3 spec-diff ADR to
+  **enumerate the P1 tests it invalidates**, so retiring a frozen P1 assertion
+  is an authorised act rather than a test edit inside a phase commit.
+
+#### Scope compliance
+
+No test, no model code, no RTL written; `rtl/**` not touched. Files staged:
+`docs/reports/dv/DV-P1-testability.md` and this packet. **No git command was
+run.**
