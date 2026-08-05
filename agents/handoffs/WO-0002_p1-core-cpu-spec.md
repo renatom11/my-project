@@ -145,3 +145,41 @@ high byte, fetch low byte, decode, then execute across one or more states.
 
 <!-- Appended on RETURNED / ACCEPTED / BOUNCED — newest at the bottom.
      Every entry cites its author's journal entry. -->
+
+### RETURNED — 2026-08-05, architect_docs_lead, `J-architect_docs_lead-0001`
+
+`docs/specs/SPEC-P1-core-cpu.md` written as **DRAFT**, 90 `REQ-###`
+requirements, 8-state multicycle FSM, all 65536 decode encodings partitioned.
+
+**All eight numbered tasks of §2 attempted; none returned unfinished.**
+Dispositions where this return differs from the packet's proposal, each argued
+in the spec rather than silently adopted:
+
+1. **Task 3 — instruction boundary CONFIRMED, with the arithmetic.** The 25
+   proposed forms plus P2's 3 plus P3's 6 plus `0NNN` account for exactly the
+   35 instructions README fixes; the phase partition is exhaustive and
+   disjoint (spec §6.3). `0NNN` (SYS) disposed as `DC_ILLEGAL` (REQ-043).
+2. **Task 6 — five quirk parameters, not three.** The packet named
+   `8XY6`/`8XYE`, `BNNN`, `FX55`/`FX65`. Added `QUIRK_VF_RESET` (`8XY1`/`2`/`3`)
+   and `QUIRK_I_OVERFLOW_VF` (`FX1E`): both bind P1 instructions and both are
+   community-divergent, so README's P4 row — "**every** divergent CHIP-8
+   behaviour exposed as a compile-time parameter" — requires them, and README
+   is canonical over a packet's enumeration of it (**L-B12**). One of the five
+   is three-valued, not boolean. All default to 1977 COSMAC VIP.
+3. **README's permitted decode-into-fetch-lo fold NOT taken**, with the
+   argument recorded and the cycle budget checked clause by clause (spec §7.2).
+   No budget clause is exceeded; **no E2 arises from the FSM.**
+
+**Owed before `P1-spec-freeze`** (spec §11): one ADR covering five non-obvious
+choices (D-2 — needs an orchestrator work order; the architect does not
+self-issue), `docs/specs/requirements.md` + the traceability matrix (D-1), and
+`rtl/chip8_pkg.sv` authored by `rtl_lead` to §5.5's normative content (D-3).
+
+**Three open questions owed a `tasks/BOARD.md` line** (**L-E10**; this author
+cannot stage the board): OQ-1 deferred-opcode halt vs. no-op (routes to
+`dv_lead` at countersignature), OQ-2 which phase owns the instruction throttle
+(**E2 only if the sponsor intends P1**), OQ-3 the VIP quirk defaults are
+provenance class *relayed* and are invisible to P1 lockstep by construction —
+P4's test-ROM campaign is the compensating control.
+
+Next: `dv_lead` testability countersignature, then the sponsor freeze (E1).
