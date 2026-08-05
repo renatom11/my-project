@@ -5801,3 +5801,77 @@ The sponsor has a straight list that cannot drift from the specification.
 - site/build.mjs
 - site/content.mjs
 - site/requirements.mjs
+
+## [J-orchestrator-0068] 2026-08-06T00:55Z | task:none | Two extraction defects I found by reading my own delivered output back
+
+### Trigger
+The sponsor asked where the file lives on GitHub. Fetching it to confirm the
+path meant reading all 91 entries as a reader sees them, and two were wrong.
+**The sponsor did not report these; reading back the delivered artefact did.**
+That is the first time in this program the loop closed on my side rather than
+on theirs, and it is the loop that should have existed from the first atlas
+commit.
+
+### Inputs
+- `docs/specs/REQUIREMENTS-LIST.md` at `a729177`, read back from GitHub
+- `docs/specs/SPEC-P1-core-cpu.md` lines 824, 276, 1171
+
+### Reasoning
+- **REQ-069's OR operator was eaten by the cell splitter.** The spec writes
+  `| REQ-069 | \`8XY1\` | OR | V\<x\> ← V\<x\> \| V\<y\> | ... |` — the bitwise
+  OR is an **escaped pipe** inside a table cell. Splitting the row on `|`
+  consumed it as a delimiter, so the operator vanished and every later cell
+  shifted one column left: the card read *"V<x> ← V<x> \"* with the VF column
+  holding `V<y>`. **This is the worst class of defect this generator can
+  produce** — not a fragment a reader can see is incomplete, but a plausible,
+  well-formed, *wrong* statement of an instruction's semantics. Splitting now
+  respects the escape and unescapes the cell.
+- **REQ-114 was won by a paragraph continuation.** The line
+  `(REQ-114, REQ-120) at the same retirement; and, for an instruction that
+  faults…` is mid-paragraph, but my mid-sentence penalty tests for a lowercase
+  opener after stripping brackets, and this one resumes on the capital R of
+  `REQ`. **The lowercase test was the wrong instrument**: the reliable signal
+  is the *previous* line — non-blank, not sentence-final, not a table row
+  means this line continues it, and a continuation is never a definition. With
+  that, the real statement at §4.C line 276 wins.
+- **Blast radius checked, not assumed**: the regenerated list differs from
+  `a729177` in exactly the two entries named, and the atlas audit is unchanged
+  at 82/6/3.
+- **The audit script shared the scorer's blind spot.** It also tested for a
+  lowercase opener, so it passed REQ-114 as ok. A checker that reuses the
+  checked code's assumption is not an independent check. Widened to flag a
+  leading `(` and split artefacts; **0 flagged** across 91 entries now.
+
+### Actions
+- `splitRow()` in `site/requirements.mjs`: escape-aware split, then unescape.
+- Added the previous-line continuation penalty to the scorer.
+- Widened the audit script's predicates.
+
+### Evidence
+- REQ-069 now reads `V\<x\> ← V\<x\> | V\<y\>` with VF in the VF column.
+  *Measured.*
+- REQ-114 now carries §4.C's memory observation contract — the `mem` array
+  naming rule — instead of a sentence fragment. *Measured.*
+- Regeneration diff against `a729177`: **2** entries, both intended.
+  *Measured.*
+- Atlas: **82** state, **6** point, unchanged by these fixes. *Measured.*
+- List audit under widened predicates: **91** entries, **0** flagged.
+  *Measured.*
+- `scripts/test_protocol.sh`: **49 passed, 0 failed**. *Measured.*
+
+### Outcome
+Both defects fixed in the extractor, so the atlas and the list are corrected
+together. **S1 remains unsigned and remains the sponsor's.**
+
+### Open-questions
+- **I have no standing practice of reading delivered output back.** Three
+  rounds of atlas defects were found by the sponsor; this round's two were
+  found by me, and only because a path question made me fetch the file. That
+  asymmetry is the lesson candidate, and it wants a rule rather than luck.
+- Unchanged and still owed: the six requirements with no normative sentence
+  (architect's read), AUD-0002-F1's disposition, the outer-hop PR,
+  AUD-0001-F3's closure, three unfiled shell defects, an unverified deploy.
+
+### Files-in-this-commit
+- docs/specs/REQUIREMENTS-LIST.md
+- site/requirements.mjs

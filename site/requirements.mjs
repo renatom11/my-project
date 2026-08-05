@@ -23,6 +23,13 @@ export const HOOKS = {
 // index entry, not a substitute for the spec. A generated FLAT LIST does not:
 // truncating there would ship a requirement missing its second clause, which
 // is how REQ-014 lost "the image is then applied over that". Pass Infinity.
+// Split a markdown table row into cells. A cell may contain an ESCAPED pipe —
+// the spec writes the bitwise-OR of `8XY1` as `V\<x\> \| V\<y\>` — and a naive
+// split on '|' eats the operator and shifts every later cell by one, which is
+// how REQ-069 came to read "V<x> <- V<x> \" with its VF column holding V<y>.
+const splitRow = t => t.trim().split(/(?<!\\)\|/).slice(1, -1)
+                       .map(c => c.replace(/\\\|/g, '|').trim());
+
 export function extractRequirements(spec, reqsDoc, { maxLen = 380 } = {}) {
   if (!spec) return [];
 
@@ -99,6 +106,14 @@ function normativeText(id) {
     // as REQ-003/4/6 are, but lost its card to "...is never entered
     // (REQ-005)" and fell through to a pointer.
     if (!l.trim().startsWith('|') && /^[a-z]/.test(l.trim().replace(/^[>*_`(]+/, ''))) score -= 100;
+    // The lowercase test above is not sufficient: a continuation line can
+    // resume on a capital. REQ-114's card was won by a line opening
+    // "(REQ-114, REQ-120) at the same retirement; and, ..." - mid-paragraph,
+    // but a capital R after the bracket. The reliable signal is the PREVIOUS
+    // line: non-blank, not sentence-final, not a table row means this line
+    // continues it, and a continuation is never a definition.
+    const prev = (specLines[i - 1] || '').trim();
+    if (!l.trim().startsWith('|') && prev && !prev.startsWith('|') && !/[.:!?]$/.test(prev)) score -= 100;
     hits.push({ i, l, score });
   }
   if (!hits.length) return null;
@@ -175,7 +190,7 @@ function continuation(from, to) {
     for (let m = k + 2; m < to; m++) {
       const nx = specLines[m];
       if (!nx.trim().startsWith('|')) break;
-      const cells = nx.trim().split('|').slice(1, -1).map(c => c.trim());
+      const cells = splitRow(nx);
       // A two-column table is a mapping and reads as one; anything wider
       // needs its headers to stay legible.
       out.push(cells.length === 2
@@ -207,7 +222,7 @@ function tableHeader(i) {
 function readable(line, id, lineNo) {
   let t = line.trim();
   if (t.startsWith('|')) {
-    const cells = t.split('|').slice(1, -1).map(c => c.trim());
+    const cells = splitRow(t);
     const hdr = lineNo != null ? tableHeader(lineNo) : null;
     const parts = [];
     cells.forEach((c, k) => {
