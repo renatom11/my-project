@@ -435,9 +435,19 @@ function buildAtlas() {
       const l = specLines[i];
       if (!l.includes(id)) continue;
       let score = l.length / 20;
-      if (new RegExp(`^>?\\s*\\*\\*${id}\\.?\\*\\*`).test(l)) score += 100;   // "> **REQ-095.** …"
+      // The spec writes normative statements as "**REQ-103 — the sequence.** …"
+      // — extra words INSIDE the bold. An `id` followed immediately by `**`
+      // matched only a minority (measured: 36 requirements carry this form).
+      if (new RegExp(`\\*\\*${id}\\b[^*]*\\*\\*`).test(l)) score += 120;      // bold normative statement
+      if (new RegExp(`^\\s*(>\\s*)?\\*\\*${id}\\b`).test(l)) score += 60;     // ...at line start = definitional
       if (new RegExp(`^\\|\\s*\\*?\\*?${id}`).test(l)) score += 80;              // row keyed by the id
       if (new RegExp(`${id}\\s*\\|\\s*$`).test(l)) score += 40;                    // traceability column
+      // A table row KEYED BY A DIFFERENT REQ that merely cites this one is
+      // not this requirement's definition. REQ-060's row ends "(REQ-006)",
+      // and without this it won REQ-006's card.
+      const firstCell = (l.match(/^\|\s*([^|]*)\|/) || [, ''])[1] || '';
+      const keyed = firstCell.match(/REQ-\d{3}/);
+      if (keyed && keyed[0] !== id) score -= 200;
       hits.push({ i, l, score });
     }
     if (!hits.length) return null;
@@ -462,13 +472,35 @@ function buildAtlas() {
     return top;
   }
 
-  // A markdown table row -> readable sentence-ish text; other lines pass through.
-  function readable(line, id) {
+  // Find the header row of the table a given line sits in.
+  function tableHeader(i) {
+    for (let j = i - 1; j >= Math.max(0, i - 60); j--) {
+      const l = specLines[j];
+      if (!l.trim().startsWith('|')) return null;
+      if (/^\|[\s:|-]+\|\s*$/.test(l.trim())) {                 // the |---|---| divider
+        const h = specLines[j - 1];
+        if (h && h.trim().startsWith('|')) return h.trim().split('|').slice(1, -1).map(c => c.trim());
+      }
+    }
+    return null;
+  }
+
+  // A markdown table row -> readable text. 55 of the 91 requirements are
+  // defined ONLY as a table row, so the row must read as a statement: pair
+  // each cell with its column header rather than dumping dash-joined cells.
+  function readable(line, id, lineNo) {
     let t = line.trim();
     if (t.startsWith('|')) {
-      const cells = t.split('|').slice(1, -1).map(c => c.trim())
-        .filter(c => c && c !== id && c !== `**${id}**` && !/^-+$/.test(c));
-      t = cells.join(' — ');
+      const cells = t.split('|').slice(1, -1).map(c => c.trim());
+      const hdr = lineNo != null ? tableHeader(lineNo) : null;
+      const parts = [];
+      cells.forEach((c, k) => {
+        if (!c || /^-+$/.test(c)) return;
+        if (c === id || c === `**${id}**` || c === `\`${id}\``) return;
+        const h = hdr && hdr[k] && !/^(req|id)$/i.test(hdr[k]) ? hdr[k] : null;
+        parts.push(h ? `**${h}:** ${c}` : c);
+      });
+      t = parts.join(' · ');
     }
     t = t.replace(/^>\s*/, '').replace(new RegExp(`^\\*\\*${id}\\.?\\*\\*\\s*`), '');
     return t;
@@ -478,12 +510,29 @@ function buildAtlas() {
     r.block = blockOf(r.id); r.hooks = hooksIn(r.hook);
     r.tests = (cover[r.id] || {}).tests || 'unfilled';
     const hit = normativeText(r.id);
-    let body = hit ? readable(hit.l, r.id) : null;
+    let body = hit ? readable(hit.l, r.id, hit.i) : null;
     // Some requirements ARE a table (e.g. the exact cycle table). Their
     // definitional line reads "is the table above", which is a fragment out
     // of context — say what it is instead of showing the fragment.
     r.tabular = !!(body && body.length < 60 && /\btable\b/i.test(body));
     if (r.tabular) body = null;
+
+    // QUALITY BAR. A requirement with no bold statement and no keyed table
+    // row leaves the scorer picking the longest prose mention, which can be
+    // a mid-sentence continuation ("happens in S_EXEC and ...") or a line
+    // sliced through a bold marker. Showing a fragment as if it were the
+    // requirement is the defect the sponsor caught twice. Pointing at the
+    // spec is worse UX and better epistemics, so a fragment becomes a
+    // pointer rather than a sentence nobody can act on.
+    if (body) {
+      const startsMidSentence = /^[a-z]/.test(body.replace(/^[`*_(]+/, ''));
+      const unbalancedBold = (body.match(/\*\*/g) || []).length % 2 !== 0;
+      // Measure the PROSE length, not the markdown length — "**Memory map
+      // (REQ-002).**" is 25 characters of asterisks and 21 of content.
+      const plain = body.replace(/[*`_]/g, '').replace(/\s+/g, ' ').trim();
+      const tooShort = plain.length < 28;
+      if (startsMidSentence || unbalancedBold || tooShort) { body = null; r.fragment = true; }
+    }
     // Cap long extracts at a sentence boundary. The card is an index entry,
     // not a substitute for the spec — the id links to the binding text, and
     // a truncated extract must LOOK truncated so nobody reads it as whole.

@@ -5509,3 +5509,105 @@ Handoff: the sponsor.
 ### Files-in-this-commit
 - site/build.mjs
 - site/assets/style.css
+
+## [J-orchestrator-0065] 2026-08-05T23:20Z | task:none | Atlas extractor: three more defects the sponsor found, and the quality bar that should have existed first
+
+### Trigger
+The sponsor, on the atlas again: *"'I is 12-bit' and 'Stack overflow fault'
+and 'The exact RNG sequence, seed non-zero' are NOT requirements... It seems
+like it references something else but I dont know where that doc is."*
+
+### Inputs
+- The three cited ids, traced through `docs/specs/SPEC-P1-core-cpu.md`.
+- `site/build.mjs` `buildAtlas()` as shipped at `a3fc912`.
+
+### Reasoning
+- **The sponsor was reading the handle line, and was right that it points
+  at something they could not find.** Two of the three cited strings are
+  §10's index column, which my previous round demoted to a small label but
+  did not remove — so a card whose extracted body was weak still led with a
+  handle, and the handle is a pointer to a document the reader has no path
+  to from the card.
+- **`REQ-103` was a real extraction failure, not a display one.** The spec
+  defines it properly at §6.5 line 884: `**REQ-103 — the sequence.** M04
+  holds a 16-bit state, reset to `RNG_SEED`...`. My scorer expected
+  `**REQ-103**` or `**REQ-103.**` and the spec writes `**REQ-103 — the
+  sequence.**` — extra words inside the bold. **Measured consequence: 36 of
+  91 requirements carry that form and I was matching almost none of them.**
+  The card was instead showing the `rnd` port row, which is a different
+  fact entirely.
+- **`REQ-004` exposed something structural about the spec, not a bug.**
+  Its only normative site is a state-table row: `| I | 12 bit | Index
+  register |`. There is no sentence, because for 55 of the 91 requirements
+  **the table row is the requirement**. That is normal for a hardware spec
+  and it is not a deficiency — but a dash-joined row ("I — 12 bit — Index
+  register") reads as a fragment. The fix is to pair each cell with its
+  column header: "**Element:** I · **Size:** 12 bit · **Notes:** Index
+  register". Same content, now a statement.
+- **A cross-citation bug that only a screenshot caught.** `REQ-006`'s card
+  was showing `REQ-060`'s table row, because that row *ends* with the
+  citation "(REQ-006)". A row keyed by a different requirement is never
+  this requirement's definition, and now costs 200 points. I found this by
+  looking at the rendered page rather than at my own counters, which had
+  reported the card as healthy.
+- **The quality bar is the fix I should have written first.** For a
+  requirement with no bold statement and no keyed row, the scorer had no
+  floor - it picked the longest prose mention, which produced
+  "happens in `S_EXEC` and `S_EXEC` is never entered" for REQ-005 and a
+  line sliced through a bold marker for REQ-107. A body that starts
+  mid-sentence, carries unbalanced bold, or has under 28 characters of
+  prose is now rejected and the card points at the spec instead. **Pointing
+  at the spec is worse UX and better epistemics**; the sponsor has now
+  twice caught me showing a fragment as if it were a requirement, and the
+  third time should not depend on them noticing.
+- **The length test was measuring markdown, not prose.** "**Memory map
+  (REQ-002).**" is 25 characters of asterisks and 21 of content, so it
+  slipped a 25-character floor. Now stripped before measuring.
+- **On the sponsor's real question - "I dont know where that doc is".**
+  Every card's id has always linked into the spec, but the link was the
+  small monospace id, which does not read as "the source is here". That is
+  the next thing to fix if they still cannot find it; I am not guessing at
+  the remedy before they say whether the text itself is now adequate.
+
+### Actions
+- Widened the bold-statement pattern to `**REQ-nnn <anything>**`; added a
+  line-start bonus for definitional placement.
+- Table rows now render cell-by-cell against their column headers, found by
+  walking back to the `|---|` divider.
+- Rows keyed by a different REQ id are heavily penalised.
+- Added the fragment quality bar (mid-sentence start, unbalanced bold,
+  prose under 28 characters) with a pointer-card fallback.
+- Fixed the length test to measure markdown-stripped prose.
+
+### Evidence
+- Spec structure, measured: **36** of 91 requirements carry a bold
+  `**REQ-nnn …**` normative statement; **55** are defined only in tables.
+- After the fix: **84** cards show requirement text, **7** point at the
+  spec. Cards showing a different requirement's id up front: **0** (was 1,
+  REQ-006). *Measured.*
+- `REQ-103` now renders its §6.5 statement; `REQ-004` renders
+  "Element: I · Size: 12 bit · Notes: Index register"; `REQ-002` and
+  `REQ-005`, whose only mentions are fragments, now point at their
+  sections. *Measured.*
+- Horizontal overflow: **0** at 1280px. *Measured.*
+
+### Outcome
+DoD met for what the sponsor named. The atlas no longer displays a fragment
+as a requirement; where it cannot find a clean statement it says so and
+points at the spec. **S1 remains unsigned and remains the sponsor's.**
+
+### Open-questions
+- **Whether the text is now adequate is the sponsor's call**, and I have not
+  asked them to re-look yet in this entry - the next message does that.
+- **Seven cards point rather than state.** Six are requirements whose
+  definitional form the extractor cannot render honestly; one (REQ-028) is
+  genuinely a table. Whether that is acceptable or whether those seven want
+  a different treatment is unresolved.
+- **The handle line remains** above the body. If it is the thing reading as
+  "a reference to a doc I cannot find", it should probably go - but that is
+  a change I want the sponsor's read on rather than my assumption.
+- Unchanged and still owed: AUD-0002-F1's disposition, the outer-hop PR,
+  AUD-0001-F3's closure, three unfiled shell defects, an unverified deploy.
+
+### Files-in-this-commit
+- site/build.mjs
