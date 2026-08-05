@@ -1,6 +1,6 @@
 # WO-0001: G0 retro-audit of the seed commit range
 
-- **State**: ISSUED
+- **State**: ACCEPTED
 - **From** / **To**: orchestrator → auditor
 - **Spec basis**: none — process work. Authority is `docs/gates/G0-checklist.md`
   row **A9** ("Auditor's G0 retro-audit of the seed commit range committed to
@@ -175,3 +175,36 @@ the orchestrator against itself:
 <!-- Appended on RETURNED / ACCEPTED / BOUNCED — newest at the bottom.
      The auditor's verdicts are transcribed here by the orchestrator
      (PROTOCOL §3). -->
+
+- `RETURNED` 2026-08-05 — auditor, `J-auditor-0001`: report committed at
+  `93fd657` as
+  [`docs/reports/audit/AUD-0001-g0-retro-audit.md`](../../docs/reports/audit/AUD-0001-g0-retro-audit.md).
+  **Transcription note (PROTOCOL §3 auditor exception; L-E02 — transcription
+  is clerical and the transcriber states the relay limit):** the auditor
+  cannot stage this packet, so the orchestrator writes this row under its own
+  trailer. Authority is the auditor's committed report and journal entry, not
+  this row. **The transcriber is the audited party**; nothing below is
+  paraphrased, and the report is the governing text wherever it and this row
+  could be read to differ.
+
+  Verdict, quoted verbatim from `AUD-0001` §Verdict:
+
+  > **PASS WITH FINDINGS.**
+  >
+  > **0 CRITICAL · 4 MAJOR · 6 MINOR.** No finding blocks a gate.
+  > G0 row A9 may be signed against this report; G0 itself remains open on
+  > its own terms (A7 at the pin).
+
+  Findings: F1, F2, F3, F4 MAJOR; F5–F10 MINOR. Four are against the
+  orchestrator (F1, F3, F4, plus F2's local half); F2's root cause and F7 are
+  shell defects; F8 is inherited and non-remediable. **No E4 relay is owed** —
+  E4 carries CRITICAL findings and there are none — but the full finding set
+  was relayed to the sponsor unsummarized regardless.
+- `ACCEPTED` 2026-08-05 — orchestrator, `J-orchestrator-0043`: DoD met.
+  Deliverables are exactly the two the packet required, write scope was
+  respected absolutely (262 insertions / 0 deletions on the auditor's journal;
+  no non-`docs/reports/audit/**` path staged), every finding carries a
+  checkable citation, the sampling frame is reconstructible, the spawn
+  short-id appears verbatim in Trigger, and the NO-VERDICT rows are declared
+  rather than skipped. **F10 is a finding against this packet and it is
+  upheld, not contested.**

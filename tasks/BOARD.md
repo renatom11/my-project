@@ -42,9 +42,15 @@ freeze bullet below arrived from the org generic with an end condition —
 completes"* — that names an event **this** repository cannot observe, and
 no G0 row re-scopes it for a plain `project` (B6 re-scopes the freeze
 only for a `solo-collapsed` copy). Read literally it would bar the M1
-toolchain ADR that BOOTSTRAP Stage 2 mandates. Taken as the conservative
-reading at intake: the inherited bullet never bound this repository, and
-M1 proceeds normally. **Filed as a shell defect**, not a lesson — see the
+toolchain ADR that BOOTSTRAP Stage 2 mandates. **A judgment call was made
+at intake between two stated readings** — obey the freeze and stall M1, or
+disapply it and proceed — and the second was chosen: the inherited bullet
+never bound this repository, and M1 proceeds normally. **This is the
+permissive reading, not the conservative one** (AUD-0001-F9 corrected the
+original label, which claimed the opposite and so read as compliance with
+`CLAUDE.md`'s "take the tree's most conservative reading" rather than as
+the discretionary call it is). A rehydrating session should **re-examine
+this, not inherit it**. **Filed as a shell defect**, not a lesson — see the
 defect log below.
 
 ## Milestone roadmap
@@ -66,7 +72,7 @@ the rows below are its roadmap view. Changing either is an E2 escalation.
 
 | Gate | Status | Checklist |
 |---|---|---|
-| G0 | **OPEN on A9 only** — A1–A5 re-verified; A6 ratified; A7 configured and verified by live fire; A8 decided; B1–B6 signed; Section C harvest instantiated, transmission awaiting the gate signature. **A9 (retro-audit) in flight as WO-0001** | [docs/gates/G0-checklist.md](../docs/gates/G0-checklist.md) |
+| G0 | **All rows signed; OPEN on Section C transmission only.** A1–A5 re-verified and re-pointed (AUD-0001-F2); A6 ratified; A7 configured and verified by live fire; A8 decided and re-pointed (AUD-0001-F4); B1–B6 signed; **A9 complete — AUD-0001, PASS WITH FINDINGS, 0 CRITICAL, no gate-blocking finding**. What remains is the harvest's transmission, which cannot run before the gate signature: it needs **the sponsor's one outer-hop yes/no** (default yes), after which the inner-hop landing runs automatically and the gate is declared passed | [docs/gates/G0-checklist.md](../docs/gates/G0-checklist.md) |
 | P1..P5 | Instantiated from [templates](../docs/gates/templates/) at each phase's spec freeze | — |
 
 ## Open work orders
@@ -130,6 +136,29 @@ protection** — all 2026-08-05.
   and filing it is an outward-facing action on a third repository, held
   for explicit sponsor authorization, which has not been given. Neither
   blocks M1 work.
+
+## Audit findings — open dispositions
+
+**AUD-0001** (`docs/reports/audit/AUD-0001-g0-retro-audit.md` at `93fd657`,
+`J-auditor-0001`, baseline `fe5dea7`) — **PASS WITH FINDINGS · 0 CRITICAL ·
+4 MAJOR · 6 MINOR · no finding blocks a gate.** No E4 relay owed (E4 carries
+CRITICAL findings); the full set was relayed to the sponsor unsummarized
+anyway. **Closure of an auditor finding is the auditor's to grant, never the
+remediating party's to assert** — the states below are the orchestrator's
+claims about its own remediation, pending re-verification.
+
+| Finding | Sev | Disposition |
+|---|---|---|
+| F1 — Evidence quantity ("39 commits") does not reproduce at its own SHA (observed 40) | MAJOR | **REMEDIED going forward, not repairable in place.** Journals are append-only; `J-orchestrator-0040` is not edited. Correction and the standing rule — pre-commit measurements state their measurement SHA in Evidence — recorded at `J-orchestrator-0043`. |
+| F2 — G0 rows A1–A5 signed against the canonical shell's journal entries | MAJOR | **REMEDIED locally**: five signature cells re-pointed at `J-orchestrator-0040`, which holds this repository's own re-verification. Root cause is a shell template defect — logged below, filing held. |
+| F3 — A6 ratification rests on a two-word non-answer whose question is unrecorded | MAJOR | **REMEDIATION CLAIMED, CLOSURE NOT GRANTED.** The sponsor's explicit "ratify the charters" landed at `4c2bc9b`, outside the audit's pin; the auditor expressly declined to credit it and requires re-verification in a follow-up report pinned at or after `4c2bc9b`. **Owed: a follow-up audit.** |
+| F4 — A8's signature cites an entry containing neither rationale nor sponsor's words | MAJOR | **REMEDIED**: cell re-pointed at `J-orchestrator-0043`, which states the rationale in the signer's own record and quotes what the sponsor was asked and answered — the answer being the single word "confirm", recorded as such. |
+| F5 — `AUD-0001` id now denotes two reports in this tree | MINOR | **DECIDED, deliberately, not to patch.** All seven bare references sit in shell-law files (`.github/`, `scripts/`, `docs/adr/`); patching law locally is barred, and the finding requires only that the trade-off be made consciously. Reasoning at `J-orchestrator-0043`. |
+| F6 — export packet's LH1 citations unresolvable by its destination screener | MINOR | **REMEDIED**: every citation in `docs/federation/outbox/G0.md` now carries its repository, with a public permalink for the CI run. Done before transmission, which is when it was cheap. |
+| F7 — `CLAUDE.md` routes shell defects to the wrong board line for a `project` | MINOR | **LOGGED, not locally patchable** (shell law). Defect-log line below; filing held. |
+| F8 — three inherited journal entries lack §4.1 narrative sections | MINOR | **CARRIED PERMANENTLY.** No legal repair exists — journals are append-only and no agent edits another's. The auditor asks for none. |
+| F9 — "the conservative reading" labels the permissive choice | MINOR | **REMEDIED**: both board occurrences now state plainly that a judgment call was made between two readings, name the chosen one as the permissive option, and tell a rehydrating session to re-examine rather than inherit. |
+| F10 — WO-0001 imported a post-pin fact into a window it declared closed | MINOR | **UPHELD, not contested.** The packet was mine; the leak pre-framed A6 as cured inside a document forbidding adjudication against a moving tree. Changed no outcome — the auditor adjudicated F3 at the pin regardless. |
 
 ## Decisions on record
 
@@ -221,9 +250,15 @@ protection** — all 2026-08-05.
   landing completes"* — that references an event **this** repository
   cannot observe, and B6 re-scopes the freeze only for a `solo-collapsed`
   copy, not for a plain project. Read literally, the inherited bullet
-  would bar the M1 toolchain ADR that BOOTSTRAP Stage 2 mandates. The
-  conservative reading taken at intake: **it never bound this repository
-  as written**, and M1's ADRs proceed under PROTOCOL §11 normally. Filed
+  would bar the M1 toolchain ADR that BOOTSTRAP Stage 2 mandates. **A
+  judgment call, not a forced reading**: of the two options — obey and
+  stall M1, or disapply and proceed — the second was taken, so **it never
+  bound this repository as written** and M1's ADRs proceed under PROTOCOL
+  §11 normally. Note this is the **permissive** option; AUD-0001-F9 struck
+  the original "conservative reading" label, which made a discretionary
+  call read as compliance with `CLAUDE.md`'s most-conservative-reading
+  instruction. A rehydrating session should re-examine rather than
+  inherit. Filed
   as a shell defect (defect log below); this line is superseded if the
   upstream fix says otherwise. The canonical shell's own freeze history —
   the three closed sponsor-directed overrides carrying ADR-0008..0016 —
@@ -375,4 +410,24 @@ protection** — all 2026-08-05.
     `solo-collapsed`). Read literally the inherited freeze bars the M1
     toolchain ADR that BOOTSTRAP Stage 2 mandates — the copy cannot both
     obey the freeze and follow the bootstrap. · **issue not yet filed** —
-    blocked on the same session-scope repository add as the B6 push check.
+    blocked on the session-scope repository add for the shell, and held for
+    sponsor authorization (filing publishes a defect report on a third
+    repository).
+  - 2026-08-05 · **G0 template ships rows A1–A5 pre-signed against
+    seeding-era journal entries** (AUD-0001-F2 root cause). Every fork
+    therefore inherits Section A rows whose signatures resolve to the
+    *parent's* record, not to anything the fork's own founding
+    re-established — A3 is the sharpest case, attesting local CI green
+    while citing an entry that describes another repository's run 1. Fixed
+    locally by re-pointing the five cells at `J-orchestrator-0040`; the
+    template defect is the shell's. · **issue not yet filed** — same hold.
+  - 2026-08-05 · **`CLAUDE.md` routes shell defects to the wrong line for
+    a `project`-role copy** (AUD-0001-F7). Its iron rule says to file on
+    "the federation upstream named on the BOARD"; for a project that line
+    is the **org generic**, which did not author the law. The correct
+    destination is the **canonical shell**, named separately on this board.
+    The rule was written when the two coincided (an org generic's upstream
+    *is* the shell) and ADR-0011's role split broke that coincidence
+    without updating it. Navigated correctly here; the next operator may
+    not. Not locally patchable — `CLAUDE.md` is shell law. · **issue not
+    yet filed** — same hold.

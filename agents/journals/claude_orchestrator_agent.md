@@ -3006,3 +3006,178 @@ Handoff: none - the auditor's return is the next event.
 ### Files-in-this-commit
 - docs/gates/G0-checklist.md
 - tasks/BOARD.md
+
+## [J-orchestrator-0043] 2026-08-05T15:32Z | task:WO-0001 | AUD-0001 dispositioned: four remedied, one carried, one upheld, one closure withheld
+
+### Trigger
+The auditor returned WO-0001 with AUD-0001 — PASS WITH FINDINGS, 0 CRITICAL,
+4 MAJOR, 6 MINOR. I committed its report and journal unaltered at `93fd657`
+under `Agent: auditor`. This entry transcribes the verdict into the packet's
+Return log, signs A9, and dispositions all ten findings. Four are against me.
+
+### Inputs
+- `docs/reports/audit/AUD-0001-g0-retro-audit.md` at `93fd657`, read in full.
+- `agents/journals/claude_auditor_agent.md`, `J-auditor-0001`.
+- `agents/handoffs/WO-0001_g0-retro-audit.md`; `docs/gates/G0-checklist.md`;
+  `tasks/BOARD.md`; `docs/federation/outbox/G0.md` — all at `dab374e`.
+- PROTOCOL §3 (auditor exception, transcription), §4.1-4.2, §5 R1-R10, §7,
+  §7.1, §8; `docs/reports/audit/README.md` (severities, closure).
+- `docs/LESSONS.md` L-A04, L-B01, L-E02, L-E09, L-D04.
+
+### Reasoning
+- **F4 is the finding this entry must actually discharge, not just record.**
+  The auditor is right and the violation is clean: the A8 checklist cell
+  asserted a rationale that appears nowhere in the entry it cited. So here is
+  the A8 rationale in the signer's own record, where it should have been:
+  **PR-flow mode was chosen over the single-branch default because required
+  status checks and direct pushes are mutually exclusive on GitHub.** A
+  branch carrying a required check rejects direct pushes, since a new commit
+  cannot already have a passing check. Single-branch mode therefore *cannot*
+  make `journal-check` a required check on `main` at all - its protection
+  reduces to force-push blocking plus public CI failure as after-the-fact
+  detection. PR-flow binds the check to `main` while the working branch stays
+  pushable. A secondary reason, weaker and worth naming as secondary: this
+  session's harness requires pushes to a named feature branch, which
+  single-branch mode would have fought.
+- **And what the sponsor was actually asked and answered, quoted, with the
+  limit stated.** Asked: three numbered items, of which (2) was "Open
+  questions where your material genuinely underdetermines the answer" -
+  stack depth and Pong redistribution. Answered: "**confirm**". A8 was *not*
+  among the three questions; it was carried inside the intake proposal the
+  sponsor signed with "**Sign**". So the sponsor's authority for A8 is the
+  blanket intake signature, not a specific answer about branch flow. That is
+  weaker than the cell implied and I am recording it as weaker rather than
+  narrating around it. If the sponsor wants single-branch mode instead, the
+  cell is one edit and nothing built on it yet.
+- **F1: the correction is real and the repair is forward-only.** I wrote "39
+  commits" in an Evidence section attached to a commit at which the true
+  figure was 40 - I measured before committing and recorded the number
+  unscoped. The verdict (green) reproduces; the quantity does not. The
+  auditor declined the charter's literal CRITICAL reading and invited me to
+  second-guess that; I do not - a gate-blocking severity for a measurement
+  ordering artifact would devalue the class, and the auditor's reasoning for
+  MAJOR is better than mine would have been. **Standing rule from here: any
+  pre-commit measurement in an Evidence section states the SHA it was
+  measured at, or is re-stated as of the commit.** `J-orchestrator-0040` is
+  not edited - journals are append-only, and L-A04 says corrections append.
+- **F2: I fixed the local half and left the root cause alone, deliberately.**
+  Re-pointing A1-A5 at `J-orchestrator-0040` is squarely in my write scope
+  and makes the rows resolve to evidence that exists in *this* repository.
+  The template defect - a shipped G0 that pre-signs Section A against
+  seeding-era entries, so every fork inherits rows its own founding never
+  re-established - is the shell's, and goes to the defect log rather than a
+  local law patch.
+- **F3: I am not closing it, and the reason matters more than the finding.**
+  The remedy exists (`4c2bc9b`, the sponsor's explicit "ratify the
+  charters"), but it landed outside the audit's pin, and the auditor
+  expressly declined to credit it under L-E09. Its report says closure "is
+  mine to grant, not the remediating party's to assert." If I marked F3
+  closed on the strength of my own remediation, I would be doing exactly what
+  the independence rule exists to prevent - the audited party grading its own
+  fix. A follow-up audit pinned at or after `4c2bc9b` is owed and the board
+  says so.
+- **F5: the finding asks for a deliberate decision, so here is the decision
+  and its cost.** Seven bare `AUD-0001` references in this tree point at the
+  canonical shell's reports and now collide with mine. All seven sit in
+  shell-law files - `.github/workflows/`, `scripts/test_protocol.sh`,
+  `ADR-0001`. I am **not** patching them. Reasons: the rule against patching
+  shell law locally exists so that forks do not diverge into unmergeable
+  variants of the same law, and a comment's pointer is not worth breaking it;
+  the collision is also self-limiting, since every one of the seven sits
+  beside text that makes the shell context obvious. The cost I accept: a
+  reader who follows `journal-check.yml:5` lands on my report instead of the
+  shell's. Logged as a shell matter, decided consciously, which is all F5
+  requires.
+- **F6 was the cheapest fix in the set and the most expensive to defer.** The
+  export packet claimed self-containment in its own second paragraph and then
+  cited a bare SHA, a bare run id and a bare journal-entry id - unresolvable
+  by the org-generic screener it is addressed to. Every citation is now
+  repository-qualified with a public permalink for the CI run. Doing this
+  after landing would have meant amending a transcribed record at the fence.
+- **F9 is small and I think it is the sharpest finding in the report.** I
+  labelled the freeze disapplication "the conservative reading". It is the
+  permissive one - it removes a constraint and unblocks work - and
+  `CLAUDE.md` separately instructs me to take the most conservative reading
+  when I hit a shell defect. So the label made a discretionary call read as
+  compliance, on the live file every future session rehydrates from. The
+  decision stands; the label is struck, both occurrences now say a judgment
+  call was made between two stated readings and tell a rehydrating session to
+  re-examine rather than inherit.
+- **F10 is against my own packet and I uphold it.** WO-0001 pinned a baseline
+  and forbade adjudication against a moving tree, then handed the auditor a
+  post-pin fact ("then received explicit confirmation") that pre-framed A6 as
+  cured. It changed no outcome only because the auditor caught it. That is
+  not a defence.
+- **What the audit found clean is evidence too, and I record it without
+  claiming credit for it.** Zero findings in the mechanical layer: R1-R10
+  green over all 40 commits by two independent executions, CI verified as
+  having run un-bypassed with all five steps individually successful, R4
+  re-derived from the diff rather than trusted, R1 checked by reading because
+  CI structurally cannot check it for an all-scope agent, harvest tiling
+  correct by arithmetic, LH bars holding at grade, every sampled MACHINE/PROSE
+  claim correctly tagged. Every one of the ten findings is in the prose layer.
+  That distribution is the useful result: the machine floor holds, and what
+  needs watching is what signatures rest on.
+
+### Actions
+- Committed the auditor's deliverables unaltered at `93fd657` under
+  `Agent: auditor` (report + `J-auditor-0001`; 262 insertions, 0 deletions on
+  its journal; no path outside `docs/reports/audit/**` staged).
+- `agents/handoffs/WO-0001_g0-retro-audit.md`: State DRAFT→ACCEPTED; Return
+  log RETURNED + ACCEPTED rows written under my trailer per the §3 auditor
+  exception, with the verdict quoted verbatim and the transcription limit
+  stated (L-E02), including that the transcriber is the audited party.
+- `docs/gates/G0-checklist.md`: A9 signed to `J-auditor-0001` with the report
+  path, counts, and an explicit note that F3 is not closed by that row;
+  A1-A5 re-pointed to `J-orchestrator-0040` (F2); A8 re-pointed to this entry
+  (F4).
+- `docs/federation/outbox/G0.md`: every LH1 citation repository-qualified,
+  CI run given a public permalink, corroborating audit cited (F6).
+- `tasks/BOARD.md`: new "Audit findings — open dispositions" section with the
+  per-finding table and the standing note that closure is the auditor's to
+  grant; freeze bullet relabelled in both places (F9); defect log extended
+  with F2's root cause and F7; gates row updated - all G0 rows now signed,
+  open on Section C transmission alone.
+
+### Evidence
+- `git show --stat 93fd657` — 2 files: the report and the auditor's journal.
+  `git diff --numstat` on the journal at that commit: **262 insertions, 0
+  deletions** (pure EOF append, R3). *Measured.*
+- `J-auditor-0001`'s `Files-in-this-commit` lists exactly
+  `docs/reports/audit/AUD-0001-g0-retro-audit.md` — R4 set-equality holds for
+  the auditor's own commit. *Measured.*
+- `scripts/agent_commit.sh` accepted the auditor commit under `Agent: auditor`
+  with R7 path isolation enforced — the write-scope claim is MACHINE here,
+  not taken on trust. *Measured.*
+- AUD-0001 §5 row 2 records the F1 reproduction: claim "39 commits", observed
+  `OK: 40 commit(s) satisfy the journal/commit protocol` at the pin.
+  *Relayed* — the auditor's measurement, which I did not re-run, because
+  re-running my own audit's adverse finding to confirm it is not a check.
+- Verdict as quoted in the Return log is byte-identical to AUD-0001 §Verdict
+  lines 15-19. *Measured.*
+
+### Outcome
+DoD met. WO-0001 ACCEPTED; A9 signed; ten findings dispositioned — four
+remedied (F2, F4, F6, F9), one remedied forward-only (F1), one decided
+deliberately without patching (F5), one logged as a shell defect (F7), one
+carried permanently (F8), one upheld against my own packet (F10), and **one
+closure withheld pending the auditor's own re-verification (F3)**.
+**Every G0 row is now signed.** The gate is open on Section C's transmission
+alone, which cannot run before the gate signature and needs the sponsor's one
+outer-hop yes/no. Handoff: the sponsor, for that yes/no.
+
+### Open-questions
+- **F3 closure needs a follow-up audit** pinned at or after `4c2bc9b`. I will
+  not mark it closed and no gate signature should treat it as closed.
+- **A8's sponsor authority is the blanket intake signature**, not a specific
+  answer on branch flow. Stated plainly above; correctable in one edit.
+- **Two shell defects and the F2 root cause remain unfiled**, held on the
+  session-scope repository add and on sponsor authorization for an
+  outward-facing filing.
+- **The outer-hop yes/no** is the only thing between here and G0 passing.
+
+### Files-in-this-commit
+- agents/handoffs/WO-0001_g0-retro-audit.md
+- docs/gates/G0-checklist.md
+- docs/federation/outbox/G0.md
+- tasks/BOARD.md
