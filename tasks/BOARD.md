@@ -95,7 +95,7 @@ the rows below are its roadmap view. Changing either is an E2 escalation.
 
 | Packet | From → To | State | Subject |
 |---|---|---|---|
-| [`WO-0007_p1-confirmatory-countersignature.md`](../agents/handoffs/WO-0007_p1-confirmatory-countersignature.md) | orchestrator → dv_lead | **ISSUED** 2026-08-05 | Confirmatory pass over the amended surface only, then the testability countersignature — the last precondition of `P1-spec-freeze` |
+| [`WO-0008_p1-spec-repair-round-2.md`](../agents/handoffs/WO-0008_p1-spec-repair-round-2.md) | orchestrator → architect_docs_lead | **ISSUED** 2026-08-05 | Four repairs (B-1…B-4) in the text added beyond A-1…A-6, plus D-8's *Closes by* cell — dv_lead's renewed pre-commitment makes this the last round before the freeze if the diff stays exact |
 
 Closed:
 
@@ -284,6 +284,48 @@ widths to be derived in the module.
 |---|---|---|
 | **D-8** | **P1 has no external anchor.** A P1 PASS proves the RTL implements *this specification* and nothing about whether the specification describes CHIP-8. (This is `dv_lead`'s F-11, now carried in the document the gate actually reads.) | Recorded as a **deferred item, not an open question** — deliberately, since an OQ row would block the very gate it asks to be signed *with knowledge of*. Options are **E3**-shaped; settles before `P1-module-ready`. **What a sponsor signing the freeze should know first.** |
 | **D-9** | Fifteen `I` hooks have no named performer; four are over RTL the countersignatory may not read. | Routed, not decided — assigning `rtl_lead` is not the architect's to do. Orchestrator's, at the first RTL work order. |
+
+## P1 confirmatory pass — NOT COUNTERSIGNED at `ddc06dc`, second round
+
+**All six amendments landed correctly and OQ-4's closure is right** —
+confirmed by *measurement* in both lanes this round, not by reading, because
+Icarus 12.0, Verilator 5.020 and cocotb 1.9.2 are now in the checkout. What
+was *relayed* last round is *measured* now. **All four defects are in text
+added beyond the amendments dv_lead wrote**, each a one-sentence repair, none
+changing a behaviour. dv_lead **renewed its pre-commitment**: a revision whose
+diff is exactly the four repairs needs no further review round.
+
+| Id | Defect | Note |
+|---|---|---|
+| **B-1** | **Blocking.** Icarus 12.0 cannot bind a package `string` parameter in a module parameter's default expression (`error: Unable to bind variable 'S' in 'p'`); the accessor form **crashes** the tool (exit 134). Package `int`/`logic`/`bit`/enum defaults all work. REQ-115 therefore mandates a form that does not elaborate — **F-5 alive through its own repair**. | Fix is that `MEM_INIT_FILE` never belonged in the package, **not** weakening REQ-109 |
+| **B-2** | §5.5 still *defines* `SP_W` — the value REQ-115 forbids a module to read — while REQ-109 ¶1 orders every package value referenced and never restated. Two clauses, opposite instructions, one name. | F-2's test verbatim; the near-miss is half closed |
+| **B-3** | REQ-115 calls `SP_W` "the only such case in P1" — **measurably false**. `obs_stack`'s width expression fails identically (**48 vs 192**); the stack array's depth is a third case. | The `SP_W` half fails **loudly**, the width half **silently** |
+| **B-4** | A-4's "at retirement **and nowhere else**" is one universal too wide: no faulting instruction ever retires, so it strands §9's five fault conditions, the **65536-encoding decode sweep**, and `mem` outside the comparison domain — narrowing README's signed full-state criterion by a subordinate clause. | An **E2** shape reached by accident; keep the distinction, fix the quantifier |
+
+**Findings that outlive this round and belong to the bench, not the spec:**
+
+- **`COCOTB_RESOLVE_X=ZEROS` silently resolves X and the deliberate-mismatch
+  check passes green.** One environment variable turns the four-state
+  authoritative lane into a second two-state lane for **every X-related check
+  in the program**. Nothing pins it today. dv_lead owns the guard.
+- **cocotb's own documented `parameters={...}` dict is the silent form** —
+  worse than the `-Ppkg.P=` the orchestrator flagged. cocotb 1.9.2 formats
+  parameters with no type awareness or quoting, so **iverilog prints
+  `error: invalid value specified for defparam`, exits 0, emits a working
+  simulation, and the test runs green over an unloaded memory.** Verilator
+  fails loudly — the lane asymmetry runs the wrong way twice. All four ways a
+  P1 test can end up running 4096 zero bytes print something and none fails
+  the run, so **the guard cannot be log-based**. Four guards committed.
+- **NV-1 discharged positive** — cocotb reads an unpacked array by hierarchy
+  in *both* lanes, so the signed memory-compare criterion is not narrowed.
+  **NV-3 discharged**, and it fired the falsifier ADR-0018 A2.7 names.
+- **Still owed**: NV-2 (now carrying the 4096-element read cost), NV-4 (what
+  X-policy CI provides), and **F-15** — Verilator refuses enum-typed
+  overrides without `-Wno-ENUMVALUE`, which four of REQ-095's six vectors
+  need.
+- **D-8 satisfies dv_lead**, with one correction: *Closes by* should be
+  **before the first `SO-` PASS**, which precedes `P1-module-ready` — every
+  P1 sign-off is written inside that interval.
 
 ## P1 open questions (L-E10 — open questions are board artifacts)
 

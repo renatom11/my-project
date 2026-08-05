@@ -4545,3 +4545,123 @@ dv_lead's countersignature**, now issued as WO-0007. Handoff: dv_lead.
 ### Files-in-this-commit
 - agents/handoffs/WO-0007_p1-confirmatory-countersignature.md
 - tasks/BOARD.md
+
+## [J-orchestrator-0055] 2026-08-05T19:55Z | task:WO-0008 | Second NOT COUNTERSIGNED, and a better one; repair round issued with the diff bounded
+
+### Trigger
+`dv_lead` returned WO-0007: **NOT COUNTERSIGNED at `ddc06dc`**, with all six
+amendments confirmed landed and OQ-4's closure confirmed right. Four defects,
+every one in text added beyond the amendments it wrote.
+
+### Inputs
+- `docs/reports/dv/DV-P1-countersignature.md` at `9f4e03b` (B-1…B-4, the
+  measurement tables, NV dispositions).
+- `J-dv_lead-0002`; spec §13.1; `ADR-0018` A1, A2.7.
+- `test/spikes/` — the harness it built to convert relayed claims to measured.
+- README's phase table (the signed full-state criterion B-4 would narrow).
+
+### Reasoning
+- **A second rejection that is better news than the first, and the reason is
+  where the defects are.** Round one: seven false or unsatisfiable clauses
+  spread through the document. Round two: **zero defects in the amendments,
+  zero in OQ-4's closure, four in the prose written around them.** The
+  spec's substance survived two independent gradings; what keeps failing is
+  the connective text added while repairing. That is a different and much
+  cheaper failure mode, and it is converging.
+- **The most valuable thing dv_lead did was re-measure what it had
+  relayed.** Last round its F-5 claim was *relayed* with a spike owed. This
+  round Icarus, Verilator and cocotb are in the checkout, so it built a spike
+  harness and produced numbers: `SP_W` 3 vs 5, `obs_stack` 48 vs 192, the
+  exact iverilog bind error, the exit-134 crash. It did not accept the
+  architect's measurements either - it re-ran them. Two independent
+  measurements of the same effect is what the two-lane architecture was
+  chosen for, and this is the first time it has actually been exercised.
+- **B-1 is the one I would have gotten wrong.** The obvious repair to "REQ-115
+  mandates a form Icarus cannot elaborate" is to relax REQ-109. dv_lead says
+  no: that trades a defect for the F-2 class REQ-109 exists to prevent. The
+  right repair is that a *filename* parameter never belonged in a package at
+  all. I wrote that into WO-0008 as an explicit prohibition, because the
+  cheap fix is the one an agent under time pressure reaches for.
+- **B-4 is an E2 reached by accident, which is why it must not land.**
+  "At retirement and nowhere else" is a subordinate clause, and no faulting
+  instruction ever retires - so read strictly it strands §9's fault
+  conditions, the 65536-encoding decode sweep, and `mem` outside the
+  model-to-DUT comparison domain. README's full-state criterion is *signed*.
+  Narrowing a signed criterion is a scope change (E2), and a scope change
+  arriving as a quantifier in a clarifying paragraph is precisely the kind
+  nobody escalates because nobody notices. Keep the distinction, fix the
+  quantifier.
+- **The two bench findings are worth more than the spec repairs.**
+  `COCOTB_RESOLVE_X=ZEROS` silently resolves X, so **one environment
+  variable turns the four-state authoritative lane into a second two-state
+  lane for every X-related check in the program** - and nothing pins it
+  today. And the silent parameter form is not the `-Ppkg.P=` I flagged: it is
+  cocotb's own documented `parameters={...}` dict, where iverilog prints an
+  error, **exits 0**, emits a working simulation, and the test runs green
+  over an unloaded memory. Both are silently-always-pass in PROTOCOL §10's
+  sense, and both were found by building a harness rather than by reading.
+  They belong to the bench, not the spec, and dv_lead owns them.
+- **My own framing of F-5 was less bad than incomplete, and I am recording
+  which.** I told dv_lead the silent form was `-Ppkg.P=…`. That is true and
+  it is not the worst one. The relay was accurate as far as it went; the
+  agent that went and measured found the sharper case. No correction owed,
+  but the pattern is the same as F2 - a claim that was *relayed* being
+  treated as though it were the whole picture.
+- **Bounding the diff is what makes this the last round.** dv_lead renewed
+  its pre-commitment: a revision whose diff is exactly the four repairs needs
+  no further review. So WO-0008 says "keep the diff to exactly these repairs"
+  as a constraint, and asks for §13.2 enumerating them the way §13.1 did -
+  the enumeration is what let dv_lead bound its confirmatory surface by a
+  list rather than by diff, and it is why round two cost one pass instead of
+  a re-grade.
+- **`test/spikes/` placement was good discipline and I checked it rather
+  than assumed.** `build.yml`'s guard globs `test/test_*.py`; `find test -name
+  'test_*.py'` returns **0**, so the spikes do not trip the de-gating
+  condition. The CI lanes stay honestly guarded - still testing nothing, and
+  still saying so - rather than reporting a green over exploratory files.
+
+### Actions
+- Verified and committed dv_lead's work at `9f4e03b` under its own trailer:
+  journal 373/0 pure append, ids 0001→0002, `Files-in-this-commit` set-equal
+  to the eight non-journal paths, all inside `test/**`,
+  `docs/reports/dv/**`, `agents/handoffs/**`.
+- Confirmed the CI source guard remains active after the spike harness landed.
+- Wrote `WO-0008` (architect): B-1…B-4, D-8's cell, §13.2, with the diff
+  bounded and the cheap-but-wrong B-1 repair explicitly prohibited.
+- `tasks/BOARD.md`: new "P1 confirmatory pass" section recording the four
+  defects, the two bench findings, the NV dispositions, and F-15.
+
+### Evidence
+- `git diff --numstat` on dv_lead's journal at `9f4e03b`: **373/0**. Ids
+  `-0001`, `-0002`. *Measured.*
+- `find test -name 'test_*.py' | wc -l` → **0**; the guard glob does not
+  match `test/spikes/`. *Measured.*
+- `scripts/agent_commit.sh` accepted the commit under `Agent: dv_lead`, so
+  R7 confirms every staged path is inside that agent's scope — MACHINE, not
+  my reading of the table. *Measured.*
+- dv_lead's numbers — `SP_W` 3 vs 5, `obs_stack` 48 vs 192, `error: Unable to
+  bind variable 'S' in 'p'`, exit 134 on the accessor form, iverilog exiting
+  **0** after `error: invalid value specified for defparam` — are its
+  measurements in its own harness. **Relayed** here; I did not re-execute
+  them. The harness is committed at `test/spikes/`, so they are reproducible
+  by anyone who wants to.
+
+### Outcome
+DoD met. P1's spec is one bounded round from freezable: four one-sentence
+repairs and a table cell. **The countersignature is still withheld and that
+is correct.** Handoff: architect, on WO-0008.
+
+### Open-questions
+- **Whether the diff stays bounded** determines whether this is the last
+  round. Unmeasured until it returns.
+- **NV-2, NV-4 and F-15** are owed by dv_lead at bench-build time, not now.
+- **D-9** — fifteen `I` hooks with no named performer — is mine to assign at
+  the first RTL work order.
+- **AUD-0002-F1's disposition is owed**; I am the subject and do not propose
+  it.
+- Unchanged and still owed: the outer-hop PR, AUD-0001-F3's closure, three
+  unfiled shell defects.
+
+### Files-in-this-commit
+- agents/handoffs/WO-0008_p1-spec-repair-round-2.md
+- tasks/BOARD.md
