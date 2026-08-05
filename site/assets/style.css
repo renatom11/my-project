@@ -211,3 +211,60 @@ table.wo td:first-child a { font-weight: 550; }
   .phase dt { margin-top: .6rem; }
   .nav { margin-left: 0; width: 100%; }
 }
+
+/* ---- Spec atlas ---------------------------------------------------------- */
+.legend { list-style: none; padding: 0; margin: .75rem 0 0; display: grid; gap: .4rem; }
+.legend li { font-size: .9rem; color: var(--ink-2); display: flex; gap: .55rem; align-items: baseline; }
+.legend .cnt { margin-left: auto; font-family: var(--mono); font-size: .78rem; color: var(--ink-3); }
+.callout .note { font-size: .88rem; color: var(--ink-2); margin: 1rem 0 0; }
+
+.hook { display: inline-flex; align-items: center; justify-content: center; width: 1.5rem;
+        height: 1.5rem; border-radius: 5px; font-family: var(--mono); font-size: .76rem;
+        font-weight: 700; text-decoration: none; border-bottom: none; cursor: help; }
+.h-D { background: var(--ok-bg); color: var(--ok-ink); }
+.h-R { background: var(--warn-bg); color: var(--warn-ink); }
+.h-F { background: var(--accent-soft); color: var(--accent); }
+.h-S { background: var(--neutral-bg); color: var(--neutral-ink); }
+.h-I { background: var(--crit-bg); color: var(--crit-ink); }
+
+.atlas-controls { position: sticky; top: 3.4rem; z-index: 4; background: var(--bg);
+  padding: 1rem 0 .9rem; border-bottom: 1px solid var(--rule); margin-bottom: 1.5rem;
+  display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; }
+#q { flex: 1 1 20rem; padding: .55rem .8rem; font: inherit; font-size: .92rem;
+     background: var(--panel); color: var(--ink); border: 1px solid var(--rule-2); border-radius: 7px; }
+#q:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+#blk { padding: .5rem .6rem; font: inherit; font-size: .88rem; background: var(--panel);
+       color: var(--ink); border: 1px solid var(--rule-2); border-radius: 7px; max-width: 100%; }
+.filters { display: flex; gap: .3rem; flex-wrap: wrap; }
+.f { font: inherit; font-size: .82rem; padding: .4rem .7rem; border-radius: 999px; cursor: pointer;
+     background: transparent; color: var(--ink-2); border: 1px solid var(--rule-2); }
+.f:hover { border-color: var(--accent); color: var(--ink); }
+.f.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 650; }
+.f .cnt { font-family: var(--mono); font-size: .74rem; opacity: .75; }
+.count { font-size: .82rem; color: var(--ink-3); font-family: var(--mono); margin: 0 0 0 auto; }
+
+.reqs { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: .75rem; }
+.req { background: var(--panel); border: 1px solid var(--rule); border-radius: 9px;
+       padding: .9rem 1rem; display: flex; flex-direction: column; gap: .5rem; }
+.req[hidden] { display: none; }
+.req-head { display: flex; align-items: center; gap: .5rem; }
+.req-id { font-family: var(--mono); font-weight: 700; font-size: .88rem; color: var(--accent);
+          text-decoration: none; }
+.req-id:hover { text-decoration: underline; }
+.req-hooks { margin-left: auto; display: flex; gap: .25rem; }
+.req-text { margin: 0; font-size: .92rem; color: var(--ink); line-height: 1.5; }
+.req-foot { margin-top: auto; padding-top: .5rem; border-top: 1px solid var(--rule);
+            display: flex; gap: .6rem; justify-content: space-between; align-items: baseline;
+            font-size: .76rem; color: var(--ink-3); flex-wrap: wrap; }
+.req-sec { font-family: var(--mono); }
+.req-block { text-align: right; }
+.empty { text-align: center; color: var(--ink-3); padding: 3rem 0; }
+
+@media (max-width: 620px) {
+  .atlas-controls { position: static; }
+  .count { margin-left: 0; }
+}
+.req-cov { font-family: var(--mono); font-size: .72rem; padding: .1em .45em; border-radius: 4px; }
+.req-cov.none { background: var(--neutral-bg); color: var(--neutral-ink); }
+.req-cov.some { background: var(--ok-bg); color: var(--ok-ink); }
+.req-block { font-size: .74rem; color: var(--ink-3); }

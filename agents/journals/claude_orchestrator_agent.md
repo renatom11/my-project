@@ -5029,3 +5029,101 @@ and that constraint is now about to lift. Handoff: the sponsor.
 - docs/gates/P1-spec-freeze-checklist.md
 - agents/handoffs/WO-0008_p1-spec-repair-round-2.md
 - tasks/BOARD.md
+
+## [J-orchestrator-0059] 2026-08-05T21:40Z | task:none | Spec atlas added: all 91 requirements individually, generated from the spec's own registry
+
+### Trigger
+The sponsor: "there needs to be a spec atlas with all of the requirements."
+The site rendered the specification and the traceability matrix as whole
+documents, so every requirement was present but none was individually
+addressable — 91 ids buried in 1600 lines.
+
+### Inputs
+- `docs/specs/SPEC-P1-core-cpu.md` §10, which the spec itself names *"the
+  authoritative registry"* for its REQ ids.
+- `docs/specs/requirements.md` — the block-summary table and the per-REQ
+  matrix with its Test-ids and Evidence columns.
+- `site/build.mjs`, `site/assets/style.css`.
+
+### Reasoning
+- **The atlas's data source had to be the registry the spec nominates, not
+  a source I prefer.** §10 says in its own text that it is the authoritative
+  registry and that `requirements.md` "indexes these ids and never restates
+  them". So the atlas reads §10 for id, satisfying text, section and DV
+  hook, and reads `requirements.md` only for what §10 does not carry: the
+  block a requirement belongs to, and the test/evidence coverage columns.
+  Reading the same fact from two files would have created the divergence
+  both documents are structured to prevent.
+- **Two parsing bugs, both mine, and the second one mattered.** The
+  block-summary table is **indented inside a list item**, so a `^\|` anchor
+  matched nothing and every requirement fell into "Unclassified" - visible
+  only because I drove the page and found the filter had one option. And
+  while fixing it I found `requirements.md` carries a **per-REQ matrix** I
+  had not noticed, with the Test-ids and Evidence columns the DV lane will
+  fill. That is strictly better data: it gives blocks *and* coverage. I left
+  a note in the source for the next editor about the indentation trap.
+- **Coverage state earns its place on every card.** Each requirement now
+  shows "no test yet" or its test ids. Today that reads `no test yet` on all
+  91 - which is correct and is the point: no bench exists, because nothing
+  is implemented against an unfrozen spec. When the DV lane fills those
+  columns the cards change with the file, and the gap between specified and
+  verified becomes visible at a glance rather than inferable from absence.
+- **The `I`-hook count is the number I most wanted surfaced.** Thirteen
+  requirements carry an inspection hook, and the spec says plainly that
+  those hooks **owe a named performer and do not yet have one**. That is
+  carry-forward `C-4` on the freeze gate. Filtering to `I` now shows exactly
+  which thirteen, which turns a sentence in a document into a worklist.
+- **I verified the interactions rather than assuming them**, because a
+  client-side filter that silently matches nothing looks identical to a
+  filter with nothing to match - the same shape as the silently-always-pass
+  class this program keeps meeting. Driven in a real browser: search "stack"
+  → 3, hook `I` → 13, hook `F` → 6, a block filter → 28, the empty state
+  appears on a no-match query, and a card's id resolves to the spec page's
+  section anchor.
+- **What the atlas does not do, deliberately**: it does not restate a
+  requirement's normative text. §10's column is *"How P1 satisfies it"* — a
+  summary — and the spec's §6 is where the binding text lives. An atlas that
+  paraphrased normative text would become a second definition site, which is
+  precisely the defect class (`F-2`, `B-2`) the spec lane has spent two
+  rounds removing. Every card links to the spec instead.
+
+### Actions
+- Added `buildAtlas()` to `site/build.mjs`: parses §10's registry, joins the
+  block and coverage columns from `requirements.md`'s per-REQ matrix, and
+  emits `/atlas/` — 91 cards with client-side search, DV-hook filters, a
+  block filter, a live count and an empty state.
+- Fixed the block parser (indented rows) and switched to the per-REQ matrix.
+- Added a "Spec atlas" nav entry and the atlas styles.
+- Rebuilt and drove the page in a headless browser, light and dark, desktop
+  and mobile.
+
+### Evidence
+- `node build.mjs` → `atlas requirements: 91`; `grep -c 'class="req"'` on the
+  emitted page → **91**, matching the spec's own count. *Measured.*
+- Hook totals rendered from the registry: D **76**, R **33**, F **6**,
+  S **8**, I **13**. *Measured.*
+- Block filter options: **7**, from the per-REQ matrix's group headings.
+  *Measured.*
+- Interactions: search "stack" → 3 visible; hook `I` → 13; hook `F` → 6;
+  block filter → 28; empty state visible on a no-match query; first card's
+  id links to `/documents/spec-p1-core-cpu/#4-interface`. *Measured.*
+- Horizontal overflow: **0** at 1280px light, **0** at 1280px dark, **0** at
+  390px. *Measured.*
+
+### Outcome
+DoD met. `/atlas/` carries every P1 requirement individually, generated from
+the specification's nominated registry, with coverage state visible per
+requirement. No gate state changed and no agent was spawned. Handoff: none —
+`P1-spec-freeze` still waits on the sponsor's S1.
+
+### Open-questions
+- **The atlas is generated; its framing prose is editorial** and can drift
+  like the rest of `content.mjs`.
+- **All 91 read "no test yet"**, which is correct today and is the number
+  that should change first once the freeze is signed.
+- Unchanged and still owed: S1, AUD-0002-F1's disposition, the outer-hop PR,
+  AUD-0001-F3's closure, three unfiled shell defects.
+
+### Files-in-this-commit
+- site/build.mjs
+- site/assets/style.css

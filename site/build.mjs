@@ -31,6 +31,7 @@ const NAV = [
   ['/', 'Overview'],
   ['/program/', 'Program'],
   ['/backlog/', 'Backlog'],
+  ['/atlas/', 'Spec atlas'],
   ['/documents/', 'Documents'],
   ['/orders/', 'Work orders'],
   ['/agents/', 'Agents'],
@@ -348,6 +349,155 @@ review. The chain is reconstructible from packets, journals and commit trailers.
   });
 }
 
+// ---- Spec atlas -------------------------------------------------------------
+// Every requirement, individually, from the specification's own §10 registry —
+// which the spec names as "the authoritative registry" for its REQ ids. The
+// blocks come from requirements.md. Nothing here is transcribed by hand.
+function buildAtlas() {
+  const spec = read('docs/specs/SPEC-P1-core-cpu.md');
+  const reqsDoc = read('docs/specs/requirements.md');
+  if (!spec) { console.warn('atlas: spec not found, skipping'); return 0; }
+
+  // §10's registry table: | REQ | How P1 satisfies it | Section | DV hook |
+  const sec10 = spec.slice(spec.indexOf('\n## 10.'), spec.indexOf('\n## 11.'));
+  const rows = [...sec10.matchAll(/^\|\s*`?(REQ-\d{3})`?\s*\|(.+?)\|(.+?)\|(.+?)\|\s*$/gm)]
+    .map(m => ({
+      id: m[1],
+      satisfies: m[2].trim(),
+      section: m[3].trim(),
+      hook: m[4].trim(),
+      n: parseInt(m[1].slice(4), 10),
+    }));
+
+  // requirements.md carries a per-REQ matrix whose group-heading rows name the
+  // block, plus the test-id and evidence columns the DV lane fills. Walk it in
+  // order: a heading row sets the current block for the rows beneath it.
+  // (Note for a later editor: the block-summary table near the top of that file
+  // is INDENTED inside a list item, so a `^\|` anchor misses it entirely. The
+  // per-REQ matrix below is the better source anyway — it carries coverage.)
+  const cover = {};
+  let curBlock = 'Unclassified';
+  if (reqsDoc) {
+    for (const line of reqsDoc.split('\n')) {
+      const head = line.match(/^\|\s*\*\*([^*|]+?)\*\*\s*\|\s*\|/);
+      if (head && !/REQ-\d{3}/.test(head[1])) { curBlock = head[1].trim(); continue; }
+      const row = line.match(/^\|\s*\*\*(REQ-\d{3})\*\*\s*\|([^|]*)\|([^|]*)\|([^|]*)\|([^|]*)\|/);
+      if (row) cover[row[1]] = {
+        block: curBlock,
+        tests: row[4].trim().replace(/^_\(|\)_$/g, ''),
+        evidence: row[5].trim().replace(/^_\(|\)_$/g, ''),
+      };
+    }
+  }
+  const blockOf = id => (cover[id] || {}).block || 'Unclassified';
+
+  // DV hook legend, taken from §10's own prose.
+  const HOOKS = {
+    D: 'directed vector',
+    R: 'constrained-random stream, full-state compare',
+    F: 'formal property (P4)',
+    S: 'structural — guaranteed by the interface or a construction rule, not assertable by a bench',
+    I: 'inspection at countersignature or review',
+  };
+  const hooksIn = h => [...new Set((h.match(/\b[DRFSI]\b/g) || []))];
+
+  rows.forEach(r => { r.block = blockOf(r.id); r.hooks = hooksIn(r.hook);
+    r.tests = (cover[r.id] || {}).tests || 'unfilled'; });
+
+  const allBlocks = [...new Set(rows.map(r => r.block))];
+  const counts = Object.fromEntries(Object.keys(HOOKS).map(k => [k, rows.filter(r => r.hooks.includes(k)).length]));
+
+  const cards = rows.map(r => `
+    <article class="req" data-id="${esc(r.id)}" data-block="${esc(r.block)}" data-hooks="${esc(r.hooks.join(' '))}"
+             data-text="${esc((r.id + ' ' + r.satisfies + ' ' + r.section + ' ' + r.block).toLowerCase())}">
+      <div class="req-head">
+        <a class="req-id" href="/documents/spec-p1-core-cpu/#${sectionAnchor(r.section)}">${esc(r.id)}</a>
+        <span class="req-hooks">${r.hooks.map(h => `<abbr class="hook h-${h}" title="${esc(HOOKS[h])}">${h}</abbr>`).join('')}</span>
+      </div>
+      <p class="req-text">${mdInline(r.satisfies)}</p>
+      <div class="req-foot">
+        <span class="req-sec">${mdInline(r.section)}</span>
+        <span class="req-cov ${/unfilled/i.test(r.tests) ? 'none' : 'some'}">${/unfilled/i.test(r.tests) ? 'no test yet' : esc(r.tests)}</span>
+      </div>
+      <div class="req-block">${esc(r.block)}</div>
+    </article>`).join('');
+
+  const legend = Object.entries(HOOKS).map(([k, v]) =>
+    `<li><abbr class="hook h-${k}">${k}</abbr> <strong>${esc(v.split('—')[0].trim())}</strong>${v.includes('—') ? ' — ' + esc(v.split('—')[1].trim()) : ''} <span class="cnt">${counts[k]}</span></li>`).join('');
+
+  page({
+    path: '/atlas/', wide: true, title: 'Spec atlas',
+    subtitle: `Every one of the **${rows.length}** P1 requirements, from the specification's own §10 registry — which the spec names as the authoritative registry for these ids. Search and filter below; each id links into the spec at its section.`,
+    body: `
+<section class="callout subtle">
+  <h2>DV hooks</h2>
+  <div class="prose"><p>Each requirement carries the kind of check that can actually perform its
+  observation. A hook names a check that can make the observation — a parenthesised module id marks a
+  row whose observation point is not the top-level DUT boundary.</p></div>
+  <ul class="legend">${legend}</ul>
+  <p class="note"><strong>The <code>I</code> hooks owe a named performer and do not yet have one</strong> —
+  carry-forward <code>C-4</code> on the spec-freeze gate.</p>
+</section>
+
+<div class="atlas-controls">
+  <input id="q" type="search" placeholder="Search ${rows.length} requirements — id, text, section…" aria-label="Search requirements">
+  <div class="filters" id="filters">
+    <button class="f on" data-f="all">All <span class="cnt">${rows.length}</span></button>
+    ${Object.keys(HOOKS).map(k => `<button class="f" data-hook="${k}">${k} <span class="cnt">${counts[k]}</span></button>`).join('')}
+  </div>
+  <select id="blk" aria-label="Filter by block">
+    <option value="">All blocks</option>
+    ${allBlocks.map(b => `<option value="${esc(b)}">${esc(b)}</option>`).join('')}
+  </select>
+  <p class="count" id="count">${rows.length} shown</p>
+</div>
+
+<div class="reqs" id="reqs">${cards}</div>
+<p class="empty" id="empty" hidden>No requirement matches that filter.</p>
+
+<script>
+(function(){
+  var q=document.getElementById('q'), blk=document.getElementById('blk'),
+      reqs=[].slice.call(document.querySelectorAll('.req')),
+      count=document.getElementById('count'), empty=document.getElementById('empty'),
+      hook=null;
+  function apply(){
+    var t=(q.value||'').toLowerCase().trim(), b=blk.value, n=0;
+    reqs.forEach(function(el){
+      var ok = (!t || el.dataset.text.indexOf(t)>-1)
+            && (!b || el.dataset.block===b)
+            && (!hook || el.dataset.hooks.split(' ').indexOf(hook)>-1);
+      el.hidden=!ok; if(ok) n++;
+    });
+    count.textContent = n + (n===1?' shown':' shown');
+    empty.hidden = n>0;
+  }
+  q.addEventListener('input', apply); blk.addEventListener('change', apply);
+  document.getElementById('filters').addEventListener('click', function(e){
+    var btn=e.target.closest('.f'); if(!btn) return;
+    document.querySelectorAll('.f').forEach(function(x){x.classList.remove('on');});
+    btn.classList.add('on');
+    hook = btn.dataset.hook || null;
+    apply();
+  });
+})();
+</script>`,
+  });
+  return rows.length;
+}
+
+// "§4.B, §6.2" -> anchor of the spec page's "## 6." heading
+function sectionAnchor(sectionText) {
+  const m = String(sectionText).match(/§\s*(\d+)/);
+  if (!m) return '';
+  const n = m[1];
+  const titles = { '1':'1-purpose','2':'2-scope','3':'3-programme-invariants-that-bind-this-module',
+    '4':'4-interface','5':'5-parameters','6':'6-behaviour','7':'7-timing-contract',
+    '8':'8-performance-stress-obligation','9':'9-errors-and-discards','10':'10-req-coverage',
+    '11':'11-deferred-items-and-open-questions','12':'12-freeze-record','13':'13-change-log' };
+  return titles[n] || '';
+}
+
 // ---- 404 --------------------------------------------------------------------
 function build404() {
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8">
@@ -368,6 +518,7 @@ buildProgram();
 buildBacklog();
 const docs = buildDocuments();
 const orders = buildOrders();
+const nReqs = buildAtlas();
 buildAgents();
 build404();
 
@@ -377,3 +528,4 @@ console.log(`built -> ${OUT}`);
 console.log(`  documents rendered: ${nDocs}${nMissing ? ` (${nMissing} missing from the tree)` : ''}`);
 console.log(`  work orders:        ${orders.length}`);
 console.log(`  backlog items:      ${backlog.length}`);
+console.log(`  atlas requirements: ${nReqs}`);
