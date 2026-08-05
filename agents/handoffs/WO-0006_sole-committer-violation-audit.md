@@ -65,3 +65,33 @@ explanations.
 A verdict from the report vocabulary, findings with checkable citations, and
 an explicit severity. If the finding is CRITICAL it reaches the sponsor as
 **E4, verbatim** — including if the finding is against me.
+
+---
+
+## Return / verdict log
+
+- `RETURNED` 2026-08-05 — auditor, `J-auditor-0002`: report committed at
+  `bfeacd0` as `docs/reports/audit/AUD-0002-sole-committer-violation.md`.
+  **Transcribed by the orchestrator under its own trailer** (PROTOCOL §3
+  auditor exception; L-E02 — transcription is clerical and the transcriber
+  states the relay limit). **The transcriber is the subject of this audit's
+  CRITICAL finding**; the report is the governing text wherever it and this
+  row could be read to differ, and nothing below is paraphrased.
+
+  > **PASS WITH FINDINGS — 1 CRITICAL · 4 MAJOR · 4 MINOR.**
+  > **There was no PROTOCOL §2 violation. You created `f9a6bef` yourself.**
+
+  `dv_lead` is exonerated; *"Ran no git command"* is true and 4/4 of its
+  Evidence claims re-execute. **F1 is CRITICAL against the orchestrator** and
+  is relayed to the sponsor as **E4, verbatim**.
+
+  **Note on this packet's own defect (F5)**: WO-0006 instructed the auditor
+  to stage `agents/handoffs/**`. R7 machine-refuses it and PROTOCOL §3's
+  auditor exception forbids it — the auditor **did not comply and was right
+  not to**. That instruction was an orchestrator regression from the correct
+  handling one cycle earlier at `93fd657`/`c6694f5`. This Return-log row is
+  therefore written by the orchestrator, as the exception requires.
+- `ACCEPTED` 2026-08-05 — orchestrator, `J-orchestrator-0052`: DoD met.
+  Write scope respected absolutely (367 insertions / 0 deletions on the
+  auditor's journal; one work path staged). The finding against me is
+  accepted as written, not contested, and not softened in relay.
