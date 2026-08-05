@@ -88,9 +88,10 @@ constraint.
 ### In scope
 
 - The 4096 × 8 single-port synchronous RAM and its access contract (§4.B).
-- V0–VF, I, PC, the 16 × 12-bit call stack and SP (§6.1.1).
+- V0–VF, I, PC, the `STACK_DEPTH` × `ADDR_W` call stack and SP (§6.1.1);
+  `STACK_DEPTH` defaults to 16 and is overridable across 2…16 (§5.1).
 - The multicycle fetch / decode / execute FSM (§6.2).
-- The 25 instruction forms listed in §6.4.1, with their effect on
+- The 25 instruction forms listed in §6.4.1–§6.4.3, with their effect on
   architectural state including VF.
 - Classification of **all 65536** 16-bit encodings into implemented, deferred
   and illegal, and the machine's behaviour on the latter two (§6.3).
@@ -107,7 +108,7 @@ constraint.
 | `00E0` clear, `DXYN` draw, the framebuffer, the 64-bit barrel shifter, the font ROM **contents** and `FX29` | **P2** (README phase table) |
 | `EX9E`, `EXA1`, `FX0A`, `FX07`, `FX15`, `FX18`, the 60 Hz delay and sound timers, the keypad | **P3** (README phase table) |
 | The 500–1000 instructions/second issue throttle | **P3** — see §11 D-4 and OQ-2 |
-| Quirk **test matrices** and alternate-configuration campaigns | **P4** (README phase table). P1 declares the parameters and defaults only |
+| Quirk **test matrices** and alternate-configuration campaigns | **P4** (README phase table). P1 declares the parameters and defaults, and runs six one-vector connectivity checks (REQ-095) — it runs no compatibility *matrix* |
 | Synthesis, fmax, resource reports, the WebAssembly build | **P5** |
 | The Python golden model, the lockstep harness, the stimulus generator | `dv_lead`. This document defines the observables they need (§4.C, §8); it does not define the bench |
 
@@ -182,20 +183,32 @@ no reserved or unused fields.
 | `rst_n` | in | 1 | **Synchronous**, active-low reset. Must be held low for at least one rising edge. | REQ-008 |
 | `mem_en` | out | 1 | High in exactly those cycles in which this module requests a memory access. | REQ-001 |
 | `mem_we` | out | 1 | 1 = write, 0 = read. Meaningful only while `mem_en` is high. | REQ-001 |
-| `mem_addr` | out | 12 | Byte address of the requested access. Meaningful only while `mem_en` is high. | REQ-001 |
-| `mem_wdata` | out | 8 | Write data. Meaningful only while `mem_en` and `mem_we` are both high. | REQ-001 |
-| `mem_rdata` | in | 8 | Read data, valid in the cycle **after** a cycle in which `mem_en` was high and `mem_we` low. | REQ-102 |
+| `mem_addr` | out | `ADDR_W` | Byte address of the requested access. Meaningful only while `mem_en` is high. | REQ-001 |
+| `mem_wdata` | out | `DATA_W` | Write data. Meaningful only while `mem_en` and `mem_we` are both high. | REQ-001 |
+| `mem_rdata` | in | `DATA_W` | Read data, valid in the cycle **after** a cycle in which `mem_en` was high and `mem_we` low. | REQ-102 |
 | `obs_retire` | out | 1 | One cycle high per instruction that completes without fault. | REQ-029 |
-| `obs_instr` | out | 16 | The 16-bit encoding of the instruction the `obs_*` bundle currently describes. | REQ-121 |
-| `obs_instr_addr` | out | 12 | The address of the **first (high) byte** of that instruction. | REQ-121 |
-| `obs_pc` | out | 12 | Architectural PC. | REQ-105 |
-| `obs_i` | out | 12 | Architectural I. | REQ-105 |
-| `obs_sp` | out | 5 | Architectural SP — the count of entries currently on the stack, 0…16. | REQ-105 |
-| `obs_v` | out | 128 | Packed register file. `obs_v[8*k +: 8]` is V\<k\> for k = 0…15. | REQ-105 |
-| `obs_stack` | out | 192 | Packed call stack. `obs_stack[12*k +: 12]` is stack entry k for k = 0…15. | REQ-105 |
-| `obs_rng` | out | 16 | The M04 LFSR state. Exposed so a model/DUT random desynchronisation is observed where it happens, not many instructions later when a `CXNN` result first differs. | REQ-105 |
+| `obs_instr` | out | `INSTR_W` | The 16-bit encoding of the instruction the `obs_*` bundle currently describes. | REQ-121 |
+| `obs_instr_addr` | out | `ADDR_W` | The address of the **first (high) byte** of that instruction. | REQ-121 |
+| `obs_pc` | out | `ADDR_W` | Architectural PC. | REQ-105 |
+| `obs_i` | out | `ADDR_W` | Architectural I. | REQ-105 |
+| `obs_sp` | out | `SP_W` | Architectural SP — the count of entries currently on the stack, 0…`STACK_DEPTH`. | REQ-105 |
+| `obs_v` | out | `NUM_V*DATA_W` | Packed register file. `obs_v[DATA_W*k +: DATA_W]` is V\<k\> for k = 0…`NUM_V`−1. | REQ-105 |
+| `obs_stack` | out | `ADDR_W*STACK_DEPTH` | Packed call stack. `obs_stack[ADDR_W*k +: ADDR_W]` is stack entry k for k = 0…`STACK_DEPTH`−1. | REQ-105 |
+| `obs_rng` | out | `RNG_W` | The M04 LFSR state. Exposed so a model/DUT random desynchronisation is observed where it happens, not many instructions later when a `CXNN` result first differs. | REQ-105 |
 | `obs_halted` | out | 1 | High from the cycle the machine enters `S_HALT` until reset. | REQ-048 |
-| `obs_err` | out | 4 | The error code (§9). `ERR_NONE` whenever `obs_halted` is low. | REQ-110 |
+| `obs_err` | out | `$bits(err_e)` | The error code (§9). `ERR_NONE` whenever `obs_halted` is low. | REQ-110 |
+
+**Widths are parameter expressions, not literals** (A-1, F-2). Every entry
+above evaluates to its §5.1 default at the default parameter set — `ADDR_W` =
+12, `DATA_W` = 8, `INSTR_W` = 16, `RNG_W` = 16, `SP_W` = 5, `NUM_V*DATA_W` =
+128, `ADDR_W*STACK_DEPTH` = 192, `$bits(err_e)` = 4 — so no width changes
+value at the default. They are written as expressions because `STACK_DEPTH` is
+overridable across 2…16 (§5.1, with a stated verification reason), and a
+literal `5` and `192` would be a frozen interface contradicting its own
+parameter table at every value but one. **`SP_W` and any other width derived
+from an overridable parameter are derived in the module from the module's
+parameter, not read from the package** — REQ-115 states why, and it is the
+clause that makes this table true rather than merely intended.
 
 ### 4.B Port table — M02 `chip8_ram`
 
@@ -204,9 +217,20 @@ no reserved or unused fields.
 | `clk` | in | 1 | Same clock domain as M01. | REQ-001 |
 | `en` | in | 1 | Access request for this cycle. When low, the memory does nothing and `rdata` is unchanged. | REQ-001 |
 | `we` | in | 1 | 1 = write, 0 = read. Meaningful only while `en` is high. | REQ-001 |
-| `addr` | in | 12 | Byte address. | REQ-001 |
-| `wdata` | in | 8 | Write data. | REQ-001 |
-| `rdata` | out | 8 | Data read by the access **of the previous cycle**; holds its value in any cycle not preceded by an enabled read. | REQ-102 |
+| `addr` | in | `ADDR_W` | Byte address. | REQ-001 |
+| `wdata` | in | `DATA_W` | Write data. | REQ-001 |
+| `rdata` | out | `DATA_W` | Data read by the access **of the previous cycle**; holds its value in any cycle not preceded by an enabled read. | REQ-102 |
+
+**M02's power-up value** (A-2, F-4). M02 holds exactly two pieces of state:
+the `mem` array (REQ-014) and the register implied by the one-cycle read
+latency. That register SHALL hold `8'h00` from time zero until the first
+enabled read completes. M02 has no reset port and needs none — this sentence
+is what makes the four-state and two-state lanes agree at time zero (REQ-123),
+and without it the two lanes disagree by construction. The `mem` array's own
+time-zero contents are REQ-014's, which since this revision covers the
+locations a partial image does not reach; between them the two clauses leave
+no bit of M02 unspecified at time zero, which is what REQ-123 needs and what
+REQ-008 no longer claims.
 
 **Structural encoding of the single-port invariant** (template §4.1 rule): M02
 exposes **one** address, **one** write-enable and **one** data path in each
@@ -222,6 +246,13 @@ this table.
 | `clk` | in | 1 | See §4.A. | REQ-008 |
 | `rst_n` | in | 1 | See §4.A. | REQ-008 |
 | `obs_retire`, `obs_instr`, `obs_instr_addr`, `obs_pc`, `obs_i`, `obs_sp`, `obs_v`, `obs_stack`, `obs_rng`, `obs_halted`, `obs_err` | out | as §4.A | The M01 observation bundle, passed through unmodified and with no added or removed cycle of delay. | REQ-105 |
+
+**M03's parameters** (A-3, F-5). M03 is not parameterless. It declares, as
+**module parameters**, every value a test overrides, each defaulting to its
+`chip8_pkg` value — this is **REQ-115**, and it is the only mechanism by which
+a test configures the machine. It adds no port, so REQ-112's closure below is
+unaffected, and it adds no run-time control path, so §4.3 and REQ-096 are
+unaffected.
 
 **REQ-112 — port closure.** M01, M02, M03 and M04 have **no ports other than
 those tabulated in §4.A–§4.D**. M03 in particular exposes no memory port: the
@@ -257,23 +288,67 @@ specified observable rather than on an implementation-derived path.
 | `clk` | in | 1 | See §4.A. | REQ-103 |
 | `rst_n` | in | 1 | On reset the LFSR state is loaded with `RNG_SEED`. | REQ-103 |
 | `step` | in | 1 | When high at a rising edge, the LFSR state advances by exactly 8 steps. When low, the state is unchanged. | REQ-104 |
-| `rnd` | out | 8 | The low 8 bits of the state the LFSR **will hold after the next advance** — so a `CXNN` executing in one cycle can both consume `rnd` and assert `step` in that same cycle. | REQ-103 |
-| `state` | out | 16 | The current LFSR state, for `obs_rng`. | REQ-105 |
+| `rnd` | out | `DATA_W` | The low 8 bits of the state the LFSR **will hold after the next advance** — so a `CXNN` executing in one cycle can both consume `rnd` and assert `step` in that same cycle. | REQ-103 |
+| `state` | out | `RNG_W` | The current LFSR state, for `obs_rng`. | REQ-105 |
 
 ### 4.3 Configuration inputs
 
-**None.** Every configuration value in P1 is compile-time and lives in the
-shared package (§5). There is no run-time configuration record and no
-run-time control path to any parameter (REQ-096).
+**None** — no configuration reaches this design through a port.
+Elaboration-time parameter overrides are **REQ-115**. Every configuration
+value in P1 is compile-time; there is no run-time configuration record and no
+run-time control path to any parameter (REQ-096), and REQ-115 adds neither.
 
 ---
 
 ## 5. Parameters
 
-All parameters live in **one** SystemVerilog package, `chip8_pkg`, imported by
-both the RTL and the testbench (ADR-0017 Consequence 1). §5.5 states the
-package's normative content; the file itself is authored under `rtl/**` by
-`rtl_lead` (§11 D-3).
+Every parameter's **value** is defined in **one** SystemVerilog package,
+`chip8_pkg` (ADR-0017 Consequence 1). §5.5 states the package's normative
+content; the file itself is authored under `rtl/**` by `rtl_lead` (§11 D-3).
+The package is the **definition site**; **REQ-115** below is the **override
+path**, and the two are different things — conflating them was F-5.
+
+### 5.0 REQ-115 — the override path
+
+> **REQ-115 — the override path.** M02 and M03 SHALL each declare, as **module
+> parameters**, every value a test overrides — `MEM_INIT_FILE`, `RNG_SEED`,
+> `OBS_ENABLE`, `STACK_DEPTH`, `PROG_START`, and the five quirk parameters of
+> §5.2 — each **defaulting to its `chip8_pkg` value** and passed down to
+> submodules unmodified. This is the only mechanism by which a test configures
+> the machine, it is elaboration-time, and it adds no port and no run-time
+> control path, so §4.3 and REQ-096 are unaffected. A package parameter cannot
+> be overridden at elaboration in this toolchain, and the package file is
+> outside the DV write scope, so without this clause no test can place a
+> program in memory.
+>
+> **Derived widths follow the module, not the package.** Any parameter whose
+> value is *derived* from an overridable one — `SP_W` = `$clog2(STACK_DEPTH)+1`
+> is the only such case in P1 — SHALL be derived **inside the module from that
+> module's own parameter**, not read from `chip8_pkg`. A package-level `SP_W`
+> does not follow a module-level `STACK_DEPTH` override, so reading it from the
+> package would leave `obs_sp` 5 bits wide at `STACK_DEPTH = 4` and reinstate
+> F-2 through the override path itself.
+
+**Why this clause exists, measured rather than argued.** §5.4 states that
+every test sets `MEM_INIT_FILE`; before this revision the specification put
+every parameter in the package, declared no configuration inputs, and gave M03
+no parameter list — so it asserted a mechanism it did not provide. That
+contradiction is internal to the document and needs no toolchain fact to
+adjudicate. The toolchain fact is nevertheless now **measured** rather than
+relayed, in both lanes, at `J-architect_docs_lead-0003`:
+
+| Attempted override | Icarus 12.0 | Verilator 5.020 |
+|---|---|---|
+| Package parameter, via the top-module scope (`-Ptop.P=…` / `-GP=…`) | **refused** — `parameter 'P' not found in 'top'` | **refused** — `%Error: Parameters from the command line were not found in the design: P` |
+| Package parameter, via the package scope (`-Ppkg.P=…`) | **silently ignored** — no diagnostic, value unchanged | no equivalent flag |
+| Top-level **module** parameter defaulting to the package value | **works** | **works** |
+| A `string` module parameter feeding `$readmemh` | **works** | **works** |
+
+The middle row is the reason this is a blocking defect rather than an
+inconvenience: the one form that produces no diagnostic is also the one a test
+author would try first, and it fails by loading nothing — a program-load that
+silently does not happen, against a machine whose all-zero memory then halts
+on `0x0000` (REQ-043) looking like an ordinary result.
 
 ### 5.1 Structural parameters
 
@@ -291,11 +366,27 @@ package's normative content; the file itself is authored under `rtl/**` by
 
 ### 5.2 Quirk parameters (WO-0002 task 6)
 
-Every one defaults to the **1977 COSMAC VIP** behaviour, per README's P4 row
-("defaulting to 1977 COSMAC VIP semantics"). P1 verification runs the default
-configuration **only**; the compatibility campaign is P4 (REQ-095). The
-parameters are declared now because retrofitting one into frozen RTL and
+The parameters are declared now because retrofitting one into frozen RTL and
 frozen benches costs more than carrying it unused for three phases.
+
+> **REQ-095.** All quirk parameters default to 1977 COSMAC VIP semantics. P1's
+> functional coverage — directed corners, random streams, lockstep parity —
+> runs the **default configuration only**; the compatibility campaign is P4.
+> P1 additionally runs **one directed vector per non-default parameter value**
+> — six vectors: `SHIFT_SRC_VX`, `JUMP_VX`, `MEMI_INC_X`, `MEMI_UNCHANGED`,
+> `QUIRK_VF_RESET = 0`, `QUIRK_I_OVERFLOW_VF = 1` — whose sole purpose is to
+> prove each parameter is **connected**. Their expected results are already
+> stated in full in §6.4. Without them an implementation that hard-codes the
+> default behaviour and ignores all five parameters passes every P1 test, and
+> the omission surfaces in P4 inside the campaign that depends on them.
+
+The six vectors are elaboration-time configurations, so each is a separate
+build; **REQ-115 is what makes them possible at all**, and A-6 without A-3 is
+an obligation with no mechanism. Note also that this is the one place where
+`STACK_DEPTH`-style override economics do not apply: a parameter that is never
+given a non-default value in any build is indistinguishable from a parameter
+that does not exist, which is precisely the defect (L-D16, L-D11 — an
+instrument that cannot fail).
 
 | Parameter | Type | Default (VIP) | Other permitted values | Instructions bound | REQ |
 |---|---|---|---|---|---|
@@ -331,13 +422,17 @@ unreachable without a spec diff.
 
 | Parameter | Type | Default | Range | Why a test overrides it |
 |---|---|---|---|---|
-| `MEM_INIT_FILE` | string | `""` | any readable path | Every test sets it: it is how a program and its data reach the machine. With `""` every byte of memory is `8'h00` at time zero. |
+| `MEM_INIT_FILE` | string | `""` | any readable path | Every test sets it: it is how a program and its data reach the machine. It is a **module** parameter of M02 and M03 (REQ-115), not a package parameter, because a package parameter cannot be overridden at elaboration. |
 
 The image is a **construction-time property of M02**, not a port and not an
 architectural mechanism: the CPU has no instruction that loads a program, and
 reset does not alter memory (REQ-009, REQ-014). Whether M02 realises the image
 with a file-read initial block, a parameterized constant array, or a
-synthesis-time block-RAM initialisation is unconstrained (§6.6).
+synthesis-time block-RAM initialisation is unconstrained (§6.6) — **subject to
+REQ-014**, which fixes the resulting contents of every one of the 4096
+locations and therefore rules out any realisation that leaves some of them
+undefined. **REQ-014 in §6.1.1 is the normative statement of what memory
+contains at time zero**; this section states the parameter, not the contents.
 
 ### 5.5 Shared package `chip8_pkg` — normative content
 
@@ -352,6 +447,21 @@ content** (**REQ-107**); §11 D-3 tracks the file's authorship.
 testbench, and by any other specification in this program. A literal that
 duplicates one of these values anywhere else is a defect, because it is a
 value that can drift while both copies still compile.
+
+> **Scope** (A-5, F-10). This rule binds the SystemVerilog side of the
+> program: the RTL and any SystemVerilog testbench component reference
+> `chip8_pkg` and never restate its values. The Python golden model and the
+> cocotb testbench derive their constants from **§5.5 of this specification**
+> instead. That second derivation from the same normative source is deliberate
+> and is not a defect: it keeps the DV lane's derivation basis the
+> specification rather than an RTL file (PROTOCOL §10), and a drift between
+> the two derivations **fails a test** rather than passing silently — which is
+> the outcome REQ-109 exists to produce.
+>
+> REQ-115's module parameters are not a second definition site either: each
+> **defaults to** its package value and restates none of them. A default that
+> is written as a literal instead of as the package reference is exactly the
+> defect this requirement names.
 
 | Group | Names | Value / members |
 |---|---|---|
@@ -368,6 +478,15 @@ The deferred-phase encodings (`SUB_CLS`, `F_FONT`, `E_SKP`, `E_SKNP`,
 `F_DT_GET`, `F_KEY`, `F_DT_SET`, `F_ST_SET`) are named in the package **in
 P1** so that P2 and P3 add behaviour without adding constants, and so that
 P1's own deferred-class decode has names rather than magic numbers.
+
+**Every enumeration declares an explicit packed base type** (A-1, F-3):
+`err_e` is `logic [3:0]`; `dclass_e` and `quirk_memi_e` are `logic [1:0]`;
+`quirk_shift_e` and `quirk_jump_e` are `logic`. An untyped enumeration is
+`int`-based and would defeat this package's purpose on the very ports that
+carry its values — `obs_err` is a `$bits(err_e)`-wide port (§4.A), and an
+`int`-based `err_e` makes that expression 32. This package closes value drift;
+without this sentence it leaves **type** drift open, which is the same defect
+one level down.
 
 **The package contains no behaviour** (REQ-108). It SHALL contain no `module`,
 no procedural block, and no function or task that computes decode
@@ -395,10 +514,10 @@ paragraph and given its P1 form:
 | V0…VF | 16 × 8 | VF is the carry/borrow flag; it is an ordinary register in every other respect (REQ-003) |
 | I | 12 bit | Index register (REQ-004) |
 | PC | 12 bit | Program counter (REQ-005) |
-| Stack | 16 × 12 bit | Dedicated array, **not** a region of RAM (REQ-006) |
-| SP | 5 bit | Number of entries on the stack, 0…16; `stack[SP]` is the next free slot (REQ-006) |
-| RNG state | 16 bit | M04's LFSR (REQ-012) |
-| `halted`, `err` | 1 + 4 bit | The fault state (REQ-048) |
+| Stack | `STACK_DEPTH` × `ADDR_W` (default 16 × 12) | Dedicated array, **not** a region of RAM (REQ-006) |
+| SP | `SP_W` (default 5) | Number of entries on the stack, 0…`STACK_DEPTH`; `stack[SP]` is the next free slot (REQ-006) |
+| RNG state | `RNG_W` (default 16) | M04's LFSR (REQ-012) |
+| `halted`, `err` | 1 + `$bits(err_e)` (default 1 + 4) | The fault state (REQ-048) |
 
 **REQ-013 — closure.** The elements above are the **complete** architectural
 state of the P1 machine. Any other storage in an implementation (the
@@ -430,16 +549,27 @@ after a rising edge at which `rst_n` was low, and in every such cycle:
 | I | `0x000` |
 | SP | 0 |
 | V0…VF | all `8'h00` |
-| stack[0]…stack[15] | all `12'h000` |
+| stack[0]…stack[`STACK_DEPTH`−1] | all `12'h000` |
 | RNG state | `RNG_SEED` |
 | `halted` | 0 |
 | `err` | `ERR_NONE` |
 | FSM | `S_RESET`, leaving to `S_FETCH_HI` in the first cycle `rst_n` is high |
 
-Every bit is given an explicit reset value. This is not defensive style: ADR-0017
-records that Verilator is 2-state and Icarus is 4-state, so an uninitialised bit
-reads `0` in one authoritative lane and `X` in the other, and the two lanes are
-required to agree (REQ-123).
+Every bit of the architectural state tabulated above is given an explicit
+reset value; **M02's two elements are covered by REQ-014 and §4.B**, not by
+this requirement. This is not defensive style: ADR-0017 records that Verilator
+is 2-state and Icarus is 4-state, so an uninitialised bit reads `0` in one
+authoritative lane and `X` in the other, and the two lanes are required to
+agree (REQ-123).
+
+**The three clauses together are exhaustive** (A-2 + OQ-4's closure). P1's
+storage is: the architectural state tabulated above → this requirement; M02's
+`mem` array → REQ-014; M02's read-latency register → §4.B. Every other
+storage element in an implementation is transient by REQ-013 and has no value
+at an instruction boundary to specify. That enumeration — not a count of it —
+is what discharges REQ-123's "no uninitialised storage anywhere in P1"
+(L-D12), and before this revision it was short by the second and third terms,
+which is what made REQ-123 false as written.
 
 **REQ-009 — reset does not alter memory.** RAM contents survive reset; the
 image is established at construction (REQ-014).
@@ -459,10 +589,66 @@ information the truncation discarded.
 **REQ-012 — RNG state.** Part of the architectural state, reset to `RNG_SEED`,
 advanced only by `CXNN` (REQ-104).
 
-**REQ-014 — memory image.** The contents of memory at the first fetch SHALL
-equal the image named by `MEM_INIT_FILE`, or all-zero when it is `""`. The
-mechanism is a construction-time property of M02 and is not part of the CPU's
-architectural interface.
+**REQ-014 — memory image, and every location the image does not cover.**
+Memory is **fully specified at time zero**, for every value of
+`MEM_INIT_FILE`, in two clauses:
+
+1. **Every one of the 4096 locations SHALL hold `8'h00` at time zero**, before
+   any image is applied.
+2. **The image named by `MEM_INIT_FILE` is then applied over that**: each
+   location the image covers holds the image's byte for it; each location the
+   image does **not** cover retains `8'h00` from clause 1. When
+   `MEM_INIT_FILE` is `""` no image is applied and all 4096 locations hold
+   `8'h00`, which is the same rule and not a special case.
+
+"Covers" is per location, not per prefix: an image may be shorter than 4096
+bytes **and** may leave holes in the middle (a `$readmemh` file may carry
+`@address` records), and clause 1 answers both the same way. The order of the
+two clauses is normative — zero-fill **then** overlay — because it is the
+order that makes the answer independent of how much of the image arrives.
+
+The mechanism is a construction-time property of M02 and is not part of the
+CPU's architectural interface. Reset does not re-apply either clause: memory
+survives reset (REQ-009), so time zero is the only moment this requirement
+speaks about.
+
+**What a bench observes on the first read of an unwritten location** — the
+question this requirement exists to answer, stated per lane because the two
+lanes are required to agree (§3, REQ-123):
+
+| | Icarus 12.0 (4-state, authoritative) | Verilator 5.020 (2-state) | Python golden model |
+|---|---|---|---|
+| **Conformant M02** (clause 1 then clause 2) | `8'h00` | `8'h00` | `0` |
+| A realisation applying the image without clause 1 — **non-conformant** | `8'hxx` | `8'h00` | `0` |
+
+The second row is what this requirement forbids, and it is why the first
+clause is normative rather than advisory: the divergence it produces is
+invisible in the fast lane where the long random campaigns run, appears in
+Icarus only when a test happens to read an uncovered location before writing
+it, and presents as a model/DUT divergence at an instruction that did nothing
+wrong. Both rows are **measured** — the commands and their observed output are
+in `J-architect_docs_lead-0003` Evidence. What was measured is the **image
+mechanism**, in a scratch harness; it measures no design, because no RTL
+exists (the same limit ADR-0018 §9 states for its LFSR measurement).
+
+**A consequence for the model, stated because it is the point.** The Python
+golden model mirrors this rule exactly and needs no notion of `X`: allocate
+4096 zero bytes, overlay the image, done. That is why zero-fill was chosen
+over specifying the locations as undefined — see ADR-0018 Amendment A1 for the
+four alternatives and why the other three lost.
+
+**A limitation this requirement does not remove** (L-F03 — naming the control
+that does not exist). If `MEM_INIT_FILE` names a path that cannot be read,
+both simulators emit a non-fatal diagnostic and continue, and memory then
+holds all-zero by clause 1 — which under REQ-043 halts on `0x0000` with
+`ERR_ILLEGAL_OPCODE` at the first instruction, an outcome indistinguishable at
+the DUT's boundary from a test that meant to run an empty image. **Nothing in
+the design can distinguish the two**, because the failure is upstream of the
+machine. No requirement here can fix that; the compensating control has to be
+bench-side — a check that the image loaded, owned by `dv_lead` — and this
+paragraph exists so that control is chosen deliberately rather than missed.
+This specification does not impose it: it is a bench obligation and
+`dv_lead`'s to place (§2's last row).
 
 #### 6.1.2 One instruction, cycle by cycle
 
@@ -671,10 +857,10 @@ README is canonical (PROTOCOL §1) and it says otherwise.
 
 The consequence for verification is worth stating because a full-state
 comparison depends on it: a stack entry is written **only** by `2NNN`, and
-`00EE` does not clear the entry it pops (REQ-060). Reset zeroes all sixteen
-(REQ-008). Entries above SP therefore hold well-defined values at every
-instruction boundary, and comparing all sixteen entries — not just the live
-ones — is deterministic.
+`00EE` does not clear the entry it pops (REQ-060). Reset zeroes all
+`STACK_DEPTH` of them (REQ-008). Entries above SP therefore hold well-defined
+values at every instruction boundary, and comparing all `STACK_DEPTH` entries
+— not just the live ones — is deterministic.
 
 ### 6.5 The random source (REQ-103, REQ-104)
 
@@ -728,13 +914,19 @@ here is constrained by this specification, and a test may rely on it.**
   the write cycles, a combinational divider, double-dabble), provided the six
   cycles of §7.1 hold and the three bytes are written in ascending address
   order.
-- Whether the 16 × 12 stack is realised as flip-flops or as a small distributed
-  memory, provided `00EE` and `2NNN` each complete in the four cycles of §7.1.
+- Whether the `STACK_DEPTH` × `ADDR_W` stack is realised as flip-flops or as a
+  small distributed memory, provided `00EE` and `2NNN` each complete in the
+  four cycles of §7.1.
 - The internal realisation of the M04 recurrence (Galois, an equivalent
   Fibonacci form, or a combinational 8-step matrix), provided the sequence of
   `advance8` values is exactly that of REQ-103.
 - Whether M02 realises its image with a file-read initial block, a
-  parameterized array, or synthesis-time block-RAM initialisation.
+  parameterized array, or synthesis-time block-RAM initialisation — **provided
+  the result satisfies REQ-014 for all 4096 locations**, including those the
+  image does not cover. The three mechanisms differ precisely in what they
+  leave in an uncovered location, so this freedom is real only above REQ-014,
+  not around it. A `$readmemh` realisation therefore zero-fills the array
+  before reading the file; the other two must reach the same end state.
 - Register-file implementation, ALU structure, and the width of any internal
   counter.
 - Whether the `obs_*` outputs are driven from the architectural registers
@@ -750,8 +942,19 @@ here is constrained by this specification, and a test may rely on it.**
 
 Latency is stated in **clock cycles of `clk`**, measured from the first cycle
 of an instruction's `S_FETCH_HI` to the last cycle before the next
-instruction's `S_FETCH_HI` — two single, well-defined observables. Every
-figure is exact, not a bound. `X` is the register index in the encoding, 0…15.
+instruction's `S_FETCH_HI`. Every figure is exact, not a bound. `X` is the
+register index in the encoding, 0…15.
+
+**The observable equivalent** (F-13). `S_FETCH_HI` is an FSM state and the FSM
+is not observable at any boundary (§6.6 frees its encoding; REQ-112 exposes no
+state output). The measurement above is therefore a *definition*, not a
+procedure. The procedure a bench uses is **retire-to-retire**: by REQ-029 the
+cycle in which `obs_retire` is high **is** the first cycle of the next
+instruction's `S_FETCH_HI`, so the interval between two consecutive
+`obs_retire` pulses equals the second instruction's cycle count. The fault
+rows, which produce no retire, are measured from the previous `obs_retire` to
+`obs_halted` rising. Both are stated here so a bench author derives them from
+this section rather than reconstructing them.
 
 | Class | Instructions | State sequence | Cycles |
 |---|---|---|---|
@@ -927,6 +1130,36 @@ storage, and no source of nondeterminism anywhere in P1. This is what allows
 the two simulator lanes to be compared against each other and against one
 golden model.
 
+**"No uninitialised storage" is discharged by an enumeration, not asserted.**
+Architectural registers: REQ-008. M02's `mem` array: REQ-014, for all 4096
+locations at every value of `MEM_INIT_FILE`. M02's read-latency register:
+§4.B. Everything else in an implementation is transient by REQ-013. Before
+this revision the clause named no such enumeration and the second and third
+terms did not exist, so the claim was **false as written** — that was OQ-4,
+and closing it is what makes this sentence true rather than aspirational.
+
+> **The compared domain** (A-4, F-9). REQ-123's determinism is asserted over a
+> named set of observables and no others: the `obs_*` bundle in every cycle;
+> the `mem` array; `mem_en` in every cycle; `mem_we`, `mem_addr` and
+> `mem_wdata` in cycles where `mem_en` is high; and `mem_rdata` in cycles
+> following an enabled read. §7.4 makes every other signal-cycle a don't-care,
+> and a don't-care is **excluded** from every comparison this program performs
+> — including a comparison between the two simulator lanes. Naming the domain
+> here rather than in a bench is deliberate: a comparison domain narrowed
+> inside a testbench to stop a false failure is a narrowing nobody reviews.
+
+**Two comparisons, two domains — do not merge them.** The domain above is the
+domain of *determinism* and of *lane-to-lane* comparison: both sides run the
+same RTL, so a value this specification leaves free (§6.6 frees whether
+`obs_*` is driven directly or through a register stage) is nonetheless fixed
+and comparable across the two lanes. The **model-to-DUT** comparison is a
+different and smaller thing: it happens at retirement, on the bundle REQ-029
+pins there, and nowhere else. A mid-instruction `obs_*` value is deterministic
+but **unspecified**, so it is comparable lane-to-lane and is *not* assertable
+against the golden model. That distinction is the whole of ADR-0018 §6.6's
+back-door concern, and stating it here is the imperative that section could
+only imply.
+
 ---
 
 ## 9. Errors and discards
@@ -984,14 +1217,37 @@ property (P4), **S** = structural — guaranteed by the interface or a
 construction rule and not assertable by a bench, **I** = inspection at
 countersignature or review.
 
+**A hook names a check that can actually perform the observation** (F-1, F-7,
+F-8). A parenthesised module id — `(M01)`, `(M02)`, `(M04)` — marks a row
+whose observation point is **not** the M03 DUT boundary and which is therefore
+bound at that module's own boundary. This matters because `R`, a full-state
+compare at `obs_retire`, cannot see per-cycle memory-port activity at all:
+nine requirements assert memory-port behaviour that is invisible at M03, and
+before this revision five of them carried an `R` hook naming a check that
+could not make the observation. §4.A, §4.B and §4.D are complete normative
+port tables for real modules, so M01, M02 and M04 are each independently
+bench-bindable and no port need be added; what was owed was this column
+telling the truth.
+
+**`I` hooks owe a named performer, and do not yet have one** (F-6, L-F03).
+Fifteen rows below carry an inspection hook with no named performer, and for
+REQ-100/107/108/112 the object of inspection is an **RTL** file, which
+`dv_lead`'s charter bars it from reviewing. Several are cheaply
+machine-checkable — module inventory, port closure, "the package contains no
+behaviour". **Assigning a performer is a governance decision, not a
+specification one**, and it is routed to the orchestrator (§11 D-9) rather
+than decided here. Until it is made, an `I` in this column is a claimed
+control with no named performer, and this paragraph is that claim's honest
+statement rather than its concealment.
+
 | REQ | How P1 satisfies it | Section | DV hook |
 |---|---|---|---|
-| REQ-001 | Single-port memory contract; one access per cycle | §4.B, §6.2 | S + R |
+| REQ-001 | Single-port memory contract; one access per cycle | §4.B, §6.2 | S + D (M01) |
 | REQ-002 | Memory map, font region reserved | §6.1.1 | D |
 | REQ-003 | V0–VF, VF as the flag register | §6.1.1 | D + R |
 | REQ-004 | I is 12-bit | §6.1.1 | D |
 | REQ-005 | PC 12-bit, updated exactly once per instruction in `S_EXEC` | §6.1.1, §6.2 | D + R |
-| REQ-006 | Stack 16 × 12, dedicated; SP 0…16; popped entries not cleared | §6.1.1, §6.4.4 | D + R |
+| REQ-006 | Stack `STACK_DEPTH` × `ADDR_W`, dedicated; SP 0…`STACK_DEPTH`; popped entries not cleared | §6.1.1, §6.4.4 | D + R |
 | REQ-007 | 2-byte big-endian instruction format | §6.1.1 | D |
 | REQ-008 | Reset values for every element of architectural state | §6.1.1, §7.5 | D (Icarus lane) |
 | REQ-009 | Reset does not alter memory | §6.1.1, §7.5 | D |
@@ -999,18 +1255,18 @@ countersignature or review.
 | REQ-011 | 8-bit register arithmetic modulo 256 | §6.1.1 | D + R |
 | REQ-012 | RNG state is architectural, reset to `RNG_SEED` | §6.1.1, §6.5 | D |
 | REQ-013 | Closure: the enumerated elements are the complete architectural state | §6.1.1 | I + R |
-| REQ-014 | Construction-time memory image | §5.4, §6.1.1 | D |
-| REQ-020 | Eight control states, no others affecting the timing contract | §6.2 | I |
-| REQ-021 | `S_FETCH_HI` reads at PC | §6.2 | R |
-| REQ-022 | `S_FETCH_LO` reads at PC+1 and captures the high byte | §6.2 | R |
-| REQ-023 | `S_DECODE` captures the low byte and classifies; no access | §6.2 | R |
-| REQ-024 | Exactly one `S_EXEC` per instruction; commits; issues the first memory access | §6.2 | R |
-| REQ-025 | `S_MEM_WR` issues one write per cycle | §6.2 | D |
-| REQ-026 | `S_MEM_RD` issues one read per cycle, capturing the previous | §6.2 | D |
+| REQ-014 | Construction-time memory image; all 4096 locations specified at time zero, covered or not | §6.1.1, §5.4 | D |
+| REQ-020 | Eight control states, no others affecting the timing contract | §6.2 | D, via REQ-028 |
+| REQ-021 | `S_FETCH_HI` reads at PC | §6.2 | D (M01) |
+| REQ-022 | `S_FETCH_LO` reads at PC+1 and captures the high byte | §6.2 | D (M01) |
+| REQ-023 | `S_DECODE` captures the low byte and classifies; no access | §6.2 | D (M01) |
+| REQ-024 | Exactly one `S_EXEC` per instruction; commits; issues the first memory access | §6.2 | D (M01) + D |
+| REQ-025 | `S_MEM_WR` issues one write per cycle | §6.2 | D (M01) |
+| REQ-026 | `S_MEM_RD` issues one read per cycle, capturing the previous | §6.2 | D (M01) |
 | REQ-027 | `S_HALT` is terminal | §6.2, §9 | D + F |
 | REQ-028 | The exact cycle table | §7.1 | D |
 | REQ-029 | The retire contract | §7.7 | D + S |
-| REQ-030 | Memory port idles in the named states | §6.2 | R |
+| REQ-030 | Memory port idles in the named states | §6.2 | D (M01) |
 | REQ-040 | Exhaustive, disjoint three-class partition of all 65536 encodings | §6.3 | D + F |
 | REQ-041 | `DC_ILLEGAL` → halt, `ERR_ILLEGAL_OPCODE`, no state change | §6.3, §9 | D |
 | REQ-042 | `DC_DEFERRED` → halt, `ERR_DEFERRED_OPCODE`, no state change | §6.3, §9 | D |
@@ -1043,7 +1299,7 @@ countersignature or review.
 | REQ-079 | `BNNN` JP offset, per `QUIRK_JUMP_OFFSET` | §6.4.1 | D + R |
 | REQ-080 | `CXNN` RND | §6.4.2, §6.5 | D + R |
 | REQ-081 | `FX1E` ADD I, per `QUIRK_I_OVERFLOW_VF` | §6.4.3 | D + R |
-| REQ-082 | `FX33` BCD, three bytes in ascending order | §6.4.3 | D |
+| REQ-082 | `FX33` BCD, three bytes in ascending order | §6.4.3 | D + D (M01) for the ordering clause |
 | REQ-083 | `FX55` store, per `QUIRK_MEM_I_MODE` | §6.4.3 | D + R |
 | REQ-084 | `FX65` load, per `QUIRK_MEM_I_MODE` | §6.4.3 | D + R |
 | REQ-085 | VF write-ordering rule and the X = `0xF` corner | §6.4.2 | D |
@@ -1054,14 +1310,14 @@ countersignature or review.
 | REQ-092 | `QUIRK_MEM_I_MODE`, three-valued, default `MEMI_INC_X_PLUS_1` | §5.2 | D |
 | REQ-093 | `QUIRK_VF_RESET`, default 1 | §5.2 | D |
 | REQ-094 | `QUIRK_I_OVERFLOW_VF`, default 0 | §5.2 | D |
-| REQ-095 | All quirks default to 1977 COSMAC VIP; P1 verifies the default configuration only | §5.2 | I |
+| REQ-095 | All quirks default to VIP; P1 runs the default configuration plus six parameter-connectivity vectors | §5.2 | D + I |
 | REQ-096 | Quirks are compile-time with no run-time control path | §4.3, §5.2 | S + I |
 | REQ-100 | Module inventory M01–M04 with fixed boundaries | §4.0 | I |
 | REQ-101 | Memory port exposes no backpressure — structural | §4.B | S |
-| REQ-102 | Memory read latency is exactly one cycle | §4.B, §7.4 | D |
+| REQ-102 | Memory read latency is exactly one cycle | §4.B, §7.4 | D (M02) |
 | REQ-103 | The exact RNG sequence, seed non-zero | §6.5 | D + R |
 | REQ-104 | RNG advances only on `CXNN` execution | §6.5 | D + R |
-| REQ-105 | The observation bundle and its bit mappings | §4.A, §4.C | S + I |
+| REQ-105 | The observation bundle and its bit mappings | §4.A, §4.C | S + D |
 | REQ-106 | Observation outputs have no functional effect | §4.C | I |
 | REQ-107 | The shared package's normative content | §5.5 | I |
 | REQ-108 | The package contains no behaviour | §5.5 | I |
@@ -1069,17 +1325,21 @@ countersignature or review.
 | REQ-110 | The error-code enumeration | §5.5, §9 | D |
 | REQ-111 | `THROTTLE_DIV` = 0 in P1; the throttle insertion point is constrained now | §5.3, §7.7 | I |
 | REQ-112 | Closure: no port other than those tabulated | §4.A–§4.D | I |
-| REQ-113 | `OBS_ENABLE` = 0 zeroes the observation outputs and changes nothing else | §5.3 | D |
+| REQ-113 | `OBS_ENABLE` = 0 zeroes the observation outputs and changes nothing else | §5.3 | D (M01) |
 | REQ-114 | Memory observation contract: M02's storage is the array `mem` | §4.C | S + I |
+| REQ-115 | The elaboration-time override path: M02 and M03 declare module parameters defaulting to package values; derived widths follow the module | §5.0, §4.3, §4.C | S + D |
 | REQ-120 | Full architectural state observable at every retirement | §4.C, §7.7 | S |
 | REQ-121 | Divergence localisation via `obs_instr` / `obs_instr_addr` | §4.A, §7.7 | D |
 | REQ-122 | Stimulus classes the campaign covers | §8 | I |
 | REQ-123 | Determinism for a given image, parameters and seed | §8 | R |
 | REQ-124 | Every REQ above has a row in this table and a row in `docs/specs/requirements.md`, whose test-id and evidence cells are filled by `P1-module-ready` | §10, §11 D-1 | I |
 
-**Count: 90 requirements.** Written as an enumeration, not as a count that
-would go stale — the table above is the registry, and this sentence is a
-reading of it (L-D12).
+**Count: 91 requirements** — 90 at `54a7221` plus **REQ-115**, added by this
+revision under A-3. Written as an enumeration, not as a count that would go
+stale — the table above is the registry, and this sentence is a reading of it
+(L-D12). REQ-115 is the only id this revision mints; no id is withdrawn,
+renumbered or reused, and it extends the REQ-100…REQ-114 block into its own
+reserve exactly as `docs/specs/requirements.md` §2 provides for.
 
 ---
 
@@ -1098,6 +1358,19 @@ rationale for choices already made. **No specified behaviour changed** — OQ-4
 in particular is recorded rather than answered, because answering it is a spec
 revision and a separate work order. **OQ-4 is the one that blocks the freeze.**
 
+**Changed by WO-0005** (`J-architect_docs_lead-0003`, 2026-08-05) — the spec
+revision that note anticipated, applying `dv_lead`'s six amendments
+(`docs/reports/dv/DV-P1-testability.md` §8) and answering OQ-4. **This
+revision does change specified behaviour**, deliberately and under a work
+order that authorises it: **OQ-4 is CLOSED** by new normative text in REQ-014,
+**REQ-115 is added** (A-3), **REQ-095 is replaced** (A-6), and REQ-008,
+REQ-109 and REQ-123 are narrowed or extended. **D-8** and **D-9** are new,
+both raised by the countersignature report rather than by this author. §13
+carries the full disposition, amendment by amendment, including the two
+amendments applied with additions and the reason for each. No open question
+blocks the freeze after this revision; `dv_lead` issues the countersignature,
+and this author does not.
+
 ### Deferred items
 
 | # | Item | Status · what a reader assumes meanwhile | Tracked as | Owner | Closes by |
@@ -1107,7 +1380,9 @@ revision and a separate work order. **OQ-4 is the one that blocks the freeze.**
 | D-3 | `rtl/chip8_pkg.sv` is authored by `rtl_lead`; `rtl/**` is outside this author's write scope (PROTOCOL §6). | **DEFERRED** · §5.5 is the normative content; the file must match it exactly and adds nothing. | The first P1 RTL work order | rtl_lead | `P1-module-ready` |
 | D-4 | The 500–1000 instruction/second throttle is not implemented in P1. | **DEFERRED** · `THROTTLE_DIV = 0`, the core issues instructions back-to-back, and REQ-111 already fixes where the mechanism may be inserted so it cannot disturb anything frozen here. | Carry-forward row; P3 scope | architect_docs_lead | `P3-spec-freeze` |
 | D-5 | The 4209 `DC_DEFERRED` encodings become implemented in P2 and P3, which changes §6.3 of this frozen spec. | **DEFERRED** · in P1 they halt with `ERR_DEFERRED_OPCODE`; the change is a **spec diff plus an ADR** recorded in §13, never an edit. | §13 of this file | architect_docs_lead | `P2-spec-freeze`, `P3-spec-freeze` |
-| D-6 | No compile-checked interface evidence exists, by ADR-0017 Consequence 1. | **DEFERRED** · §4's port tables are the normative interface; the compensating controls are the line-by-line countersignature and the single-definition-site package (§5.5). | §12 freeze record | dv_lead (countersignature) | `P1-spec-freeze` |
+| D-6 | No compile-checked interface evidence exists, by ADR-0017 Consequence 1. | **PERFORMED, awaiting the second signature** · the line-by-line grading ran at `54a7221` and is committed at `docs/reports/dv/DV-P1-testability.md` §3 — 30 ports across M01/M02/M04 plus M03's, four defects found (F-2, F-3, F-4, F-5), all in the width and parameter columns and none in the direction or meaning columns. The countersignature was **withheld** at that SHA and issues against this revision as `J-dv_lead-0002`. | §12 freeze record | dv_lead (countersignature) | `P1-spec-freeze` |
+| D-8 | **P1 has no external anchor.** Both artifacts the lockstep compares — the RTL and the Python golden model — derive from this one document (the B3 independence rider); every CHIP-8 reference at intake is **consult-only**; and the three free-use artifacts are test ROMs that §8 rules out for P1. So a P1 lockstep PASS proves the RTL implements this specification and proves nothing about whether this specification describes CHIP-8. Raised by `DV-P1-testability.md` F-11 and §10, which grades it MAJOR/ESCALATION and **not freeze-blocking**. | **DEFERRED** · OQ-3 already says this of the five quirk defaults; F-11 establishes it is true of the whole phase — the RNG sequence, the fault semantics, the decode partition, the cycle counts and all 25 instruction semantics. What a reader assumes meanwhile: P1's verdict is a self-consistency check, the mutation campaign is what qualifies the instrument (PROTOCOL §10, L-D11), and **P4's test-ROM campaign is the first external truth this program touches**. `dv_lead`'s options are (a) add one free-use CHIP-8 reference to the B3 intake as a differential oracle for the non-draw subset — an **E3**-shaped intake change; (b) anchor piecewise against non-CHIP-8 external truth (the LFSR recurrence, BCD against integer arithmetic, the classifier against §6.3's row totals); (c) declare NO-ANCHOR for P1 explicitly. Its recommendation is (a)+(b) with (c) as the honest fallback. **This row exists so the freeze is signed knowing it**, which is what F-11 asked for. | `DV-P1-testability.md` §10; board line owed | orchestrator → sponsor (E3-shaped) | `P1-module-ready` — **not** the freeze |
+| D-9 | **Fifteen `I` (inspection) hooks in §10 have no named performer**, and for REQ-100/107/108/112 the object is an RTL file — which `dv_lead`'s charter bars it from reviewing, so the performer cannot be the countersignatory. Raised by `DV-P1-testability.md` F-6 as a governance recommendation, MINOR/CARRIED. | **DEFERRED** · §10's hook legend states the gap in place rather than concealing it (L-F03). What a reader assumes meanwhile: an `I` hook is a claimed control with no named performer. The recommendation on the table is to name `rtl_lead` as performer with auditor sampling, and to convert what is cheaply machine-checkable — module inventory, port closure, "the package contains no behaviour" — into CI checks. **Assigning work to another lead is not this author's to do** (charter §7: downward work is a WO- request to the orchestrator), which is why this is a routed row and not a decision. | §10 hook legend; board line owed | orchestrator | `P1-module-ready` |
 | D-7 | The quirk-parameter set of §5.2 may be short by one: interpreter behaviour on unknown opcodes is divergent across the population, and README's P4 row requires "**every** divergent CHIP-8 behaviour" to be a compile-time parameter. Raised by ADR-0018 §7.1. | **DEFERRED** · P1 halts (REQ-041/REQ-042) and no such parameter exists; the requirements are unambiguous and nobody is blocked. The reading is arguable — the community quirk tables enumerate divergences in the semantics of CHIP-8 *instructions*, and these encodings are not instructions — and the evidence that would settle it (a conformant test ROM needing no-op) does not exist before P4. | ADR-0018 §7.1; board line owed | architect_docs_lead | `P4-spec-freeze` |
 
 ### Open questions (must be closed before freeze)
@@ -1117,7 +1392,7 @@ revision and a separate work order. **OQ-4 is the one that blocks the freeze.**
 | OQ-1 | Should `DC_DEFERRED` encodings **halt** (this spec's decision) or behave as a no-operation so that partially-covered programs can run further in P1? | It is a verification-strategy question that belongs to the party who writes the lockstep campaign, and it is cheap to change **before** freeze and expensive after. This spec carries "halt" as its default and states the argument in REQ-042. | `dv_lead`, at the testability countersignature |
 | OQ-2 | Which phase owns the instruction-issue throttle? README records the rate in the scope parameters but assigns it to no phase row. | Assigning intake-recorded work to a phase is a scope statement, and this author does not invent one. This spec assumes **P3** (the timing phase) and is correct either way, since P1 is unaffected. If the sponsor intends P1, that is an **E2**. | orchestrator → sponsor if P1 is intended |
 | OQ-3 | The five quirk defaults, and the CHIP-8 behavioural facts generally, are provenance class **relayed** — from the intake's consult-only references, none of which was retrieved during authorship. **A wrong default here is invisible to P1 by construction**: the RTL and the Python golden model are both derived from this document (the intake independence rider), so they would agree with each other about any error it contains. | Verifying them requires the community test-ROM suite, which README assigns to P4. There is no P1 experiment that can settle it. | Recorded here as a standing risk; **P4's test-ROM campaign is the compensating control**, and it is the point at which these values become *measured*. `dv_lead` may wish to note it in the countersignature |
-| OQ-4 | **What are the contents of memory at the first fetch when `MEM_INIT_FILE` names an image shorter than 4096 bytes?** REQ-014 and §5.4 state the all-zero guarantee only for `MEM_INIT_FILE = ""`; for a partial image — which is every realistic P1 image — neither clause says what the remaining bytes hold, and §6.6 frees M02's realisation among three mechanisms that differ precisely in their answer. | Answering it is a change to specified behaviour, which is a spec revision and therefore a new work order — WO-0003 (which raised it) expressly excludes changing what this document specifies, and an edit smuggled through an ADR is the thing that packet was drafted to prevent. **The consequences are stated so nobody has to rediscover them**: (a) **REQ-123 is falsified as written** — it claims no uninitialised storage anywhere in P1, and 32768 bits have no specified initial value; (b) Verilator is 2-state and reads unwritten locations as `0`, so the fast lane where the long campaigns run is green while Icarus reads `X`; (c) the Python golden model has no `X` and will zero-fill, so the first read of unwritten memory in the Icarus lane is a **false divergence caused by this document**, not by the RTL. | **Blocks `P1-spec-freeze`** (SPEC-TEMPLATE §11 bars freezing a spec carrying an open question). Raised in ADR-0018 §7.2; routed to the orchestrator for a board line and a spec-revision packet. `dv_lead` should read it before the countersignature — it bears directly on the lockstep's first instruction |
+| OQ-4 | **What are the contents of memory at the first fetch when `MEM_INIT_FILE` names an image shorter than 4096 bytes?** REQ-014 and §5.4 state the all-zero guarantee only for `MEM_INIT_FILE = ""`; for a partial image — which is every realistic P1 image — neither clause says what the remaining bytes hold, and §6.6 frees M02's realisation among three mechanisms that differ precisely in their answer. | ~~Answering it is a change to specified behaviour, which is a spec revision and therefore a new work order.~~ **✅ CLOSED 2026-08-05 by WO-0005** (`J-architect_docs_lead-0003`). **The answer: `8'h00`.** REQ-014 now specifies memory in two ordered clauses — every one of the 4096 locations holds `8'h00` at time zero, and the image is then applied over that — so a location the image does not cover holds `8'h00`, whether it is past the end of a short image or inside a hole left by an `@address` record. §5.4 and §6.6 are amended to match: the three realisation mechanisms remain free **above** REQ-014, not around it. The three consequences the row recorded are each discharged: (a) **REQ-123 is now true rather than narrowed** — its "no uninitialised storage" is discharged by a three-term enumeration (REQ-008 for architectural registers, REQ-014 for `mem`, §4.B for the read-latency register), and REQ-008 is narrowed by A-2 to stop claiming the terms it never covered; (b) both lanes read `8'h00` on the first read of an uncovered location, **measured** in Icarus 12.0 and Verilator 5.020 and tabulated in REQ-014; (c) the Python model mirrors the rule with 4096 zero bytes overlaid by the image and needs no notion of `X`, so the false-divergence class is removed at its source rather than compensated for. The four alternatives — including "require a full 4096-byte image" and "specify the locations undefined" — are recorded with their costs in **ADR-0018 Amendment A1**. | **No longer blocks `P1-spec-freeze`.** Raised in ADR-0018 §7.2, closed by ADR-0018 Amendment A1 plus the REQ-014/§4.B/§5.4/§6.6/REQ-008/REQ-123 diff of this revision. The normative text is new and is therefore inside `dv_lead`'s confirmatory pass |
 
 Per **L-E10**, open questions are artifacts on the program board, not items
 buried in a document. This author cannot stage `tasks/BOARD.md` (PROTOCOL §6);
@@ -1126,27 +1401,128 @@ and carry board lines. **OQ-4 and D-7 are handed over in the return of
 WO-0003** and owe board lines of their own — OQ-4 as a freeze blocker with a
 spec-revision packet behind it, D-7 as a P4 carry-forward.
 
+**Status of the open-question table after WO-0005**, as an enumeration and not
+a count (L-D12): **OQ-1 CLOSED** by `dv_lead`'s adjudication (halt upheld,
+`DV-P1-testability.md` §5 — the spec's default was confirmed, so no text
+moved); **OQ-2 CLOSED** by the orchestrator's P3 assignment, board-recorded;
+**OQ-3 OPEN as an accepted standing limitation** with P4 as the stated
+compensating control, and now **subsumed by D-8**, which establishes that the
+same exposure covers the whole phase and not only the five quirk defaults;
+**OQ-4 CLOSED** by this revision. **No row of this table is an unresolved
+blocker**, which is the condition SPEC-TEMPLATE §11 imposes on a freeze. OQ-3
+remains in the table because it is a limitation to sign *with*, not a question
+to answer — the deferred-item rows D-8 and D-9 are its freeze-visible form,
+and both are handed to the orchestrator in the return of WO-0005 owing board
+lines this author cannot write.
+
 ---
 
 ## 12. Freeze record
 
-Filled in at `P1-spec-freeze`. All four rows are required and all four are
-empty: **this specification is not frozen.**
+Filled in at `P1-spec-freeze`. **This specification is not frozen**: the three
+signature-class rows are empty and only the evidence row is filled.
 
 | Item | Value |
 |---|---|
-| Interface check | **Fallback regime** (ADR-0017 Consequence 1): reviewed port tables §4.A–§4.D, `J-dv_lead-____`. There is no compile-check CI run for this program and none is owed. |
+| Interface check | **Fallback regime** (ADR-0017 Consequence 1): reviewed port tables §4.A–§4.D, graded line by line at `docs/reports/dv/DV-P1-testability.md` §3 — 30 distinct ports (M01 19, M02 6, M04 5) plus M03's `clk`, `rst_n` and pass-through bundle; four defects found (F-2, F-3, F-4, F-5), all in the width and parameter columns, none in the direction or meaning columns. There is no compile-check CI run for this program and none is owed. |
 | Architect signature | `J-architect_docs_lead-____` |
-| dv_lead testability countersignature | `J-dv_lead-____` |
+| dv_lead testability countersignature | `J-dv_lead-____` — **withheld at `54a7221`**, issues against this revision |
 | Frozen at | SHA `________`, gate `docs/gates/P1-spec-freeze-checklist.md` |
+
+**The interface-check row is a clerical transcription** (L-E02, PROTOCOL §7's
+transcription rule). Its wording is `dv_lead`'s own, from
+`DV-P1-testability.md` §12, and **its authority is that committed report and
+`J-dv_lead-0001`, not this file** — a transcription carries no authority of
+its own, and this author neither performed the grading nor can attest to it.
+The two signature rows are deliberately left empty: a signature's authority is
+the signer's own journal entry, and neither exists yet.
 
 ---
 
 ## 13. Change log
 
-Post-freeze changes only. Each row cites the ADR that authorised it; a
-breaking interface change is counted against post-freeze churn.
+Post-freeze changes are counted against post-freeze churn (charter §6) and
+each cites the ADR that authorised it. **There are none: this specification is
+not yet frozen.**
 
 | Date | Change | Breaking? | ADR | Journal |
 |---|---|---|---|---|
 | — | *(none — not yet frozen)* | — | — | — |
+
+### 13.1 Pre-freeze revision record — WO-0005, 2026-08-05
+
+A pre-freeze revision is not churn and is not counted as such. It is recorded
+here anyway, at the same granularity, because the alternative is a
+countersignatory who has to diff two SHAs to learn what moved — and because a
+declined amendment that leaves no trace is indistinguishable from a forgotten
+one.
+
+**Basis**: `docs/reports/dv/DV-P1-testability.md` §8 at `f9a6bef` (NOT
+COUNTERSIGNED at `54a7221`, six ready-to-apply amendments); spec §11 OQ-4;
+`agents/handoffs/WO-0005_p1-spec-revision.md`. **Journal**:
+`J-architect_docs_lead-0003`.
+
+#### The six amendments, one by one
+
+| # | Finding | Disposition | Where it landed |
+|---|---|---|---|
+| **A-1** | F-2 (`obs_sp`/`obs_stack` hard-code widths §5.1 derives from an overridable parameter), F-3 (untyped enums default to `int`) | **APPLIED, with consistency propagation** | §4.A, §4.B, §4.D width columns → parameter expressions; §4.A gains a note recording that every expression evaluates to its old literal at the default, so **no width changes value**; REQ-008's stack row → `stack[0]…stack[STACK_DEPTH−1]`; §5.5 gains the explicit-base-type sentence. **Propagated beyond dv_lead's list** to the four other sites that carried the same literals — §2's scope bullet, §6.1.1's architectural-state table, §6.4.4's "all sixteen entries", §6.6's stack-realisation bullet, and §10's REQ-006 row. A partial application would have left F-2 alive in a different section, which is the same defect at a new address. |
+| **A-2** | F-4 (M02 has no reset and no specified power-up value; REQ-008 and REQ-123 both false of it) | **APPLIED verbatim** | §4.B gains the power-up paragraph (`8'h00` from time zero until the first enabled read completes); REQ-008's closing sentence narrowed to the architectural state it actually covers, with M02's two elements pointed at REQ-014 and §4.B. Extended by one paragraph making the three-clause coverage an **enumeration** rather than a claim — see OQ-4 below, which is the same repair from the other end. |
+| **A-3** | F-5 (no mechanism by which any test can put a program into the DUT) | **APPLIED, with one addition A-3 needed and did not have** | New **REQ-115** at §5.0, referenced from §4.3 and §4.C; §4.3's "Configuration inputs: None" reworded to point at it; §5.4's `MEM_INIT_FILE` row now says *module* parameter. **The addition**: A-3 as written would have reinstated F-2 through its own mechanism. `SP_W` is `$clog2(STACK_DEPTH)+1`; if `STACK_DEPTH` becomes a module parameter while `SP_W` is still read from the package, an override to 4 leaves `SP_W` at 5 and `obs_sp` 5 bits wide — measured in both lanes. REQ-115 therefore requires derived widths to be derived **in the module from the module's parameter**. |
+| **A-4** | F-9 (REQ-123 asserts cycle-by-cycle determinism while §7.4 creates don't-care windows) | **APPLIED verbatim, plus one distinction** | The compared-domain block is appended to REQ-123 unchanged. **The addition**: a second paragraph separating the *determinism / lane-to-lane* domain (which is per-cycle) from the *model-to-DUT* domain (which is at retirement only). Without it a reader can take A-4's "the `obs_*` bundle in every cycle" as licensing a model comparison on mid-instruction `obs_*` values — which §6.6 leaves unspecified, and which is exactly the back door ADR-0018 §6.6 could only implicitly close. A-4 asked for the comparison domain to live in the spec rather than in a bench; this makes both domains do so. |
+| **A-5** | F-10 (REQ-109's single-definition-site rule cannot cross the SV/Python boundary and forbids the derivation DV should make) | **APPLIED verbatim, plus one clause** | The scope block is appended to REQ-109 unchanged. **The addition**: one sentence stating that REQ-115's module parameters are not a second definition site either, because each *defaults to* its package value rather than restating it — a distinction REQ-115 makes newly necessary. |
+| **A-6** | F-12 (six declared parameter values are unverifiable in P1, and REQ-095 forbids the cheapest check that they exist) | **APPLIED verbatim, plus propagation** | REQ-095's replacement text is adopted unchanged and promoted into a normative block in §5.2 (it previously existed only as a clause of §5.2's preamble). **Propagated** to §2's scope table, which restated the old "default configuration only", and to §10's REQ-095 hook (`I` → `D + I`, since it now mandates six directed vectors). Recorded alongside: **A-6 is unimplementable without A-3** — six non-default configurations require the override path — so the two are a pair, not independent repairs. |
+
+**Nothing was declined.** All six are applied. Three are applied with
+additions, each named above with its reason; the additions are in scope for
+`dv_lead`'s confirmatory pass and are flagged here so they are graded rather
+than discovered.
+
+#### OQ-4, closed by normative text
+
+| | |
+|---|---|
+| **Answer** | Every one of the 4096 locations holds `8'h00` at time zero; the image is applied over that; a location the image does not cover keeps `8'h00`. Order is normative. |
+| **Text** | REQ-014 rewritten (§6.1.1) — the normative site; §5.4 and §6.6 amended to match; REQ-008 narrowed; REQ-123 gains the discharging enumeration. |
+| **Both lanes** | First read of an uncovered location: `8'h00` in Icarus 12.0 **and** `8'h00` in Verilator 5.020 — **measured**, tabulated in REQ-014, non-conformant realisations shown alongside as the failing case. |
+| **Model** | 4096 zero bytes overlaid by the image. No notion of `X` required, which was the constraint the work order set. |
+| **Decision record** | **ADR-0018 Amendment A1** — four alternatives, why the other three lost, and the narrowing of §6.6's realisation freedom. Appended, not edited (L-A04). |
+
+#### Beyond the amendments and OQ-4
+
+Four corrections `dv_lead` marked **owed** or **CARRIED** rather than writing
+as amendments, applied because a frozen document that records checks which
+cannot perform their observation is a false record:
+
+- **F-1 / F-7 / F-8 → §10's hook column.** Nine requirements assert
+  memory-port behaviour invisible at M03; five carried an `R` hook that cannot
+  see it. Hooks corrected and a `(M01)`/`(M02)`/`(M04)` convention added to the
+  legend. REQ-020 `I` → "D, via REQ-028"; REQ-105 `S + I` → `S + D`; REQ-113
+  `D` → `D (M01)`. **No requirement text changed** — only the column that says
+  how each is checked.
+- **F-6 → §10's legend and D-9.** The `I` hooks' missing performer is stated
+  in place (L-F03) and routed to the orchestrator rather than decided here:
+  assigning work to `rtl_lead` is not this author's to do (charter §7).
+- **F-11 → D-8.** The standing "P1 verifies itself against itself" limitation
+  is recorded as a **deferred item**, not an open question — `dv_lead` graded
+  it explicitly not freeze-blocking, and an OQ row would have blocked the gate
+  it asked to be signed *with knowledge of*. It is the item that most changes
+  what a P1 PASS means, and it now appears in the document the gate reads.
+- **F-13 → §2 and §7.1.** The `§6.4.1` citation corrected to `§6.4.1–§6.4.3`;
+  §7.1 gains the retire-to-retire observable equivalent of a latency
+  definition stated between two unobservable FSM states.
+
+#### Requirement count
+
+**90 → 91.** REQ-115 added; none withdrawn, renumbered or reused. The matrix
+in `docs/specs/requirements.md` gains the corresponding row (REQ-124).
+
+#### What was deliberately not touched
+
+`dv_lead` pre-committed that its confirmatory pass covers only the amended
+text, having graded the other 84 requirements and all 30 ports line by line.
+That pre-commitment binds this author too: **no requirement outside the
+amendment set had its meaning revised**, and the propagation edits listed
+above change wording to preserve a meaning rather than to alter one. D-3
+(`rtl/chip8_pkg.sv`) remains `rtl_lead`'s and is untouched; nothing under
+`rtl/**` is created, implied or reserved by this revision.

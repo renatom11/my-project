@@ -797,3 +797,397 @@ than allowed to age into an assumption.
 - docs/specs/requirements.md
 - docs/specs/SPEC-P1-core-cpu.md
 - agents/handoffs/WO-0003_p1-design-rationale-adr.md
+
+## [J-architect_docs_lead-0003] 2026-08-05T17:57Z | task:WO-0005 | P1 spec revision: OQ-4 closed at `8'h00`, all six amendments applied, F-5 confirmed real and measured in both lanes
+
+### Trigger
+
+Spawn short-id `WO-0005/2026-08-05T17:40Z`. The orchestrator issued
+`agents/handoffs/WO-0005_p1-spec-revision.md` (ISSUED, 2026-08-05) after
+`dv_lead` returned **NOT COUNTERSIGNED at `54a7221`** with six ready-to-apply
+amendments. Two things had to come out of this round: **OQ-4 closed by
+normative text** — my own finding from WO-0003, and the freeze blocker — and
+**each of A-1…A-6 applied or declined with a reason**. The packet additionally
+ordered F-5 reasoned through rather than accepted or dismissed, because
+`dv_lead` marked its own toolchain premise provenance *relayed* with a spike
+owed.
+
+### Inputs
+
+Read in full, in this order. No external document was retrieved during this
+unit of work; nothing outside this repository was opened.
+
+- `agents/charters/architect_docs_lead.md`
+- `agents/PROTOCOL.md` (v2)
+- `agents/handoffs/WO-0005_p1-spec-revision.md` — governs, and is authoritative
+  over the spawn prompt where they differ
+- `docs/reports/dv/DV-P1-testability.md` — **all 764 lines**, not only §8. The
+  amendments are unintelligible without the findings they repair, and three of
+  the four corrections I made beyond A-1…A-6 come from sections §3, §4 and §7
+  that §8 does not restate
+- `docs/specs/SPEC-P1-core-cpu.md` at `ef3728c` — all 1153 lines
+- `docs/adr/ADR-0018-p1-core-cpu-design-choices.md` — all 932 lines, including
+  §5.4's backtest and §7.2, which is OQ-4's origin
+- `docs/adr/ADR-0017-toolchain-lane.md` — §§ index plus Amendments A1 and A2,
+  for the amendment form this repository has established
+- `docs/specs/requirements.md`
+- `docs/LESSONS.md` — L-A04, L-B01, L-D11, L-D12, L-E04, L-F03 read at their
+  entries, not from the packet's summary of them
+- `agents/journals/claude_architect_docs_lead_agent.md` — my own tail, for the
+  harvest-span arithmetic carried forward from `-0002`
+
+### Reasoning
+
+**1. F-5 first, because if it were false the round's shape changed.** The
+packet was right that it is the most consequential defect in the set: if no
+test can configure the DUT, every other repair is decoration. `dv_lead` had
+marked the claim *relayed* and owed it a spike, so I had two ways to settle it.
+
+The first needs no toolchain fact at all, and it is the one I lead with.
+§5.4 says *"Every test sets `MEM_INIT_FILE`"*; §5 puts every parameter in the
+package; §4.3 declares "Configuration inputs: **None**"; §4.C lists no
+parameters. **Those four clauses are jointly unsatisfiable under any toolchain
+assumption whatever.** Even on the most generous reading of the tools, the
+document named no mechanism. That makes F-5 adjudicable from the document
+alone — which matters, because it means the finding never depended on the
+relay, and a spike that came back the other way would not have saved it.
+
+The second way was available and I took it anyway, because "the relay is
+probably right" is not a verdict and both simulators are installed. Verilator
+5.020 and Icarus 12.0 both **refuse** a package-parameter override and both
+**accept** a top-level module parameter defaulting to the package value; a
+`string` module parameter feeding `$readmemh` works in both. So A-3 is not
+merely correct-either-way as `dv_lead` argued — it is measured to work.
+
+The measurement also returned something the relay did not contain, and it is
+the reason I upgraded F-5's severity rather than merely confirming it.
+Icarus's package-scoped form `-Ppkg.P=…` is **silently ignored**: no error, no
+warning, value unchanged. That is the form a test author reaches for first,
+and it fails by loading nothing — against a machine whose all-zero memory then
+halts on `0x0000` with `ERR_ILLEGAL_OPCODE` at the first instruction, which
+looks exactly like an ordinary decode-fault test result. A defect whose
+presentation is a plausible pass is the silently-always-pass class (PROTOCOL
+§10, L-D11), and that is a different and worse thing than "the override does
+not work".
+
+**2. The near-miss: A-3 applied literally would have reinstated F-2.** This is
+the part of the round I would most want a reviewer to check. A-1 makes
+`obs_sp` `SP_W` wide. §5.1 derives `SP_W` as `$clog2(STACK_DEPTH)+1`. A-3
+makes `STACK_DEPTH` a module parameter. If `SP_W` is still read from
+`chip8_pkg`, it is computed from the *package's* `STACK_DEPTH` and does not
+follow the override — so at `STACK_DEPTH = 4` the port is 5 bits while the
+stack is 4 deep. That is F-2 exactly, arriving through the mechanism written
+to repair it, and it would have frozen into the document under two amendments
+that each look right in isolation.
+
+I measured it rather than trusting my reading of the LRM: with `STACK_DEPTH`
+overridden to 4, a package-derived `SP_W` reads **5** and a module-derived one
+reads **3**, in both simulators — so it is a property of the language, not of
+a tool. REQ-115 therefore carries a clause A-3 did not have: derived widths
+are derived **in the module from the module's parameter**. Applying an
+amendment as written would have been worse than reasoning it through, and this
+is the one place in the round where that was true.
+
+**3. OQ-4 — why zero-fill won, and why "narrow REQ-123" lost.** The packet
+allowed either making REQ-123 true or narrowing it until it is. I chose to
+make it true, and the reason is consistency with a decision ADR-0018 already
+took. §5.1 of that ADR rejected "reset only what correctness requires" for
+architectural registers on the ground that it makes determinism a property of
+the *stimulus* rather than of the *design*. "Leave uncovered memory undefined
+and require the bench to read only covered locations" is the same alternative
+one level up, and accepting it here after rejecting it there would be
+incoherent — quite apart from being unenforceable, since PC wraps (REQ-010)
+and the decode sweep deliberately executes from locations no image covers.
+
+The other two alternatives lost on measurement rather than principle.
+Requiring a full 4096-byte image does not close the hole, it makes the hole a
+precondition **nothing checks** — a short image still elaborates and still
+X-fills. Specifying the locations as `X` is unavailable because Verilator
+cannot represent it: measured, it reads `00`, so the lane where the long
+campaigns run could never check the property.
+
+**The measurement changed the wording, which is why it was worth running.** I
+had assumed with `dv_lead` and with my own ADR §7.2 that the uncovered set is
+a *suffix* — "bytes beyond the end of a short image". It is not: a `$readmemh`
+file may carry `@address` records, and I measured a sparse image leaving a
+hole **in the middle** reading `xx` under Icarus. So the repair had to be
+phrased per location ("every location the image does not cover") rather than
+per length. A one-sentence repair phrased the way all three of us were
+thinking about it would have left a hole in the hole.
+
+**4. What I applied beyond the six, and the boundary I was told not to cross.**
+`dv_lead` pre-committed that its confirmatory pass covers only the amended
+text, and the packet was explicit that the pre-commitment binds me too. I read
+that as barring me from **re-opening graded requirements**, not as barring the
+corrections `dv_lead` itself marked *owed*. Four sets, each enumerated in §13.1
+so the confirmatory surface is bounded rather than discovered by diff:
+
+- **F-1/F-7/F-8 → §10's hook column.** Five requirements carried an `R` hook —
+  a full-state compare at `obs_retire` — for behaviour that a full-state
+  compare cannot observe. Leaving a frozen document recording checks that
+  cannot perform their observation is a false record, and doc truthfulness is
+  the thing my charter §6 evaluates me on. No requirement text changed; only
+  the column saying how each is checked.
+- **F-6 → §10's legend + D-9.** Fifteen `I` hooks have no named performer.
+  I stated that in place (L-F03) and **routed** it rather than deciding it:
+  naming `rtl_lead` as performer is assigning another lead work, which
+  charter §7 makes a WO- request to the orchestrator, not my call.
+- **F-11 → D-8.** This is the judgement I most want on the record. `dv_lead`
+  graded it MAJOR, ESCALATION, explicitly **not freeze-blocking**, and asked
+  that the sponsor have it *before* signing. Those two facts constrain the
+  form: an **OQ** row would block the gate it asked to be signed with
+  knowledge of, so it had to be a **deferred item** with a stated
+  what-a-reader-assumes-meanwhile. D-8 is that, and it is now in the document
+  the gate reads rather than only in a DV report.
+- **F-13 → §2, §7.1.** Editorial, and §7.1's is not merely cosmetic: latency
+  was defined between two `S_FETCH_HI` events, neither observable anywhere, so
+  the retire-to-retire equivalent is now stated rather than left for each
+  bench author to re-derive.
+
+**5. Two amendments to ADR-0018, appended, because two decisions moved.**
+L-A04 and the packet both require append-not-edit, and ADR-0017's A1/A2 set
+the form. **A1** extends Choice 4's scope to memory — §5.4's backtest had
+found the decision "right in what it covered and short by the largest term",
+and closing OQ-4 is exactly the extension it named. **A2** records a decision
+ADR-0018 does not contain at all: the override path is a non-obvious design
+choice with real alternatives (preprocessor defines *do* reach package
+parameters, and that is the one alternative that is not a strawman — it loses
+on making the value a macro property and putting an RTL edit in DV's path for
+every new overridable value). Charter §3 makes every non-obvious choice owe an
+ADR; REQ-115 is one, so it owes this.
+
+I did not fold either into the original text, and I did not rewrite §0's
+promise that the repair would be a separate packet — that promise was kept,
+this *is* the separate packet, and both statements are true of their own
+sections. I added a header bullet pointing forward, which is the pattern
+ADR-0017's Status line already uses.
+
+**6. What I deliberately did not do.** I re-opened nothing `dv_lead` graded and
+closed: no requirement outside the amendment set had its meaning revised, and
+the propagation edits change wording to preserve a meaning rather than to
+alter one. I minted exactly one id, REQ-115, which A-3 dictated. I touched
+nothing under `rtl/**`. And I added no requirement obliging `dv_lead` to check
+the image actually loaded — the missing-file hazard I measured is real, but
+imposing a bench obligation on another lead mid-countersignature is not mine
+to do, so REQ-014 names the gap and assigns the control to `dv_lead` without
+mandating it (L-F03: name the control that does not exist rather than claim
+one that does).
+
+### Actions
+
+- Revised `docs/specs/SPEC-P1-core-cpu.md`: A-1 across §4.A/§4.B/§4.D/§5.5/
+  REQ-008 plus propagation to §2, §6.1.1, §6.4.4, §6.6, §10; A-2 into §4.B and
+  REQ-008; A-3 as new **REQ-115** at §5.0 with §4.3 and §4.C referencing it;
+  A-4 and the two-domain distinction into REQ-123; A-5 into REQ-109; A-6 as a
+  normative REQ-095 block in §5.2 with propagation to §2 and §10. **OQ-4
+  closed** by rewriting REQ-014 and amending §5.4, §6.6, REQ-008, REQ-123 and
+  §4.B. §10 hook column corrected; §11 OQ-4 marked closed and D-6 updated;
+  D-8 and D-9 added; §12's interface-check row transcribed with its relay
+  limit stated; §13.1 written as the revision record.
+- Appended **Amendments A1 and A2** to `docs/adr/ADR-0018-p1-core-cpu-design-choices.md`.
+- Updated `docs/specs/requirements.md`: REQ-115 row, block table, hook column
+  synced to §10, §7's OQ-4 item marked closed and the hook-column note
+  rewritten from "a proposal" to "post-grading".
+- Flipped `agents/handoffs/WO-0005_p1-spec-revision.md` to **RETURNED** and
+  wrote its Return log.
+- **Ran no git command.** Not `add`, not `commit`, not `push`, not `stash`.
+  The packet's §3 emphasis was read as written; the files are handed to the
+  orchestrator for commit.
+
+### Evidence
+
+Commands are self-contained and runnable from a checkout at this commit,
+except the two simulator spikes, whose scratch sources are **ephemeral** — the
+heredocs below recreate them in full, which is what makes the results
+reproducible rather than the files.
+
+1. **Every REQ id used in the spec has exactly one §10 row, and §10 contains no
+   id the body does not state** (*measured*, same command as `-0001` and
+   `-0002`):
+   ```
+   diff <(grep -o 'REQ-[0-9]\{3\}' docs/specs/SPEC-P1-core-cpu.md | sort -u) \
+        <(awk '/^## 10\. REQ coverage/,/^## 11\./' docs/specs/SPEC-P1-core-cpu.md \
+          | grep -o '^| REQ-[0-9]\{3\}' | sed 's/| //' | sort -u)
+   ```
+   Observed: no output. Registry row count **91** — 90 at `54a7221` plus
+   REQ-115, confirming I added exactly the one id A-3 dictated and withdrew
+   none.
+
+2. **Spec registry and traceability matrix hold exactly the same ids**
+   (*measured*, the two-way check `requirements.md` §6 specifies):
+   ```
+   diff <(awk '/^## 10\. REQ coverage/,/^## 11\./' docs/specs/SPEC-P1-core-cpu.md \
+          | grep -o '^| REQ-[0-9]\{3\}' | sed 's/| //' | sort -u) \
+        <(awk '/^## 5\. Matrix — P1/,/^## 6\./' docs/specs/requirements.md \
+          | grep -o '^| \*\*REQ-[0-9]\{3\}\*\*' | grep -o 'REQ-[0-9]\{3\}' | sort -u)
+   ```
+   Observed: no output. Matrix row count **91**.
+
+3. **F-5, measured in both lanes** (*measured*; scratch sources ephemeral,
+   recreated by this command):
+   ```sh
+   d=$(mktemp -d); cd "$d"
+   cat > pkg.sv <<'X'
+   package p;
+     parameter int PKG_SEED = 16'hACE1;
+   endpackage
+   X
+   cat > top.sv <<'X'
+   module top;
+     parameter int MOD_SEED = p::PKG_SEED;
+     initial begin
+       $display("PKG_SEED=%0d  MOD_SEED=%0d", p::PKG_SEED, MOD_SEED);
+       $finish;
+     end
+   endmodule
+   X
+   iverilog -g2012 -o a.out pkg.sv top.sv && ./a.out                        # baseline
+   iverilog -g2012 -Ptop.PKG_SEED=1234 -o b.out pkg.sv top.sv               # package param, top scope
+   iverilog -g2012 -Pp.PKG_SEED=1234   -o b2.out pkg.sv top.sv && ./b2.out  # package param, pkg scope
+   iverilog -g2012 -Ptop.MOD_SEED=1234 -o c.out pkg.sv top.sv && ./c.out    # module param
+   ```
+   Observed — Icarus 12.0: baseline `PKG_SEED=44257 MOD_SEED=44257`;
+   `-Ptop.PKG_SEED` → **`error: parameter 'PKG_SEED' not found in 'top'`**;
+   `-Pp.PKG_SEED` → **no diagnostic and no effect**, `PKG_SEED=44257`;
+   `-Ptop.MOD_SEED` → `MOD_SEED=1234`. Verilator 5.020 with the same sources
+   and a trivial C++ harness: `-GPKG_SEED=1234` →
+   **`%Error: Parameters from the command line were not found in the design:
+   PKG_SEED`**; `-GMOD_SEED=1234` → `MOD_SEED=1234`.
+   **Conclusion: F-5 is real. A-3's mechanism works in both lanes.** The
+   silent-ignore row is the one the relay did not contain.
+
+4. **The derived-width consequence A-3 lacked** (*measured*): with `SP_W`
+   derived in the package and `STACK_DEPTH` overridden to 4 via
+   `-Ptop5.STACK_DEPTH=4` / `-GSTACK_DEPTH=4`, both simulators report
+   `STACK_DEPTH=4 | pkg SP_W=5 | module SP_W=3`. The package-derived width
+   does **not** follow the override; the module-derived one does. This is why
+   REQ-115 carries its second paragraph.
+
+5. **OQ-4, measured in both lanes** (*measured*; sources ephemeral, recreated
+   here). An 8-element array, a 3-byte image `11 22 33`, `$readmemh` with and
+   without a zero-fill first:
+   ```sh
+   printf '11\n22\n33\n' > img.hex
+   # top3.sv: logic [7:0] mem[0:7]; NO zero-fill; $readmemh(MEM_INIT_FILE, mem)
+   # top4.sv: same, but preceded by  for (int i=0;i<8;i++) mem[i] = 8'h00;
+   iverilog -g2012 -Ptop3.MEM_INIT_FILE=\"img.hex\" -o u1.out top3.sv && ./u1.out
+   iverilog -g2012 -Ptop4.MEM_INIT_FILE=\"img.hex\" -o z1.out top4.sv && ./z1.out
+   verilator --cc --exe --build --timing -GMEM_INIT_FILE='"img.hex"' top3.sv tb3.cpp \
+             --top-module top3 -o Vtop3 && ./obj_dir/Vtop3
+   ```
+   Observed:
+
+   | Case | Icarus 12.0 | Verilator 5.020 |
+   |---|---|---|
+   | No zero-fill, uncovered locations | **`xx`** | **`00`** |
+   | Zero-fill then `$readmemh`, uncovered | **`00`** | **`00`** |
+   | Sparse image (`@0000` … `@0006`), hole in the middle | **`xx`** | — |
+   | `MEM_INIT_FILE` = missing path | non-fatal diagnostic, all-zero, **exit 0** | non-fatal warning, all-zero, **exit 0** |
+
+   Row 1 is the divergence ADR-0018 §7.2 predicted, now observed rather than
+   derived. **Row 3 is the one that changed the normative wording**: the
+   uncovered set is not a suffix, so REQ-014 is phrased per location. Row 2 is
+   the repair working in both lanes. Row 4 is the limitation REQ-014 names and
+   does not fix.
+
+   **The instrument proved it can fail before it was allowed to report
+   agreement** (L-D11): rows 1 and 3 are the negative controls. A harness
+   reporting `00` unconditionally would have shown row 2 green and the
+   conclusion would have been worthless.
+
+   **What this measures**: the `$readmemh` image mechanism, in a scratch
+   harness. **It measures no design** — no RTL and no M02 exist. Same limit
+   ADR-0018 §9 states for its LFSR measurement.
+
+6. **No banned phrasing** in any of the three files (SPEC-TEMPLATE how-to-use
+   item 5) (*measured*):
+   `grep -n -i "as needed\|appropriately\|should normally\|obviously\|TBD" docs/specs/SPEC-P1-core-cpu.md docs/specs/requirements.md docs/adr/ADR-0018-p1-core-cpu-design-choices.md`
+   → no output.
+
+7. **No residual literal width in any port table** (*measured*):
+   `awk '/^### 4\.A/,/^### 4\.3/' docs/specs/SPEC-P1-core-cpu.md | grep -E '^\| `' | grep -E '\| (5|12|8|16|128|192|4) \|'`
+   → no output. The two surviving `16 × 12` occurrences (§3's invariants table,
+   §6.4.4) are **verbatim quotations of README**, which is canonical over this
+   document (PROTOCOL §1) and both already carry "(parameterized)".
+
+8. **No open question blocks the freeze** (*measured*):
+   `awk '/^### Open questions/,/^Per \*\*L-E10\*\*/' docs/specs/SPEC-P1-core-cpu.md | grep -o "Blocks \`P1-spec-freeze\`\|No longer blocks\|CLOSED"`
+   → `CLOSED`, `No longer blocks`. No row asserts a block.
+
+9. **Blob gate** (PROTOCOL §5, default 1000000 bytes) (*measured*): `wc -c` →
+   SPEC 109610, requirements.md 16193, ADR-0018 77296. All well under.
+
+10. **No git command was run in this unit of work.** Stated as an assertion
+    about my own conduct, which is the only class of claim it can be — the
+    reproducible form of it is `git reflog` and the absence of any commit
+    bearing this entry, checkable by the orchestrator at commit time.
+
+### Outcome
+
+**DoD vs WO-0005: met on every item.**
+
+| Task | Status |
+|---|---|
+| 1 — apply A-1…A-6, or decline with a reason in §13 | **Met. All six APPLIED, none declined.** Three carry additions, each named with its reason in §13.1 |
+| 2 — close OQ-4 with normative text; state both lanes | **Met.** `8'h00`, REQ-014 rewritten, both lanes measured and tabulated in the requirement itself |
+| 3 — reason F-5 through; say which it is | **Met. F-5 is REAL** — on an internal contradiction that needs no toolchain fact, *and* on a measurement that confirms the relay and finds one row worse than relayed |
+| 4 — amend ADR-0018 if a decision moves | **Met.** Two moved, two amendments appended |
+| 5 — re-open nothing dv_lead graded and closed | **Met.** No graded requirement's meaning revised; propagation edits enumerated in §13.1 so the confirmatory surface is bounded |
+
+**Is the spec freezable?** **In my judgement yes — and the countersignature is
+`dv_lead`'s to issue, not mine, which is why this is a judgement and not a
+verdict.** Charter §5's preconditions: D-1 and D-2 landed at `-0002`; the
+interface-check regime is ADR-0017's reviewed-port-table fallback and the
+grading has been performed line by line; an ADR exists for every non-obvious
+choice, including the two this round added; every REQ has a matrix row; no
+open question remains unresolved. What a signer should know before signing is
+**D-8** — a P1 lockstep PASS proves the RTL implements this specification and
+proves nothing about whether this specification describes CHIP-8 — and
+**OQ-3**, the relayed quirk defaults. Both are now in the document the gate
+reads, which is what `dv_lead`'s F-11 asked for and could not itself do from
+`docs/reports/dv/`.
+
+**Handoff**: returned to the orchestrator via the packet's Return log.
+`P1-spec-freeze` loses its last blocker and gains two routed carry-forwards.
+
+**No harvest note is owed at this entry**: PROTOCOL §7.1 makes the lessons
+harvest a precondition of a gate signature or an `SO-` packet, and this is
+neither — it is the revision *preceding* the gate. Carrying the arithmetic
+forward from `-0002`: this chain's fork-point baseline is **none**, so my
+first harvest span tiles from `J-architect_docs_lead-0001` and must reach this
+entry — the interval at `P1-spec-freeze` is `J-architect_docs_lead-0001..0003`
+unless further entries intervene.
+
+### Open-questions
+
+1. **D-8 — P1 has no external anchor.** Not freeze-blocking, and it must be
+   settled before `P1-module-ready`. `dv_lead`'s options are (a) add one
+   free-use CHIP-8 reference to the B3 intake as a differential oracle for the
+   non-draw subset, **E3**-shaped; (b) anchor piecewise against non-CHIP-8
+   external truth; (c) declare NO-ANCHOR explicitly. Its recommendation is
+   (a)+(b) with (c) as the fallback. **Owes a board line I cannot write**
+   (`tasks/**` outside my write scope, L-E10).
+2. **D-9 — fifteen `I` hooks have no named performer**, four of them over RTL
+   files the countersignatory may not read. Routed to the orchestrator because
+   assigning `rtl_lead` is not mine to do (charter §7). Owes a board line.
+3. **NV-3's remaining fraction is `dv_lead`'s.** I measured the simulator
+   flags cocotb's runner maps onto; I did **not** measure the runner itself,
+   because no bench exists. Evidence 3 makes the end-to-end result very likely
+   and "very likely" is not a measurement. Discharged by its first bench.
+
+Carried unchanged: **OQ-3** (relayed VIP defaults; P4's test-ROM campaign is
+the compensating control — now subsumed by D-8, which establishes the exposure
+covers the whole phase). **D-3** remains `rtl_lead`'s and is untouched.
+**D-7** unchanged, a P4 carry-forward. **OQ-1** is closed by `dv_lead`'s
+adjudication (halt upheld — my spec's default confirmed, so no text moved) and
+**OQ-2** by the orchestrator's P3 assignment.
+
+One item that is not a question, noted a third time rather than allowed to age
+into an assumption: the **L-D16 citation still does not resolve** in this
+tree, and §6.3 of the spec depends on it.
+
+### Files-in-this-commit
+- docs/specs/SPEC-P1-core-cpu.md
+- docs/adr/ADR-0018-p1-core-cpu-design-choices.md
+- docs/specs/requirements.md
+- agents/handoffs/WO-0005_p1-spec-revision.md

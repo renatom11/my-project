@@ -19,6 +19,18 @@
 - **Supersedes / amends**: nothing. This ADR carries **no** PROTOCOL §11
   enforcement change and therefore owes **no** `scripts/test_protocol.sh`
   scenario.
+- **Amended by its own Amendments A1 and A2** (2026-08-05,
+  `J-architect_docs_lead-0003`, WO-0005), appended below and not folded into
+  the text above (**L-A04**). **A1** extends Choice 4's scope to memory and
+  closes spec **OQ-4** — the finding §7.2 recorded and expressly declined to
+  repair. **A2** records a decision this ADR does not contain: the
+  elaboration-time override path (spec **REQ-115**), repairing `dv_lead`'s
+  finding F-5. Both carry an enforcement class of **PROSE** and neither
+  touches law, so §8.5's "no `scripts/test_protocol.sh` scenario" still holds.
+  **§0 below remains true of the original text and is now false of this
+  document as a whole**: the repair §0 promised would be a separate packet has
+  arrived as that packet, and the two are distinguishable by which section
+  they live in — which is the point of appending rather than editing.
 - **Depends on**: ADR-0017 (toolchain lane) including Amendments A1 and A2;
   README.md's phase table and scope-parameter paragraph (the canonical scope
   statement, PROTOCOL §1); `tasks/BOARD.md` intake decisions B3 and B4.
@@ -929,3 +941,257 @@ and ADR-0002/ADR-0016, every enforcement claim carries **MACHINE** or **PROSE**.
 | The observation-bundle admission rule (§6.4) | **PROSE** — countersignature and auditor sampling |
 | `OBS_ENABLE = 0` changes no architectural behaviour | **PROSE** today; **MACHINE** once REQ-113's directed test runs |
 | Port closure (REQ-112), passivity (REQ-106) | **PROSE** — line-by-line countersignature is the control, per ADR-0017 Consequence 1's reviewed-port-table regime |
+
+---
+
+## Amendment A1 — Choice 4's scope extended to memory; OQ-4 closed
+
+Adopted 2026-08-05 at `J-architect_docs_lead-0003`, under
+`agents/handoffs/WO-0005_p1-spec-revision.md`, by the same decider and the same
+in-role authority as the original (PROTOCOL §8 — no requirement, phase or role
+is added or dropped, and no toolchain lane or license class is touched).
+**Corrections append; §5 above is not rewritten** (L-A04), so the decision that
+was short and the decision that closed it are both on the record.
+
+§5.4's backtest found Choice 4 **right in what it covered and short by the
+largest term**: it enumerated architectural state and stopped, leaving memory —
+32768 bits, the largest single block of state in the machine — governed by
+REQ-014, which specified contents only for `MEM_INIT_FILE = ""`. §7.2 recorded
+that as spec **OQ-4** and declined to repair it, because one sentence of
+normative text is a change to specified behaviour and WO-0003 put that out of
+scope. WO-0005 is the packet that puts it in scope. This amendment is the
+decision record for the repair.
+
+### A1.1 — The decision
+
+**Memory is fully specified at time zero, in two ordered clauses**: every one
+of the 4096 locations holds `8'h00`; the image named by `MEM_INIT_FILE` is
+then applied over that. A location the image does not cover — past the end of
+a short image, or inside a hole left by an `@address` record — holds `8'h00`.
+`MEM_INIT_FILE = ""` is the same rule with an empty image, not a special case.
+
+Normative text: spec **REQ-014** (§6.1.1, the definition site), with §5.4 and
+§6.6 amended to match and REQ-008 narrowed by `dv_lead`'s A-2 to stop claiming
+the terms it never covered.
+
+### A1.2 — Alternatives actually available
+
+| Alternative | What it buys | Why it lost |
+|---|---|---|
+| **Zero-fill, then overlay the image** (chosen) | One rule covering every value of `MEM_INIT_FILE`; both simulator lanes agree by construction; the Python model mirrors it in one line and needs no notion of `X`; REQ-123's determinism claim becomes **true** rather than narrowed. | — |
+| **Require every image to be exactly 4096 bytes** | Keeps the specification silent about uncovered locations by making the set empty. | It does not close the hole, it makes the hole a precondition **nothing checks**. A short image still elaborates, still X-fills in Icarus, and now does so while violating an unenforced rule — the failure mode is unchanged and the diagnosis is worse. It also taxes every test: §6.2 of the countersignature report plans a decode sweep that writes two bytes and pulses reset per encoding, which would need a 4096-byte image per encoding for no benefit. |
+| **Leave the locations undefined; require the bench to read only covered ones** | Preserves M02's realisation freedom completely. | Unenforceable and unsound. PC is 12 bits and wraps (REQ-010); an illegal encoding walks it anywhere; the whole point of the decode sweep is to execute from locations no image covers. Worse, it makes REQ-123's determinism a property of the **stimulus** rather than of the design — precisely what §5.1 above rejected when it refused the "reset only what correctness requires" alternative for architectural registers. Rejecting it there and accepting it here would be incoherent. |
+| **Specify the locations as `X`, and give the model a three-valued memory** | Honest about a real hardware situation; would catch a program that reads uninitialised memory. | **Verilator cannot represent it** — it is 2-state and reads `0` (measured below), so the lane where the long campaigns run could never check the property, and the lanes could never agree. And §5.1 above already rejected a Python "undefined" for registers on the grounds that it does not exist; memory does not make it exist. This alternative buys a diagnostic the toolchain cannot deliver, at the cost of the cross-lane agreement §3 of the spec requires. |
+
+### A1.3 — What this narrows, stated because it is a real cost
+
+§6.6 frees M02's image mechanism among a file-read initial block, a
+parameterized constant array, and synthesis-time block-RAM initialisation.
+**Those three differ precisely in what they leave in an uncovered location** —
+which is what made §7.2's finding sharp — so the freedom now sits **above**
+REQ-014 rather than around it: all three remain available, and all three must
+reach the same end state. Concretely, a `$readmemh` realisation must zero-fill
+the array before reading the file. That is one extra loop in an initial block,
+and it is the whole cost.
+
+The freedom that is genuinely lost is a realisation that *cannot* define its
+uncovered locations — a vendor BRAM primitive whose power-up contents are
+undefined. No such primitive is in play: the intake is simulation-only (B4),
+and P5's iCE40 path infers BRAM from a flat array, which §6.7 above already
+checked.
+
+### A1.4 — Corpus verdict
+
+**What the rule flags.** No CHIP-8 program. A program cannot observe the
+difference between "this location was zero because the machine zeroed it" and
+"this location was zero because the image covered it with zero" — the values
+are identical. The corpus is **blind to this rule**, in the same way §4.4(a)
+found it blind to the RNG's step discipline, and for the same reason: the rule
+is made for the verification architecture, not for the programs.
+
+**What the corpus does constrain.** The *choice of value* is not free. §5.4
+above established that the dependent program class — hand-written CHIP-8 that
+reads a register or a location before writing it — depends on **zero**, and
+that a program depending on non-zero garbage is not portably writable. Zero is
+therefore both the convenient answer and the one the corpus already assumes.
+The rule and the corpus agree, which is the same verdict §5.4 returned for
+architectural registers, now extended to the term it had missed.
+
+**What the rule misses.** It cannot distinguish a test that meant to load an
+image from one whose `MEM_INIT_FILE` path was wrong: both produce all-zero
+memory, and under REQ-043 both halt on `0x0000` at the first instruction with
+`ERR_ILLEGAL_OPCODE`. Both simulators emit only a non-fatal diagnostic for an
+unreadable file (measured below). **Nothing in the design can close this** —
+the failure is upstream of the machine — so the compensating control must be
+bench-side, and REQ-014 names it as a `dv_lead` obligation rather than
+pretending a requirement covers it (**L-F03**).
+
+### A1.5 — The measurement
+
+Provenance **measured**; commands and observed output in
+`J-architect_docs_lead-0003` Evidence. What is measured is the **image
+mechanism** in a scratch harness — it measures no design, because no RTL
+exists. This is the same limit §9 above states for the LFSR measurement.
+
+| Realisation | Icarus 12.0 | Verilator 5.020 |
+|---|---|---|
+| `$readmemh` of a 3-byte image into an 8-element array, **no** zero-fill | covered `11 22 33`; **uncovered `xx`** | covered `11 22 33`; **uncovered `00`** |
+| Same image, sparse (`@0000` then `@0006`) | **hole in the middle reads `xx`** | — |
+| Zero-fill **then** `$readmemh` (conformant) | covered `11 22 33`; **uncovered `00`** | covered `11 22 33`; **uncovered `00`** |
+| `MEM_INIT_FILE` naming a missing path, zero-fill then read | non-fatal diagnostic, memory all-zero, **exit 0** | non-fatal warning, memory all-zero, **exit 0** |
+
+Row 1 is the divergence §7.2 predicted from ADR-0017's context finding 2,
+now observed rather than derived. Row 2 is a case §7.2 did **not** anticipate:
+the hole need not be a suffix, so the repair had to be phrased per location
+("every location the image does not cover") rather than per length ("bytes
+beyond the end of the image"). Row 3 is the repair working in both lanes. Row
+4 is A1.4's miss, measured.
+
+**The instrument proved it can fail before it was allowed to report agreement**
+(**L-D11**): rows 1 and 2 are the negative controls. A harness that reported
+`00` everywhere regardless would have shown row 1 green, and the conclusion
+would have been worthless.
+
+### A1.6 — Consequences
+
+1. **Spec OQ-4 is CLOSED**, and with it the last open question blocking
+   `P1-spec-freeze`. §7.2 above stands as written — it correctly declined to
+   perform this repair — and is **discharged** by this amendment.
+2. **REQ-123 is true rather than narrowed.** WO-0005 permitted either. Its "no
+   uninitialised storage anywhere in P1" is now discharged by a three-term
+   enumeration — REQ-008 for architectural registers, REQ-014 for `mem`, §4.B
+   for M02's read-latency register — and everything else is transient by
+   REQ-013. §5.2's table above gains a fourth row by implication: REQ-014 is
+   **hazard elimination** of exactly the class REQ-008 is, and the Icarus lane
+   remains the only compensating control for what elimination misses.
+3. **Choice 4's scope now matches its title.** "Every element of architectural
+   state has a specified reset value" was true of the enumeration and false of
+   the machine, because REQ-013 lists RAM first and REQ-009 excludes it from
+   reset. Memory is specified at **construction** rather than at reset, so the
+   original decision's *mechanism* is untouched; only its coverage moved.
+4. **§5.5's falsifier is unchanged and now sharper**: an Icarus run showing an
+   `X` reaching a comparison despite REQ-008 **and** REQ-014 would mean the
+   enumeration is still incomplete. Two known instances are now closed; the
+   first Icarus reset test at P1 is where any third surfaces.
+
+---
+
+## Amendment A2 — the elaboration-time override path (spec REQ-115)
+
+Adopted 2026-08-05 at `J-architect_docs_lead-0003`, same packet and same
+authority as A1. This records a decision the original ADR does not contain,
+because the defect it repairs was found after the ADR was written — by
+`dv_lead`'s countersignature grading, as its finding **F-5**, graded MAJOR and
+BLOCKING.
+
+### A2.1 — The defect
+
+The specification asserted a mechanism it did not provide. §5.4 said *"Every
+test sets `MEM_INIT_FILE`: it is how a program and its data reach the
+machine"*; §5 put every parameter in the package `chip8_pkg`; §4.3 declared
+"Configuration inputs: **None**"; and §4.C listed no parameters at all. Those
+four clauses are jointly unsatisfiable, and the consequence is the largest one
+available: **no test could put a program into the DUT**, which blocks every
+test in P1.
+
+**This is a contradiction internal to the document and needs no toolchain fact
+to adjudicate.** That matters, because `dv_lead` marked its own toolchain
+premise provenance ***relayed*** and owed it a spike (its NV-3). The finding
+does not rest on the relay: under the most generous possible reading of the
+tools, the specification still named no mechanism. The relay was load-bearing
+for *how bad* the defect is, not for *whether* it is one.
+
+### A2.2 — The decision
+
+Spec **REQ-115**: M02 and M03 each declare, as **module parameters**, every
+value a test overrides — `MEM_INIT_FILE`, `RNG_SEED`, `OBS_ENABLE`,
+`STACK_DEPTH`, `PROG_START`, and the five quirk parameters — each defaulting
+to its `chip8_pkg` value and passed down unmodified. Plus a clause `dv_lead`'s
+amendment did not have, for the reason in A2.4: **any width derived from an
+overridable parameter is derived inside the module from that module's
+parameter, not read from the package.**
+
+The package remains the **definition site**; REQ-115 is the **override path**.
+Conflating the two was the defect.
+
+### A2.3 — Alternatives actually available
+
+| Alternative | Why it lost |
+|---|---|
+| **Keep the parameters in the package and override with preprocessor defines** (`` `ifdef `` guards in the package; `-D` / cocotb `defines=`) | This *does* reach package parameters, so it is a real alternative and not a strawman. It loses on three counts: it makes the value a **preprocessor** property, so the "one definition site" the package exists for becomes a definition site plus a macro that can silently shadow it; the package is under `rtl/**`, outside the DV write scope, so every new overridable value needs an RTL edit by another agent; and macro state is global and order-dependent across a compile, which is the drift class REQ-109 was written to close. |
+| **Regenerate `chip8_pkg.sv` per test** | Puts an RTL file on the DV critical path permanently and requires DV to stage `rtl/**`, which PROTOCOL §6 forbids. It would also make the package a **generated** artifact whose content differs per test, destroying the single-definition-site property outright. |
+| **Read the image path at run time via `$value$plusargs`** | Makes configuration a run-time control path, which §4.3 and REQ-096 forbid and which the whole compile-time-parameter design of §5 exists to avoid. It would also make the memory image a property of the *run* rather than of the *construction*, contradicting §5.4's framing and REQ-014's "at time zero". |
+| **Module parameters defaulting to package values** (chosen) | The mechanism both simulators and cocotb's runner already implement; elaboration-time, so nothing becomes run-time controllable; adds no port, so REQ-112's closure is untouched; and the package keeps its single-definition-site role because each parameter *defaults to* the package value rather than restating it. |
+
+### A2.4 — The clause the amendment needed and did not have
+
+`dv_lead`'s A-3 text, applied literally alongside its A-1 text, would have
+**reinstated the very defect A-1 repairs**. A-1 makes `obs_sp` `SP_W` wide;
+§5.1 derives `SP_W` as `$clog2(STACK_DEPTH)+1`; A-3 makes `STACK_DEPTH` a
+module parameter. If `SP_W` is still read from `chip8_pkg`, it is computed
+from the *package's* `STACK_DEPTH` and does not follow the override — so at
+`STACK_DEPTH = 4` the port is 5 bits and the stack is 4 deep, which is F-2
+again, arriving through the mechanism that was supposed to fix it.
+
+Measured in both lanes (`J-architect_docs_lead-0003` Evidence): with
+`STACK_DEPTH` overridden to 4, a package-derived `SP_W` reads **5** while a
+module-derived one reads **3**. Both simulators agree, so this is a property
+of the language, not of a tool.
+
+This is the one place where applying an amendment as written would have been
+worse than reasoning it through, and it is recorded here rather than absorbed
+silently.
+
+### A2.5 — The measurement, and what it does to a relayed claim
+
+`dv_lead`'s NV-3 asks: can a package parameter be overridden at elaboration
+under Icarus/Verilator via cocotb's runner? It answered ***relayed*** and owed
+a spike. The spike is now run, at the elaboration level (the flags cocotb's
+runner maps onto — Verilator `-G`, Icarus `-P`); provenance **measured**,
+commands in `J-architect_docs_lead-0003` Evidence.
+
+| Attempted override | Icarus 12.0 | Verilator 5.020 |
+|---|---|---|
+| Package parameter via the top-module scope (`-Ptop.P=…` / `-GP=…`) | **refused** — `parameter 'P' not found in 'top'` | **refused** — `%Error: Parameters from the command line were not found in the design: P` |
+| Package parameter via the package scope (`-Ppkg.P=…`) | **silently ignored** — no diagnostic, value unchanged | no equivalent flag |
+| Top-level **module** parameter defaulting to the package value | **works** | **works** |
+| A `string` module parameter feeding `$readmemh` | **works** — image loads | **works** — image loads |
+
+**The relay is confirmed and one row is worse than the relay claimed.** The
+package-scoped form under Icarus fails *silently*: no error, no warning, value
+unchanged. That is the form a test author reaches for first, and it fails by
+loading nothing — against a machine whose all-zero memory then halts on
+`0x0000` (REQ-043) looking like an ordinary result. A defect that presents as
+a plausible test outcome is the silently-always-pass class (PROTOCOL §10,
+**L-D11**), and it is the specific reason F-5 is BLOCKING rather than an
+inconvenience.
+
+**What this does not do**: it does not measure cocotb's `parameters=` mapping
+end to end, because no bench exists. It measures the simulator flags that
+mapping targets. NV-3's remaining fraction — the runner's own behaviour — is
+`dv_lead`'s and stays owed; row 3 makes it very likely to hold, and "very
+likely" is not a measurement.
+
+### A2.6 — Consequences
+
+1. **Spec REQ-115 is added** — the only id this revision mints. The
+   requirement count moves 90 → 91.
+2. **A-6 depends on it.** `dv_lead`'s six parameter-connectivity vectors are
+   six non-default elaborations; without REQ-115 they are an obligation with
+   no mechanism. The two amendments are a pair.
+3. **REQ-109 is unaffected and says so.** A module parameter that *defaults
+   to* its package value restates nothing; a default written as a literal
+   would be the defect REQ-109 names, and the spec now says that explicitly.
+4. **REQ-096 and §4.3 are unaffected.** The override is elaboration-time. No
+   port is added, so REQ-112's closure holds; no run-time control path is
+   added, so the quirks stay compile-time.
+5. **`rtl/**` is still untouched by this ADR.** REQ-115 constrains what
+   `rtl_lead` must write; it writes nothing. D-3 remains its work.
+
+### A2.7 — Falsifier
+
+A cocotb run in which `parameters={"MEM_INIT_FILE": ...}` fails to reach M03's
+module parameter in either lane — which would mean the runner does not map
+onto the flags measured above, and the repair would be a spec diff naming
+whatever mechanism does work. This is the remaining fraction of NV-3 and is
+discharged by `dv_lead`'s first bench, not by argument.

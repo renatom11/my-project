@@ -5,7 +5,9 @@
 - **Landed**: 2026-08-05, `J-architect_docs_lead-0002`, discharging
   `SPEC-P1-core-cpu.md` §11 deferred item **D-1** under
   `agents/handoffs/WO-0003_p1-design-rationale-adr.md`.
-- **Covers**: P1 (REQ-001 … REQ-124, the 90 ids enumerated below). P2–P5 blocks
+- **Covers**: P1 (REQ-001 … REQ-124, the 91 ids enumerated below — 90 at the
+  spec's `54a7221` draft plus **REQ-115**, added by the WO-0005 revision under
+  `dv_lead` amendment A-3). P2–P5 blocks
   are added by their own phases' spec work; this file is the program-wide
   register and grows with the program.
 
@@ -51,7 +53,7 @@ would be a scope act (**E2**), not a bookkeeping one.
   | REQ-040 … REQ-049 | Decode classification and fault behaviour | §6.3, §9 |
   | REQ-060 … REQ-087 | Instruction semantics | §6.4 |
   | REQ-090 … REQ-096 | Quirk parameters | §5.2 |
-  | REQ-100 … REQ-114 | Module inventory, interfaces, observation, shared package | §4, §5.5 |
+  | REQ-100 … REQ-115 | Module inventory, interfaces, observation, shared package, the override path | §4, §5.0, §5.5 |
   | REQ-120 … REQ-124 | Verification obligations and closure clauses | §4.C, §8, §10 |
 
 ## 3. Columns — who writes each, and when
@@ -106,7 +108,7 @@ labels, **not** statements of what any requirement says.
 | REQ | Spec § | Hook | Test ids | Evidence |
 |---|---|---|---|---|
 | **Architectural state, memory map, reset (§6.1.1, §5.4, §7.5)** | | | | |
-| **REQ-001** | §4.B, §6.2 | S + R | _(unfilled)_ | _(unfilled)_ |
+| **REQ-001** | §4.B, §6.2 | S + D (M01) | _(unfilled)_ | _(unfilled)_ |
 | **REQ-002** | §6.1.1 | D | _(unfilled)_ | _(unfilled)_ |
 | **REQ-003** | §6.1.1 | D + R | _(unfilled)_ | _(unfilled)_ |
 | **REQ-004** | §6.1.1 | D | _(unfilled)_ | _(unfilled)_ |
@@ -119,20 +121,20 @@ labels, **not** statements of what any requirement says.
 | **REQ-011** | §6.1.1 | D + R | _(unfilled)_ | _(unfilled)_ |
 | **REQ-012** | §6.1.1, §6.5 | D | _(unfilled)_ | _(unfilled)_ |
 | **REQ-013** | §6.1.1 | I + R | _(unfilled)_ | _(unfilled)_ |
-| **REQ-014** | §5.4, §6.1.1 | D | _(unfilled)_ | _(unfilled)_ |
+| **REQ-014** | §6.1.1, §5.4 | D | _(unfilled)_ | _(unfilled)_ |
 | | | | | |
 | **Control FSM, cycle counts, retire contract (§6.2, §7.1, §7.7)** | | | | |
-| **REQ-020** | §6.2 | I | _(unfilled)_ | _(unfilled)_ |
-| **REQ-021** | §6.2 | R | _(unfilled)_ | _(unfilled)_ |
-| **REQ-022** | §6.2 | R | _(unfilled)_ | _(unfilled)_ |
-| **REQ-023** | §6.2 | R | _(unfilled)_ | _(unfilled)_ |
-| **REQ-024** | §6.2 | R | _(unfilled)_ | _(unfilled)_ |
-| **REQ-025** | §6.2 | D | _(unfilled)_ | _(unfilled)_ |
-| **REQ-026** | §6.2 | D | _(unfilled)_ | _(unfilled)_ |
+| **REQ-020** | §6.2 | D, via REQ-028 | _(unfilled)_ | _(unfilled)_ |
+| **REQ-021** | §6.2 | D (M01) | _(unfilled)_ | _(unfilled)_ |
+| **REQ-022** | §6.2 | D (M01) | _(unfilled)_ | _(unfilled)_ |
+| **REQ-023** | §6.2 | D (M01) | _(unfilled)_ | _(unfilled)_ |
+| **REQ-024** | §6.2 | D (M01) + D | _(unfilled)_ | _(unfilled)_ |
+| **REQ-025** | §6.2 | D (M01) | _(unfilled)_ | _(unfilled)_ |
+| **REQ-026** | §6.2 | D (M01) | _(unfilled)_ | _(unfilled)_ |
 | **REQ-027** | §6.2, §9 | D + F | _(unfilled)_ | _(unfilled)_ |
 | **REQ-028** | §7.1 | D | _(unfilled)_ | _(unfilled)_ |
 | **REQ-029** | §7.7 | D + S | _(unfilled)_ | _(unfilled)_ |
-| **REQ-030** | §6.2 | R | _(unfilled)_ | _(unfilled)_ |
+| **REQ-030** | §6.2 | D (M01) | _(unfilled)_ | _(unfilled)_ |
 | | | | | |
 | **Decode classification and fault behaviour (§6.3, §9)** | | | | |
 | **REQ-040** | §6.3 | D + F | _(unfilled)_ | _(unfilled)_ |
@@ -169,7 +171,7 @@ labels, **not** statements of what any requirement says.
 | **REQ-079** | §6.4.1 | D + R | _(unfilled)_ | _(unfilled)_ |
 | **REQ-080** | §6.4.2, §6.5 | D + R | _(unfilled)_ | _(unfilled)_ |
 | **REQ-081** | §6.4.3 | D + R | _(unfilled)_ | _(unfilled)_ |
-| **REQ-082** | §6.4.3 | D | _(unfilled)_ | _(unfilled)_ |
+| **REQ-082** | §6.4.3 | D + D (M01) for the ordering clause | _(unfilled)_ | _(unfilled)_ |
 | **REQ-083** | §6.4.3 | D + R | _(unfilled)_ | _(unfilled)_ |
 | **REQ-084** | §6.4.3 | D + R | _(unfilled)_ | _(unfilled)_ |
 | **REQ-085** | §6.4.2 | D | _(unfilled)_ | _(unfilled)_ |
@@ -182,16 +184,16 @@ labels, **not** statements of what any requirement says.
 | **REQ-092** | §5.2 | D | _(unfilled)_ | _(unfilled)_ |
 | **REQ-093** | §5.2 | D | _(unfilled)_ | _(unfilled)_ |
 | **REQ-094** | §5.2 | D | _(unfilled)_ | _(unfilled)_ |
-| **REQ-095** | §5.2 | I | _(unfilled)_ | _(unfilled)_ |
+| **REQ-095** | §5.2 | D + I | _(unfilled)_ | _(unfilled)_ |
 | **REQ-096** | §4.3, §5.2 | S + I | _(unfilled)_ | _(unfilled)_ |
 | | | | | |
 | **Module inventory, interfaces, observation, shared package (§4, §5.5)** | | | | |
 | **REQ-100** | §4.0 | I | _(unfilled)_ | _(unfilled)_ |
 | **REQ-101** | §4.B | S | _(unfilled)_ | _(unfilled)_ |
-| **REQ-102** | §4.B, §7.4 | D | _(unfilled)_ | _(unfilled)_ |
+| **REQ-102** | §4.B, §7.4 | D (M02) | _(unfilled)_ | _(unfilled)_ |
 | **REQ-103** | §6.5 | D + R | _(unfilled)_ | _(unfilled)_ |
 | **REQ-104** | §6.5 | D + R | _(unfilled)_ | _(unfilled)_ |
-| **REQ-105** | §4.A, §4.C | S + I | _(unfilled)_ | _(unfilled)_ |
+| **REQ-105** | §4.A, §4.C | S + D | _(unfilled)_ | _(unfilled)_ |
 | **REQ-106** | §4.C | I | _(unfilled)_ | _(unfilled)_ |
 | **REQ-107** | §5.5 | I | _(unfilled)_ | _(unfilled)_ |
 | **REQ-108** | §5.5 | I | _(unfilled)_ | _(unfilled)_ |
@@ -199,8 +201,9 @@ labels, **not** statements of what any requirement says.
 | **REQ-110** | §5.5, §9 | D | _(unfilled)_ | _(unfilled)_ |
 | **REQ-111** | §5.3, §7.7 | I | _(unfilled)_ | _(unfilled)_ |
 | **REQ-112** | §4.A–§4.D | I | _(unfilled)_ | _(unfilled)_ |
-| **REQ-113** | §5.3 | D | _(unfilled)_ | _(unfilled)_ |
+| **REQ-113** | §5.3 | D (M01) | _(unfilled)_ | _(unfilled)_ |
 | **REQ-114** | §4.C | S + I | _(unfilled)_ | _(unfilled)_ |
+| **REQ-115** | §5.0, §4.3, §4.C | S + D | _(unfilled)_ | _(unfilled)_ |
 | | | | | |
 | **Verification obligations and closure clauses (§4.C, §8, §10)** | | | | |
 | **REQ-120** | §4.C, §7.7 | S | _(unfilled)_ | _(unfilled)_ |
@@ -235,17 +238,28 @@ prerequisite.
 
 ## 7. Open items against this file
 
-- **OQ-4** (`SPEC-P1-core-cpu.md` §11) blocks `P1-spec-freeze`: memory outside
-  a partial `MEM_INIT_FILE` image has no specified initial value, which
-  falsifies **REQ-123** as written. Until it closes, REQ-123's row below is
-  **known to be citing a requirement that its own spec section does not
-  discharge**. Recorded here rather than left for a reader to discover, per
-  ADR-0018 §7.2.
+- ~~**OQ-4** blocks `P1-spec-freeze`…~~ **✅ CLOSED 2026-08-05** by the WO-0005
+  spec revision (`J-architect_docs_lead-0003`). REQ-014 now specifies all 4096
+  locations at time zero for every value of `MEM_INIT_FILE`, so **REQ-123's
+  row below is no longer citing a requirement its spec section fails to
+  discharge**. The note is marked rather than deleted (L-A04) so the interval
+  during which the row was known-weak stays on the record.
 - **Every Test-ids and Evidence cell is empty.** No RTL and no bench exist;
   this is the expected state at spec time, not an omission.
-- **The Hook column is a proposal.** `dv_lead` grades it at the testability
-  countersignature (WO-0004) and may discharge any requirement by a different
-  means.
+- ~~**The Hook column is a proposal.**~~ **Graded 2026-08-05** at
+  `docs/reports/dv/DV-P1-testability.md`, and the hooks above are the
+  **post-grading** column: `dv_lead` found that nine requirements assert
+  memory-port behaviour invisible at the M03 DUT boundary and that five of
+  them carried a hook naming a check which could not perform the observation
+  (its F-1, F-7, F-8). Those cells are corrected here and in the spec's §10,
+  which remains authoritative; a `(M01)`/`(M02)`/`(M04)` annotation marks a row
+  bound at that module's own boundary rather than at the DUT's. `dv_lead` may
+  still discharge any requirement by a different means.
+- **Fifteen `I` hooks have no named performer** (`DV-P1-testability.md` F-6;
+  spec §11 D-9). For REQ-100/107/108/112 the object of inspection is an RTL
+  file, which the countersignatory's charter bars it from reviewing. Routed to
+  the orchestrator; until it is answered, an `I` in the column above is a
+  claimed control with no performer named anywhere.
 
 ## 8. Related artifacts
 

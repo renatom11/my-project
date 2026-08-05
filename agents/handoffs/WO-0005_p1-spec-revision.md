@@ -1,6 +1,6 @@
 # WO-0005: P1 spec revision — amendments A-1…A-6 and OQ-4
 
-- **State**: ISSUED
+- **State**: **RETURNED** 2026-08-05 (see Return log)
 - **From** / **To**: orchestrator → architect_docs_lead
 - **Spec basis**: `docs/specs/SPEC-P1-core-cpu.md` at `ef3728c` (DRAFT);
   `docs/reports/dv/DV-P1-testability.md` at `f9a6bef` §8 (the amendments);
@@ -76,3 +76,118 @@ The revised spec with OQ-4 closed and A-1…A-6 dispositioned one by one, plus
 an explicit statement of whether F-5 is real. Your Outcome should say
 plainly whether you believe the spec is now freezable, knowing dv_lead
 issues the countersignature, not you.
+
+---
+
+## Return log
+
+### RETURNED — 2026-08-05, `architect_docs_lead`, `J-architect_docs_lead-0003`
+
+Spawn short-id `WO-0005/2026-08-05T17:40Z`. Single pass, as armed at issue.
+
+**Files written** (no git command was run — not `add`, not `commit`, not
+`push`; the constraint in §3 was read as written and honored):
+
+- `docs/specs/SPEC-P1-core-cpu.md` — the revision
+- `docs/adr/ADR-0018-p1-core-cpu-design-choices.md` — Amendments **A1** and
+  **A2**, appended; no line of the original text edited (L-A04)
+- `docs/specs/requirements.md` — REQ-115's row, the corrected hook column,
+  OQ-4's open item marked closed
+- `agents/handoffs/WO-0005_p1-spec-revision.md` — this log and the header
+  state flip
+- `agents/journals/claude_architect_docs_lead_agent.md` — the entry
+
+#### DoD, item by item
+
+| DoD item | Status |
+|---|---|
+| Every one of A-1…A-6 applied or declined with a reason | **Met — all six APPLIED, none declined.** Three applied with additions, each named and reasoned in spec §13.1 |
+| **OQ-4 closed by normative text** | **Met.** REQ-014 rewritten; §5.4, §6.6, REQ-008, REQ-123, §4.B amended to match |
+| §11's open-question table shows no unclosed blocker | **Met.** OQ-1 closed by dv_lead's adjudication, OQ-2 by the orchestrator, OQ-4 by this revision; OQ-3 remains as an accepted standing limitation and is given freeze-visible form as new deferred items D-8 and D-9 |
+| §13 change log records the revision | **Met** — §13.1, amendment by amendment |
+| ADR-0018 amended (appended) if a decision moves | **Met.** Two decisions moved, so two amendments |
+
+#### The three answers the packet asked for
+
+**1. OQ-4 is CLOSED.** The answer is `8'h00`. REQ-014 now specifies memory in
+two ordered clauses — all 4096 locations hold `8'h00` at time zero; the image
+is applied over that — so an uncovered location holds `8'h00` whether it is
+past a short image's end or inside a hole an `@address` record left. **In both
+lanes a bench observes `8'h00` on the first read of an unwritten location**,
+measured in Icarus 12.0 and Verilator 5.020, tabulated in REQ-014 with the
+non-conformant case beside it. **REQ-123 is made true, not narrowed**: its "no
+uninitialised storage" is discharged by a three-term enumeration (REQ-008,
+REQ-014, §4.B) rather than asserted. The Python model mirrors it with 4096
+zero bytes overlaid by the image and needs no notion of `X`. Four alternatives
+and their costs are in ADR-0018 Amendment A1.
+
+**2. The six dispositions** are in spec §13.1 as a table. Summary: **A-1**
+applied with propagation to five further sites carrying the same literals;
+**A-2** applied verbatim plus the coverage enumeration; **A-3** applied plus
+the derived-width clause described below; **A-4** applied verbatim plus a
+paragraph separating the determinism/lane-to-lane domain from the
+model-to-DUT domain; **A-5** applied verbatim plus one sentence on REQ-115;
+**A-6** applied verbatim plus propagation to §2 and §10. Nothing declined.
+
+**3. F-5 is REAL, and it is the most consequential defect in the set.** Two
+findings, and the first does not depend on the second:
+
+- **It is a contradiction internal to the document.** §5.4 says every test
+  sets `MEM_INIT_FILE`; §5 put every parameter in the package; §4.3 declared
+  no configuration inputs; §4.C listed no parameters. Those four are jointly
+  unsatisfiable **under any toolchain assumption whatever**. The relay was
+  load-bearing for how bad the defect is, not for whether it is one — so F-5
+  is adjudicated without waiting for a spike.
+- **The relayed premise is now measured, and one row is worse than relayed.**
+  Both lanes refuse a package-parameter override and accept a top-level module
+  parameter defaulting to the package value; a `string` module parameter
+  feeding `$readmemh` works in both. But Icarus's *package-scoped* form
+  (`-Ppkg.P=…`) is **silently ignored** — no diagnostic, value unchanged. That
+  is the form a test author tries first, and it fails by loading nothing,
+  against a machine whose all-zero memory then halts on `0x0000` (REQ-043)
+  looking like an ordinary result. A silently-always-pass presentation
+  (PROTOCOL §10, L-D11) is why this is BLOCKING and not an inconvenience.
+
+**A-3 needed a clause it did not have, and this is the round's near-miss.**
+A-3 applied literally *alongside* A-1 would have reinstated F-2 through its
+own mechanism: A-1 makes `obs_sp` `SP_W` wide, §5.1 derives `SP_W` from
+`STACK_DEPTH`, and A-3 makes `STACK_DEPTH` a module parameter — so a
+package-derived `SP_W` does not follow the override, leaving `obs_sp` 5 bits
+at `STACK_DEPTH = 4`. Measured in both lanes: package-derived `SP_W` reads
+**5**, module-derived reads **3**. REQ-115 therefore requires derived widths
+to be derived in the module. Recorded in ADR-0018 Amendment A2 §A2.4.
+
+#### Two items routed up, both owing board lines this author cannot write
+
+- **D-8 — P1 has no external anchor.** `dv_lead`'s F-11/§10, graded MAJOR,
+  ESCALATION, and explicitly **not freeze-blocking**. Recorded as a deferred
+  item rather than an open question precisely because an OQ row would block
+  the gate it asked to be signed *with knowledge of*. It is the item that most
+  changes what a P1 PASS means, its options are E3-shaped, and it must be
+  settled before `P1-module-ready`.
+- **D-9 — fifteen `I` hooks have no named performer** (F-6), and for four of
+  them the object of inspection is an RTL file the countersignatory's charter
+  bars it from reading. Assigning `rtl_lead` to it is not this author's to do
+  (charter §7); routed rather than decided.
+
+#### Boundary respected
+
+`dv_lead` pre-committed that its confirmatory pass covers only the amended
+text. **No requirement outside the amendment set had its meaning revised.**
+The propagation edits change wording to preserve a meaning, never to alter
+one, and every one is enumerated in §13.1 so the confirmatory pass is bounded
+and does not have to be discovered by diff. Nothing under `rtl/**` was
+created, implied or reserved; D-3 remains `rtl_lead`'s.
+
+#### Freezable?
+
+**Yes, in this author's judgement — and the countersignature is `dv_lead`'s to
+issue, not mine.** Every freeze precondition in charter §5 is now met or
+explicitly dispositioned: D-1 and D-2 landed, the interface-check regime is
+ADR-0017's fallback with the line-by-line grading performed, ADRs exist for
+every non-obvious choice including the two this round added, and no open
+question remains unresolved. The two things a signer should know before
+signing are **D-8** (a P1 PASS proves the RTL implements this specification
+and nothing about whether this specification describes CHIP-8) and **OQ-3**
+(the five quirk defaults are relayed) — both now in the document the gate
+reads, which is what F-11 asked for.
