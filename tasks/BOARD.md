@@ -95,8 +95,7 @@ the rows below are its roadmap view. Changing either is an E2 escalation.
 
 | Packet | From → To | State | Subject |
 |---|---|---|---|
-| [`WO-0005_p1-spec-revision.md`](../agents/handoffs/WO-0005_p1-spec-revision.md) | orchestrator → architect_docs_lead | **ISSUED** 2026-08-05 | Apply dv_lead's amendments A-1…A-6 and close **OQ-4** with normative text — the two things blocking `P1-spec-freeze` |
-| [`WO-0006_sole-committer-violation-audit.md`](../agents/handoffs/WO-0006_sole-committer-violation-audit.md) | orchestrator → auditor | **ISSUED** 2026-08-05 | A commit exists under `Agent: dv_lead` (`f9a6bef`) that the orchestrator did not author — PROTOCOL §2 sole-committer. Baseline pinned `f9a6bef` |
+| [`WO-0007_p1-confirmatory-countersignature.md`](../agents/handoffs/WO-0007_p1-confirmatory-countersignature.md) | orchestrator → dv_lead | **ISSUED** 2026-08-05 | Confirmatory pass over the amended surface only, then the testability countersignature — the last precondition of `P1-spec-freeze` |
 
 Closed:
 
@@ -243,6 +242,48 @@ exception forbids — the auditor **did not comply** and was right not to),
 spawn prompt stated the R2 consequence, so the fix is a template), **F8**
 (journal header timestamps up to +57 min ahead of commit time — L-A07's own
 incident recurring), **F9**.
+
+## P1 spec revision — OQ-4 closed, all six amendments applied
+
+`WO-0005` returned at `ddc06dc`. **OQ-4 is closed**: `REQ-014` now specifies
+memory in two *ordered* clauses — all 4096 locations hold `8'h00` at time
+zero, then the image is applied over that — so an uncovered location holds
+`8'h00`, **measured as `8'h00` on first read in both lanes**, with the
+non-conformant case (image applied without zero-fill → `8'hxx` on Icarus,
+`8'h00` on Verilator) tabulated beside it as a deliberate-mismatch check.
+`REQ-123` is made **true**, not narrowed. All of **A-1…A-6 applied, none
+declined**. 90 → 91 requirements (`REQ-115` minted, none withdrawn).
+
+**The finding that changed the wording**: the uncovered set is **not a
+suffix**. The orchestrator, `dv_lead` and the architect's own ADR §7.2 all
+framed it as "bytes beyond the end of a short image" — but a `$readmemh`
+file may carry `@address` records, and a sparse image leaving a hole in the
+*middle* was measured reading `xx`. The repair is phrased per location. A
+one-sentence fix written the way all three parties were thinking would have
+left a hole in the hole.
+
+**F-5 is confirmed real, BLOCKING, and worse than graded.** It is
+adjudicable from the document alone — §5.4, §5, §4.3 and §4.C are jointly
+unsatisfiable under *any* toolchain assumption. Measured on top of that:
+both lanes refuse a package-parameter override, while **Icarus's
+package-scoped form `-Ppkg.P=…` is silently ignored** — no diagnostic, value
+unchanged. That is the form a test author tries first, and it fails by
+loading nothing into a machine whose all-zero memory then halts on `0x0000`
+looking like an ordinary result: a silently-always-pass presentation.
+
+**A near-miss worth the record**: applying A-3 literally alongside A-1 would
+have reinstated F-2 by a new mechanism — A-1 widens `obs_sp` to `SP_W`, §5.1
+derives `SP_W` from `STACK_DEPTH`, A-3 makes `STACK_DEPTH` a module
+parameter, and a package-derived `SP_W` does not follow the override
+(measured 5 vs 3 at `STACK_DEPTH = 4`). `REQ-115` now requires derived
+widths to be derived in the module.
+
+**Two items routed up, both owed board lines the architect cannot write:**
+
+| Id | Item | Disposition |
+|---|---|---|
+| **D-8** | **P1 has no external anchor.** A P1 PASS proves the RTL implements *this specification* and nothing about whether the specification describes CHIP-8. (This is `dv_lead`'s F-11, now carried in the document the gate actually reads.) | Recorded as a **deferred item, not an open question** — deliberately, since an OQ row would block the very gate it asks to be signed *with knowledge of*. Options are **E3**-shaped; settles before `P1-module-ready`. **What a sponsor signing the freeze should know first.** |
+| **D-9** | Fifteen `I` hooks have no named performer; four are over RTL the countersignatory may not read. | Routed, not decided — assigning `rtl_lead` is not the architect's to do. Orchestrator's, at the first RTL work order. |
 
 ## P1 open questions (L-E10 — open questions are board artifacts)
 

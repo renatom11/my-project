@@ -4415,3 +4415,133 @@ confirmatory pass.
 
 ### Files-in-this-commit
 - agents/handoffs/templates/WO-template.md
+
+## [J-orchestrator-0054] 2026-08-05T18:12Z | task:WO-0007 | P1 revision landed; a premature inference of mine corrected; confirmatory pass issued
+
+### Trigger
+`architect_docs_lead` returned WO-0005. OQ-4 is closed, all six amendments
+applied, F-5 confirmed real. I commit its work, correct an inference I drew
+too early at `J-orchestrator-0053`, and issue the last packet standing
+between P1 and its spec freeze.
+
+### Inputs
+- `docs/specs/SPEC-P1-core-cpu.md`, `docs/adr/ADR-0018-...md`,
+  `docs/specs/requirements.md`, WO-0005 Return log, all at `ddc06dc`.
+- `J-architect_docs_lead-0003`; spec §13.1 (the enumerated propagation set).
+- `docs/reports/dv/DV-P1-testability.md` §8 and its pre-commitment.
+- `docs/reports/audit/AUD-0002-...md` F8.
+
+### Reasoning
+- **A correction I owe, and it is a subtler error than the last one.** At
+  `J-orchestrator-0053` I wrote that the architect had *returned* without a
+  journal entry, and called it "the second agent in two cycles to do so".
+  The **measurement was sound** — the file was byte-identical to HEAD when I
+  read it, and the R2 refusal I captured was real. The **inference was
+  premature**: the agent had not returned, it was still writing, and its
+  append landed after my snapshot. WO-0005's State line already read
+  RETURNED, which is what misled me - but a packet's own state line is
+  written by the agent mid-flight and is not a completion signal. So: the
+  dv_lead occurrence was real, the architect one was not, and "a pattern
+  across two cycles" was wrong. Corrections append (L-A04); `-0053` stands
+  and this entry carries the correction.
+- **The §0 template fix survives the correction, and I want to be precise
+  about why rather than defend it out of habit.** Its justification was
+  never the count - it was AUD-0002-F7's finding that **no** spawn prompt
+  had ever stated the R2 consequence, which is true independent of how many
+  agents tripped on it. One real occurrence plus a systemic gap is
+  sufficient. What I should not have done is inflate the evidence for a fix
+  I already believed in.
+- **What I take from this, at the same seam as F1 and F2.** Both errors are
+  the same shape: I had a measurement and reported a conclusion the
+  measurement did not license. `git log` cannot say who ran a command; a
+  byte-identical journal cannot say whether an agent has finished. The
+  discipline is not "measure more", it is to ask what the measurement is
+  actually evidence *of*. I have added a completion rule to my own practice:
+  **an agent has returned when its task notification arrives, not when its
+  files look done.**
+- **The architect's best work this round was refusing the frame all three
+  of us brought.** dv_lead, the architect's own ADR §7.2 and I had each
+  described the uncovered memory as a *suffix* - "bytes beyond the end of a
+  short image". It isn't: `$readmemh` accepts `@address` records, so a
+  sparse image can leave a hole in the middle, which it measured reading
+  `xx`. It phrased the repair per location. A one-sentence fix written the
+  way all three of us were thinking would have left a hole in the hole -
+  and it would have been invisible until a bench loaded a sparse image,
+  which is exactly the kind of latent defect a spec freeze is supposed to
+  stop.
+- **F-5 is worse than dv_lead graded it and the reason is presentation.**
+  The architect established it is adjudicable from the document alone -
+  §5.4, §5, §4.3 and §4.C are jointly unsatisfiable under any toolchain
+  assumption - then measured it anyway rather than resting on "the relay is
+  probably right". The measurement found the sharp edge: Icarus **silently
+  ignores** `-Ppkg.P=…`, no diagnostic. A test author tries that form first,
+  it loads nothing, and the machine's all-zero memory halts on `0x0000`
+  looking like an ordinary result. A defect whose symptom is a plausible
+  green is PROTOCOL §10's silently-always-pass class, and grading it
+  BLOCKING is right.
+- **The near-miss is the strongest argument for this whole round.**
+  Applying A-3 literally *alongside* A-1 would have reinstated F-2 through a
+  new mechanism, because a package-derived `SP_W` does not follow a module
+  parameter override (measured 5 vs 3). An agent that applied its
+  instructions faithfully and without thought would have shipped it. That is
+  why I told the architect to reason F-5 through rather than accept or
+  dismiss it, and why WO-0007 asks dv_lead to check derived widths
+  generally rather than `SP_W` specifically.
+- **D-8's placement is a piece of real judgement and I am adopting it.**
+  The architect recorded "P1 has no external anchor" as a *deferred item*
+  rather than an *open question*, because an OQ row blocks the freeze - and
+  this is precisely a fact the sponsor should sign the freeze **knowing**,
+  not a reason to withhold it. That is dv_lead's F-11 moved from a DV report
+  into the document the gate actually reads, which is what F-11 asked for
+  and could not do from its own write scope.
+- **WO-0007 is the first packet issued under the new template §0.** Whether
+  it stops the recurrence is unmeasured until it returns; I am not claiming
+  the fix works.
+
+### Actions
+- Verified and committed the architect's five files at `ddc06dc` under its
+  own trailer: journal 394/0 pure append, ids 0001→0003 contiguous,
+  `Files-in-this-commit` set-equal to the four non-journal paths.
+- Wrote `WO-0007` (dv_lead): confirmatory pass bounded by spec §13.1's
+  enumerated propagation set, seven numbered tasks, the three
+  amendments-with-additions flagged for judgement, and the standing
+  obligations carried inline.
+- `tasks/BOARD.md`: new "P1 spec revision" section recording the OQ-4
+  closure, the not-a-suffix finding, F-5's silent-ignore edge, the A-1/A-3
+  near-miss, and **D-8/D-9** as the two items routed up; open work orders
+  replaced with WO-0007.
+
+### Evidence
+- `git diff --numstat` on the architect's journal at `ddc06dc`: **394/0**,
+  pure EOF append. Chain: `-0001`, `-0002`, `-0003`. *Measured.*
+- `Files-in-this-commit` for `-0003` lists exactly the four non-journal
+  paths staged. *Measured.*
+- `grep -oE '^\| *REQ-[0-9]{3}' | sort -u | wc -l` → **91** (was 90;
+  `REQ-115` minted, none withdrawn). *Measured.*
+- `scripts/check_journals.sh --all` → **59 commits** green, chains verified.
+  *Measured.*
+- OQ-4's two-lane table, F-5's flag behaviour, and the `SP_W` 5-vs-3 result
+  are the architect's measurements in its own simulator runs — **relayed**
+  here, not re-executed by me. dv_lead's confirmatory pass is where they get
+  independent eyes.
+
+### Outcome
+DoD met. P1's spec stands at `ddc06dc` with every open question closed and
+every amendment applied. **The last precondition of `P1-spec-freeze` is
+dv_lead's countersignature**, now issued as WO-0007. Handoff: dv_lead.
+
+### Open-questions
+- **The countersignature is not granted yet** and I will not pre-announce
+  its outcome.
+- **D-9** — fifteen `I` hooks with no named performer — is mine to assign at
+  the first RTL work order.
+- **D-8** is E3-shaped and settles before `P1-module-ready`; it is what a
+  sponsor signing the freeze should know first.
+- **AUD-0002-F1's disposition is owed**; I am the subject and do not propose
+  it.
+- Unchanged and still owed: the outer-hop PR, AUD-0001-F3's closure, three
+  unfiled shell defects.
+
+### Files-in-this-commit
+- agents/handoffs/WO-0007_p1-confirmatory-countersignature.md
+- tasks/BOARD.md
