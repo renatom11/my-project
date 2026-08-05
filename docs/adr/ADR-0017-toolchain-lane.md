@@ -211,3 +211,80 @@ licenses breaking two others.
   record and checkable — without breaking R-CI-b.
 - **The two exceptions** — pinned by revision in the same committed
   manifest.
+
+---
+
+## Amendment A2 — R1 retired by measurement; the pin moves, not the simulator
+
+Adopted 2026-08-05 at `J-orchestrator-0048`. The named risk **R1** —
+"cocotb's Verilator support is narrower than its Icarus support" — was the
+ADR's one open risk and its retirement was made the first M1 work order. It
+is now retired **by measurement rather than by argument**, and the answer is
+more specific than the risk was.
+
+### What was measured
+
+A minimal synchronous DUT (one register, one flag) driven by a cocotb test
+running a Python reference model in lockstep, comparing full state every
+cycle — the P1 pattern in miniature. Run under both simulators.
+
+| cocotb | Icarus 12.0 | Verilator 5.020 |
+|---|---|---|
+| **2.0.1** | PASS — 200 steps | **BUILD FAILURE** |
+| **1.9.2** | PASS — 200 steps, final sum 232 | **PASS** — identical, final sum 232 |
+
+The 2.0.1 failure is a **compile error in cocotb's own VPI shim**, not a test
+failure and not a limitation of the pairing:
+
+```
+cocotb/share/lib/verilator/verilator.cpp:154:36:
+  error: 'evalNeeded' is not a member of 'VerilatedVpi'
+cocotb/share/lib/verilator/verilator.cpp:158:27:
+  error: 'doInertialPuts' is not a member of 'VerilatedVpi'
+```
+
+cocotb 2.0 targets a newer Verilator than the runner distribution carries.
+Since **R-CI-b** bars building a newer Verilator from source, the resolution
+is to move the *pin*, not the *simulator*: `cocotb==1.9.2`, recorded in
+`requirements.txt` with the reason at the site so a later reader does not
+"fix" the downgrade.
+
+### The harness was proved able to fail
+
+A green lockstep bench proves nothing unless it can go red (**L-D11**;
+PROTOCOL §10's silently-always-pass class). A one-character defect was
+injected into the DUT (`sum + addend` → `sum + addend + 1`) and the
+comparator fired immediately, naming the divergence precisely:
+
+```
+AssertionError: divergence at step 0: en=1 addend=5 DUT=(6,0) MODEL=(5,0)
+```
+
+That is the P1 acceptance behaviour working on a toy: the failure identifies
+the exact step and what differed, rather than leaving a reader to work
+backwards from corrupted state thousands of cycles later.
+
+### Consequences
+
+1. **R1 is CLOSED.** The dual-lane architecture stands as decided; the ADR's
+   stated fallback (Icarus-only for cocotb) is **not** taken and no capability
+   is lost.
+2. **`requirements.txt` and `TOOLCHAIN.md` are committed**, discharging
+   Amendment A1.2's promise that pins live in committed project files.
+3. **A standing rule, recorded at the pin site**: raising the cocotb pin
+   requires re-running this spike against **both** simulators. A cocotb that
+   passes on Icarus alone silently costs the Verilator lane, and the loss
+   would not show up as a red build — it would show up as a lane quietly
+   absent.
+4. **Still *relayed*, not *measured***: `nextpnr-ice40` and `icetime`. They
+   are P5 tools and were not installed for this spike. Their availability
+   becomes measured when the synthesis lane first runs, not before.
+5. **A bench-authoring hazard worth carrying into P1**, found the hard way in
+   this spike: the first draft consumed an extra clock edge per iteration
+   while inputs were still applied, so the DUT accumulated twice where the
+   model accumulated once. The lockstep caught it and reported it as a
+   divergence — correctly, but the defect was in the *bench*, not the DUT.
+   For a machine whose instructions take a variable number of cycles, "how
+   many edges does one model step correspond to?" is the question most likely
+   to produce false divergences in P1. It belongs in the tb_writer work
+   order's context, not in a debugging session.

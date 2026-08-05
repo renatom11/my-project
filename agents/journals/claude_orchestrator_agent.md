@@ -3658,3 +3658,130 @@ DV-lane question. Handoff: none; the sponsor has no open decision.
 - scripts/policy.sh
 - scripts/test_protocol.sh
 - tasks/BOARD.md
+
+## [J-orchestrator-0048] 2026-08-05T16:14Z | task:none | R1 retired by measurement: cocotb pinned 1.9.2, both lanes green, harness proved able to fail
+
+### Trigger
+The sponsor asked whether progress was moving. Answering honestly required
+counting what exists: eight commits, all governance; no `rtl/`, `test/`,
+`tools/`, `syn/` or `web/`; zero lines of design or model code. The useful
+response was to stop producing governance and retire the one open technical
+risk, which is also what M1's next step needed.
+
+### Inputs
+- `docs/adr/ADR-0017-toolchain-lane.md` (ACCEPTED, A1) — risk R1 and its
+  stated fallback.
+- `docs/playbooks/ci-evidence.md` §7 R-CI-b, R-CI-c, R-CI-h.
+- `BOOTSTRAP.md` §2.1 (pins in committed files).
+- `docs/LESSONS.md` L-D11 (an instrument must prove it can still fail),
+  L-B01 (provenance classes), L-D04 (NO-VERDICT).
+- The container itself: `command -v` over the nine named tools.
+
+### Reasoning
+- **The state of the tree was the answer to the question, so I measured it
+  before speaking.** Five product directories absent, zero lines of RTL or
+  model, no toolchain installed. Some of that ratio is the shell's design -
+  governance is front-loaded so independence and evidence rules are real
+  before code exists - but eight-to-zero is stark and the sponsor should
+  see it stated rather than inferred from green checkmarks.
+- **R1 fired, and the specific cause is more useful than the risk was.**
+  ADR-0017 framed R1 as "cocotb's Verilator support is narrower". What
+  actually happens is narrower still and fully diagnosable: cocotb 2.0.1's
+  Verilator VPI shim references `VerilatedVpi::evalNeeded` and
+  `doInertialPuts`, which Verilator 5.020 does not define, so the *shim*
+  fails to compile. It is a version incompatibility, not a limitation of
+  the pairing - which means the fallback was the wrong remedy.
+- **The pin moves, not the simulator.** Verilator 5.020 is what the
+  distribution carries and R-CI-b bars building a newer one from source.
+  Downgrading cocotb to 1.9.2 costs nothing measurable here and preserves
+  the dual-lane architecture whole. Taking the ADR's stated fallback
+  (Icarus-only for cocotb) would have given up the fast lane for a reason
+  that turned out not to be the real one - which is exactly why the spike
+  had to run before the fallback was invoked.
+- **A downgrade in a pin file reads as drift unless it argues for itself.**
+  So `requirements.txt` carries the compiler error verbatim at the pin
+  site, plus a standing rule: raising the cocotb pin requires re-running
+  this spike against *both* simulators. A cocotb that passes on Icarus
+  alone would not produce a red build - it would produce a lane quietly
+  absent, which is the silently-always-pass class in a different costume.
+- **A green lockstep bench proves nothing until it goes red.** I injected a
+  one-character defect (`sum + addend` → `+ 1`) and confirmed the
+  comparator fires at step 0 naming the exact divergence. That is L-D11
+  applied to the instrument itself, and it is also a rehearsal of the P1
+  acceptance behaviour: the failure identifies the step and what differed,
+  rather than leaving a reader to work backwards from corrupted state.
+- **My first bench draft was wrong, and the bug is worth carrying into
+  P1.** It consumed an extra clock edge per iteration while inputs were
+  still applied, so the DUT accumulated twice where the model accumulated
+  once - reported as a divergence, correctly, but the defect was in the
+  bench. For a machine whose instructions take a *variable* number of
+  cycles, "how many edges is one model step?" is the question most likely
+  to manufacture false divergences in P1. Recorded in ADR-0017 A2 as
+  context the tb_writer work order should carry, rather than left to be
+  rediscovered in a debugging session.
+- **What I did not claim.** `nextpnr-ice40` and `icetime` were not
+  installed and stay *relayed*. Their availability becomes measured when
+  the synthesis lane first runs. Saying "the toolchain is verified" would
+  have been true of four tools and false of two.
+
+### Actions
+- Measured the tree's product state and the container's toolchain.
+- Installed Verilator, Icarus, Yosys and Z3 from the distribution archive
+  and cocotb from pip; ran the R1 spike in the scratchpad (throwaway - the
+  finding is the deliverable, and `test/**` is dv_lead's scope, not mine).
+- Ran the spike matrix under cocotb 2.0.1 and 1.9.2 against both
+  simulators; injected and reverted a deliberate defect to prove the
+  comparator fires.
+- Committed `requirements.txt` (exact Python pins, with the error and the
+  standing rule at the site) and `TOOLCHAIN.md` (distribution floors,
+  R-CI-c sidecar rule, the two named R-CI exceptions and their
+  confinement).
+- Appended **ADR-0017 Amendment A2**: R1 CLOSED, the measurement matrix,
+  the proof the harness can fail, and the bench-authoring hazard for P1.
+- `tasks/BOARD.md`: M1 row updated; next work order set to the P1 spec
+  freeze; a measured toolchain block replacing the previously relayed one.
+
+### Evidence
+All measured in this session, in a scratch directory, at `2cdade8`:
+
+| cocotb | Icarus 12.0 | Verilator 5.020 |
+|---|---|---|
+| 2.0.1 | PASS, 200 steps | **BUILD FAILURE** |
+| 1.9.2 | PASS, 200 steps, final sum 232 | **PASS**, identical, final sum 232 |
+
+- Build failure, verbatim: `cocotb/share/lib/verilator/verilator.cpp:154:36:
+  error: 'evalNeeded' is not a member of 'VerilatedVpi'` (and `:158:27`
+  for `doInertialPuts`). *Measured.*
+- Deliberate-mismatch check: with `sum + addend + 1` injected,
+  `AssertionError: divergence at step 0: en=1 addend=5 DUT=(6,0)
+  MODEL=(5,0)`; defect reverted. *Measured.*
+- Versions: `Verilator 5.020 2024-01-01`, `Icarus Verilog version 12.0
+  (stable)`, `Yosys 0.33`, `Z3 version 4.8.12`. *Measured.*
+- `nextpnr-ice40`, `icetime`, `sby`, `emcc`: not installed, not measured.
+- **Ephemerality note (PROTOCOL §4.1)**: the spike ran in this session's
+  scratchpad and those artifacts are **ephemeral** — they are not committed
+  and will not survive the container. What is durable is this entry, the
+  ADR amendment, and the two pin files; the spike is reproducible from the
+  ADR's description, not from a saved directory.
+
+### Outcome
+DoD met. **R1 is CLOSED** and the dual-lane architecture stands as decided,
+with no capability surrendered. Pin manifests are committed, discharging
+A1.2's promise. M1's remaining work is `build.yml` instantiation. The next
+spawn is `architect_docs_lead` for the P1 spec freeze — the first agent
+whose output is the product rather than the program. Handoff: none; no
+sponsor decision is open.
+
+### Open-questions
+- **`nextpnr-ice40` and `icetime` are unverified**; the synthesis lane's
+  first run measures them, and a gap there is a new E3, not a re-pin.
+- **`sby` and `emcc`** remain the two named R-CI exceptions, unexercised
+  until P4 and P5.
+- Unchanged and still owed: the outer-hop PR, AUD-0001-F3's closure by
+  follow-up audit, three unfiled shell defects.
+
+### Files-in-this-commit
+- requirements.txt
+- TOOLCHAIN.md
+- docs/adr/ADR-0017-toolchain-lane.md
+- tasks/BOARD.md

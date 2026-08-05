@@ -77,7 +77,7 @@ the rows below are its roadmap view. Changing either is an E2 escalation.
 | Milestone | Scope | Status |
 |---|---|---|
 | M0 | Bring-up: G0 intake, org ratification, branch protection, enforcement self-test green | ✅ **Complete** — G0 passed 2026-08-05 |
-| M1 | Toolchain ADR (E3), build CI instantiation, SPEC-TEMPLATE §4.1 interface regime | **Active** — ADR-0017 **ACCEPTED** (Lane A, reviewed port tables) and its §11 lane amendment landed with its proving scenario. Remaining: CI instantiation, the committed pin manifests, the R1 spike |
+| M1 | Toolchain ADR (E3), build CI instantiation, SPEC-TEMPLATE §4.1 interface regime | **Active** — ADR-0017 **ACCEPTED** (Lane A); §11 lane amendment landed with its proving scenario; **R1 retired by measurement** (A2) and pin manifests committed. Remaining: `build.yml` instantiation, then the P1 spec freeze |
 | P1 | Core CPU — memory, register file, stack, multicycle FSM, non-draw/non-I/O instructions, golden model + lockstep harness | Not started |
 | P2 | Display and draw path — framebuffer, 64-bit barrel shifter, `DXYN` XOR + collision, `00E0`, font ROM + `FX29` | Not started |
 | P3 | I/O, timing, first light — 60 Hz timers, keypad, `FX0A` blocking wait; Pong runs end-to-end | Not started |
@@ -99,9 +99,17 @@ _None open._ Closed this milestone:
 |---|---|---|---|
 | [`WO-0001_g0-retro-audit.md`](../agents/handoffs/WO-0001_g0-retro-audit.md) | orchestrator → auditor | ✅ **ACCEPTED** 2026-08-05 | G0 row A9 — retro-audit of the seed commit range, baseline `fe5dea7`. Verdict PASS WITH FINDINGS (AUD-0001); dispositions in "Audit findings" below |
 
-**Next work order**: the **R1 spike** — validate cocotb driving Verilator
-before the P1 spec freeze (ADR-0017's named risk). Its fallback is already
-written, so the spike retires a risk rather than discovering one.
+**Next work order**: the **P1 spec freeze** — `architect_docs_lead`'s first
+spawn, writing the core-CPU REQ-### requirements. R1 is retired, the
+toolchain is measured present, and the pins are committed, so nothing
+technical blocks it.
+
+**Toolchain, measured 2026-08-05** (was *relayed* until the R1 spike):
+Verilator **5.020**, Icarus **12.0**, Yosys **0.33**, Z3 **4.8.12**, all
+from the distribution archive (R-CI-b honored in practice); cocotb pinned
+**1.9.2** in `requirements.txt` — see ADR-0017 A2 for why 2.0.1 is barred.
+`nextpnr-ice40` and `icetime` remain **unverified** (P5 tools, not installed).
+Floors and the two named R-CI exceptions: [`TOOLCHAIN.md`](../TOOLCHAIN.md).
 
 ## Pending escalations to sponsor
 

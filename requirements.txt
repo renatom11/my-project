@@ -1,0 +1,27 @@
+# Python toolchain pins — ADR-0017 (M1 toolchain lane), Amendment A2.
+#
+# BOOTSTRAP §2.1: version pins live in committed project files, never in CI
+# steps. The P1 critical path (golden model + lockstep harness) depends only
+# on what is pinned here.
+
+# cocotb is pinned to 1.9.x DELIBERATELY, and downgrading it is not drift.
+#
+# Measured at the R1 spike (J-orchestrator-0048): cocotb 2.0.1 does not build
+# against Verilator 5.020 — its VPI shim references VerilatedVpi::evalNeeded
+# and VerilatedVpi::doInertialPuts, which that Verilator does not define, and
+# the failure is a COMPILE error in cocotb's own shim, not a test failure:
+#
+#   cocotb/share/lib/verilator/verilator.cpp:154:36:
+#     error: 'evalNeeded' is not a member of 'VerilatedVpi'
+#
+# 5.020 is what the runner distribution carries, and R-CI-b bars building a
+# newer Verilator from source. So the pin moves, not the simulator.
+# cocotb 1.9.2 was measured green against BOTH lanes on the same test.
+#
+# Before raising this pin: re-run the R1 spike against BOTH simulators. A
+# cocotb that passes on Icarus alone silently costs the Verilator lane.
+cocotb==1.9.2
+
+# pytest gives cocotb readable AssertionError output (cocotb warns without it)
+# and hosts the golden model's own unit tests.
+pytest==8.3.4
