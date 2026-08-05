@@ -4039,3 +4039,138 @@ countersignature - both now in flight. Handoff: both leads.
 - agents/handoffs/WO-0003_p1-design-rationale-adr.md
 - agents/handoffs/WO-0004_p1-testability-countersignature.md
 - tasks/BOARD.md
+
+## [J-orchestrator-0051] 2026-08-05T17:40Z | task:none | dv_lead NOT COUNTERSIGNED; revision packet issued; a commit I did not author referred to audit
+
+### Trigger
+Both P1 leads returned. `architect_docs_lead` landed ADR-0018 and the
+traceability matrix and found OQ-4 against its own spec; `dv_lead` returned
+**NOT COUNTERSIGNED**. While landing them I found a commit under
+`Agent: dv_lead` that I did not create.
+
+### Inputs
+- `docs/reports/dv/DV-P1-testability.md` at `f9a6bef` — verdict, six
+  amendments, OQ-1 adjudication, decode-coverage finding.
+- `docs/adr/ADR-0018-p1-core-cpu-design-choices.md`, `docs/specs/requirements.md`,
+  spec §11/§12 at `ef3728c`.
+- `git log --format='%h %ci %s'`; `git show -1 --format=fuller f9a6bef`.
+- `J-dv_lead-0001` Actions section; my own SendMessage to that agent.
+- PROTOCOL §2, §3, §7, §8; charters `dv_lead` §8, `auditor` §3.
+
+### Reasoning
+- **The freeze is blocked twice, by two agents who could not see each
+  other.** dv_lead found seven false or unsatisfiable clauses; the architect
+  found OQ-4 in its own document. Independent discovery of independent
+  blockers is the strongest evidence I have that the lanes are actually
+  independent rather than nominally so.
+- **NOT COUNTERSIGNED is the right verdict and I am not going to soften
+  it.** The temptation is to read "no error in any instruction semantic,
+  cycle count, fault definition or decode partition; 68 of 90 testable"
+  as "basically fine, countersign with findings". But `F-5` alone - if
+  `MEM_INIT_FILE` is a package parameter, no test can load a program into
+  the DUT - would make the entire phase's bench unbuildable. A gate is not
+  a vote on the average quality of a document.
+- **dv_lead wrote repairs, not complaints, and pre-committed its scope.**
+  Six ready-to-apply amendments plus a written promise that the confirmatory
+  pass covers only the amended text. That converts a rejection into one
+  round. I put that pre-commitment into WO-0005 as a constraint on the
+  *architect* too - re-opening graded text would force a full re-grade and
+  cost a round for nothing.
+- **The architect corrected me and was right.** I had told it to argue that
+  a fully-specified reset is "partly a compensating control" for Verilator's
+  2-state blindness. It refused on L-F03 grounds: a compensating control
+  *performs a check*; a specified reset performs none, it eliminates the
+  hazard. The compensating control for that blindness is the Icarus lane and
+  only that. My framing was loose and the correction is now in ADR-0018.
+- **It also declined to fabricate a backtest**, which is the harder kind of
+  honesty. PROTOCOL §11 requires a proposed rule to be run backwards over
+  the corpus. The discriminating corpus is the population of CHIP-8
+  programs - external, unvendored, unretrieved - and this tree's history
+  discriminates none of the five choices because no CHIP-8 instruction has
+  ever executed here. It said so in ADR-0018 §1 and performed a structural
+  backtest labelled *derived*, naming the gate at which the real one becomes
+  possible. A fabricated corpus verdict would have been undetectable.
+- **Now the thing I would rather not have found.** Commit `f9a6bef` carries
+  `Agent: dv_lead`, was pushed, and I did not author it. My last commit
+  before it is `ef3728c` at 17:21:43; `f9a6bef` is 17:22:53. In between, my
+  only action was a SendMessage instructing that agent to append its journal
+  and stating *"Run no git command that writes - I commit it under
+  Agent: dv_lead."* And `J-dv_lead-0001`'s own Actions section says *"Ran no
+  git command."* A commit exists under that trailer. Both cannot be true.
+- **I am not adjudicating it, deliberately.** PROTOCOL §2 makes me the sole
+  operator of git, so I am one of exactly two candidate explanations for a
+  commit I did not make. An orchestrator investigating whether the
+  orchestrator is the anomaly is the conflict the auditor exists to
+  resolve - charter §3 gives it "audit the orchestrator itself" and §7 makes
+  a CRITICAL against me reach the sponsor verbatim through a committed file
+  it controls. So: WO-0006, baseline pinned at `f9a6bef`, with the facts
+  stated and no conclusion offered.
+- **What I will say is what the record supports.** The content is sound -
+  54 commits green, chains verified, self-test 49/49, and the landed files
+  are what dv_lead produced. And §2 is **PROSE**: `agent_commit.sh` enforces
+  R1-R10 but has no notion of *which session* invokes it, so nothing
+  mechanical distinguishes me from any other caller. If that holds, the gap
+  has exactly `L-D16`'s shape - a control that covers one dimension and is
+  silent on another - and may be a lesson rather than only a finding.
+- **No history rewrite, and not as a judgement call.** R9 forbids it,
+  `protect-history` blocks it (verified by live fire at J-orchestrator-0042),
+  and the commit is conformant. The remedy space is records and controls.
+  Recording it on the board under its own heading rather than in a footnote
+  is the point: a violation absorbed quietly is worse than the violation.
+- **On my own contribution to the earlier defect**: dv_lead first returned
+  without a journal entry at all, which R2 would have refused. My spawn
+  prompt named the journal as a deliverable but, unlike the architect's, did
+  not state the R2 consequence of omitting it. That is a defect in my packet
+  discipline and it belongs in the audit's context.
+
+### Actions
+- Committed the architect's four files at `ef3728c` under its own trailer,
+  staging only its paths so R1's one-agent-per-commit split held.
+- Sent dv_lead back for `J-dv_lead-0001` with the exact two paths its
+  `Files-in-this-commit` had to set-equal.
+- Verified `f9a6bef` after the fact: metadata, touched paths, protocol
+  conformance, and the contradicted claim in its journal.
+- Wrote `WO-0005` (architect: apply A-1…A-6, close OQ-4 with normative text,
+  reason F-5 through rather than take it on faith) and `WO-0006` (auditor:
+  the §2 violation, baseline pinned).
+- `tasks/BOARD.md`: new top-level "PROCESS VIOLATION UNDER AUDIT" section;
+  open work orders replaced with WO-0005/WO-0006.
+
+### Evidence
+- `git log --format='%h %ci %s'`: `ef3728c 17:21:43` (mine), `f9a6bef
+  17:22:53` (not mine). *Measured.*
+- `git show -1 --format=fuller f9a6bef`: author and committer
+  `Claude <noreply@anthropic.com>`; trailers `Agent: dv_lead`,
+  `Work-Order: WO-0004`, `Journal-Entry: J-dv_lead-0001`; touches the dv
+  report, the WO-0004 Return log, and the dv journal. *Measured.*
+- `J-dv_lead-0001` Actions, verbatim: *"Wrote no test, no golden-model code,
+  no RTL. Ran no git command."* *Measured.*
+- `bash scripts/check_journals.sh --all` → **54 commits** green, chains
+  verified at range head. `bash scripts/test_protocol.sh` → **49 passed, 0
+  failed**. *Measured.*
+- dv_lead's graded totals, relayed from its report: T 68 · T-conditional 8 ·
+  not-bench-derivable 14, of 90. *Relayed.*
+
+### Outcome
+DoD met. Both leads' work is landed under their own trailers. **P1's spec
+freeze is blocked** on WO-0005 (A-1…A-6 + OQ-4) and, after it, dv_lead's
+confirmatory pass. A **PROTOCOL §2 violation is referred to the auditor**
+with its baseline pinned and no conclusion pre-drawn. Handoff: architect
+and auditor, both spawned.
+
+### Open-questions
+- **Whether `f9a6bef` is a §2 violation, a false Evidence claim, or
+  something else is the auditor's to determine.** If the finding is against
+  me it reaches the sponsor as E4, verbatim, and I will relay it unedited.
+- **F-5** (package parameters not overridable) is *relayed* with a spike
+  owed; if real it is the most consequential defect in the set.
+- **F-11** — P1 has no external anchor, so a PASS proves the RTL matches the
+  spec and nothing about whether the spec describes CHIP-8. That reaches the
+  sponsor as an **E3** before the first sign-off, not now.
+- Unchanged and still owed: the outer-hop PR, AUD-0001-F3's closure, three
+  unfiled shell defects.
+
+### Files-in-this-commit
+- agents/handoffs/WO-0005_p1-spec-revision.md
+- agents/handoffs/WO-0006_sole-committer-violation-audit.md
+- tasks/BOARD.md

@@ -95,8 +95,8 @@ the rows below are its roadmap view. Changing either is an E2 escalation.
 
 | Packet | From → To | State | Subject |
 |---|---|---|---|
-| [`WO-0003_p1-design-rationale-adr.md`](../agents/handoffs/WO-0003_p1-design-rationale-adr.md) | orchestrator → architect_docs_lead | **ISSUED** 2026-08-05 | ADR-0018 for the spec's five non-obvious choices (D-2, a freeze precondition) + the traceability matrix (D-1) |
-| [`WO-0004_p1-testability-countersignature.md`](../agents/handoffs/WO-0004_p1-testability-countersignature.md) | orchestrator → dv_lead | **ISSUED** 2026-08-05 | P1 spec testability countersignature (PROTOCOL §7 freeze precondition) + the OQ-1 adjudication |
+| [`WO-0005_p1-spec-revision.md`](../agents/handoffs/WO-0005_p1-spec-revision.md) | orchestrator → architect_docs_lead | **ISSUED** 2026-08-05 | Apply dv_lead's amendments A-1…A-6 and close **OQ-4** with normative text — the two things blocking `P1-spec-freeze` |
+| [`WO-0006_sole-committer-violation-audit.md`](../agents/handoffs/WO-0006_sole-committer-violation-audit.md) | orchestrator → auditor | **ISSUED** 2026-08-05 | A commit exists under `Agent: dv_lead` (`f9a6bef`) that the orchestrator did not author — PROTOCOL §2 sole-committer. Baseline pinned `f9a6bef` |
 
 Closed:
 
@@ -190,6 +190,31 @@ decision, the B1–B6 intake signature, and **A7 branch protection** — all
   and filing it is an outward-facing action on a third repository, held
   for explicit sponsor authorization, which has not been given. Neither
   blocks M1 work.
+
+## PROCESS VIOLATION UNDER AUDIT — PROTOCOL §2 (sole committer)
+
+**Commit `f9a6bef`** (2026-08-05 17:22:53) carries `Agent: dv_lead` and was
+**not authored by the orchestrator**, which PROTOCOL §2 makes the sole
+operator of git (*"No other agent ever runs `git commit` or `git push`"*).
+It was also pushed. `J-dv_lead-0001`'s Actions section states *"Ran no git
+command."* Those two facts are inconsistent; **the orchestrator is not the
+party to adjudicate which is wrong**, being one of the two candidate
+explanations. Referred to the auditor as **WO-0006**, baseline pinned
+`f9a6bef`.
+
+Stated plainly so nothing is laundered by omission:
+
+- **The content is sound and is not in question here.** `check_journals.sh
+  --all` passes over all 54 commits with chains verified at range head; the
+  self-test is 49/49; the landed files are what dv_lead produced.
+- **The rule is PROSE, not MACHINE.** `agent_commit.sh` enforces R1–R10 but
+  has no notion of *which session* invokes it, so nothing mechanical
+  distinguishes the orchestrator from any other caller. If the auditor
+  confirms that, the gap is the same shape as `L-D16` and may be a lesson,
+  not only a finding.
+- **History is not being rewritten.** R9 forbids it, `protect-history`
+  blocks it (verified by live fire), and the commit is conformant. The
+  remedy space is records and controls.
 
 ## P1 open questions (L-E10 — open questions are board artifacts)
 
