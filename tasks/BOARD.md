@@ -11,9 +11,10 @@ agents with open work.
 project: a clone of `renatom11`'s org generic
 (https://github.com/renatom11/my-fpga-org), founded as a project on
 2026-08-05. The intake is **signed and recorded** (G0 Section B); G0
-itself remains **OPEN** on two rows — A7 (the sponsor's ruleset) and A9
-(the auditor's retro-audit). Working branch:
-`claude/project-investigation-54wqwc`, PR-flow mode (A8).
+itself remains **OPEN** on one row — **A9**, the auditor's retro-audit,
+in flight as WO-0001. Every sponsor row is discharged. Working branch:
+`claude/project-investigation-54wqwc`, PR-flow mode (A8), both branches
+under the `protect-history` ruleset (A7).
 
 Founded from the org generic at
 `0a60b2ae001cb62ec017d6f949dda3ef4d388321` (C39), which is the SHA the
@@ -65,7 +66,7 @@ the rows below are its roadmap view. Changing either is an E2 escalation.
 
 | Gate | Status | Checklist |
 |---|---|---|
-| G0 | **OPEN** — A1–A5 re-verified, A6 ratified, A8 decided, B1–B6 signed; **A7 (sponsor ruleset) and A9 (retro-audit) open**; Section C harvest instantiated, transmission blocked | [docs/gates/G0-checklist.md](../docs/gates/G0-checklist.md) |
+| G0 | **OPEN on A9 only** — A1–A5 re-verified; A6 ratified; A7 configured and verified by live fire; A8 decided; B1–B6 signed; Section C harvest instantiated, transmission awaiting the gate signature. **A9 (retro-audit) in flight as WO-0001** | [docs/gates/G0-checklist.md](../docs/gates/G0-checklist.md) |
 | P1..P5 | Instantiated from [templates](../docs/gates/templates/) at each phase's spec freeze | — |
 
 ## Open work orders
@@ -76,18 +77,40 @@ the rows below are its roadmap view. Changing either is an E2 escalation.
 
 ## Pending escalations to sponsor
 
-**Live — one, class E0 (founding).** The other three G0 E0 contacts are
-discharged: A6 ratification (2026-08-05), A8 branch-flow decision
-(2026-08-05), and the B1–B6 intake signature (2026-08-05).
+**None live.** All four G0 E0 contacts are discharged: A6 ratification,
+A8 branch-flow decision, the B1–B6 intake signature, and **A7 branch
+protection** — all 2026-08-05.
 
-- **A7 — branch protection.** The sponsor configures the `protect-history`
-  ruleset (Active, empty bypass list, Restrict deletions + Block force
-  pushes) targeting `main` **and** the working branch
-  `claude/project-investigation-54wqwc`; plus, in PR-flow mode,
-  `main-requires-ci` requiring the `journal-check` status check on `main`.
-  Click-path: G0 checklist §A7. Until this is configured, **PROTOCOL §5 R9
-  (no force push, no deletion) is convention only here — enforced by
-  nothing**, and G0 cannot close.
+- **A7 — branch protection: CONFIGURED AND VERIFIED** (2026-08-05).
+  Rulesets on this repository:
+  - **`protect-history`** (id 20463571) — `deletion` + `non_fast_forward`,
+    targeting **both** `main` and `claude/project-investigation-54wqwc`.
+  - **`main-requires-ci`** (id 20463601) — `required_status_checks` on
+    `journal-check`, targeting **`main` only** (deliberately not the
+    working branch: GitHub rejects direct pushes to any branch carrying
+    required checks, so binding it to the working branch would halt all
+    work).
+  - **PROTOCOL §5 R9 is now MACHINE-enforced here** for force-push, on
+    both branches. The evidence classes differ per rule and must not be
+    flattened (`CLAUDE.md` iron rule):
+    - **No-force-push — verified by live fire** (*measured*). A
+      non-fast-forward push of the working branch was rejected:
+      `GH013 ... - Cannot force-push to this branch`, exit 1, remote SHA
+      unchanged. The same attempt against `main` was rejected naming
+      **both** rules, which is also the live proof `main-requires-ci` is
+      active.
+    - **No-deletion — verified by configuration read only** (*measured*,
+      but **not** live fire). The live-fire delete attempt returned a
+      proxy-level HTTP 403 before GitHub could adjudicate, so as a live
+      test it is **NO-VERDICT** — a distinct class from a pass (L-D04).
+      The `deletion` rule's presence on both branches is confirmed from
+      `GET /repos/renatom11/my-project/rules/branches/<b>`.
+    - **Empty bypass list — verified for the pushing identity only**
+      (*derived*). The rules API does not expose bypass actors. But the
+      force-push was rejected **for the credential this session pushes
+      with**, which is the repository owner's; had the bypass list
+      contained an admin entry, that push would have succeeded. The claim
+      is therefore proven where it matters and unproven in general.
 
 **In flight, not escalations:**
 

@@ -2887,3 +2887,122 @@ under `Agent: auditor`, and its findings relay verbatim.
 - agents/handoffs/WO-0001_g0-retro-audit.md
 - docs/gates/G0-checklist.md
 - tasks/BOARD.md
+
+## [J-orchestrator-0042] 2026-08-05T15:14Z | task:none | A7 verified by live fire: R9 becomes MACHINE for force-push
+
+### Trigger
+Sponsor reported the A7 rulesets configured ("Done!"). A7's signature row
+does not accept a report — it requires "rejection verified by live fire",
+so I tested the protections rather than transcribing the claim.
+
+### Inputs
+- `docs/gates/G0-checklist.md` row A7 and its click-path §A7 at `4c2bc9b`.
+- `tasks/BOARD.md` escalations section and gates table at `4c2bc9b`.
+- PROTOCOL §5 R9; §8 (deliberate tests of protections are pre-declared);
+  §10 (evidence provenance classes, NO-VERDICT).
+- `docs/LESSONS.md` L-D04 (NO-VERDICT is a class of its own), L-D12 (a
+  report is not a check), L-B01 (provenance classes).
+- `CLAUDE.md` iron rule: enforcement claims are tagged MACHINE or PROSE.
+
+### Reasoning
+- **A report is not a check (L-D12).** The sponsor saying the rulesets
+  exist is a *relayed* claim. The row asks for live fire because a
+  ruleset can exist and not bite - wrong enforcement status, a bypass
+  entry, the wrong target pattern. Transcribing "Done!" onto the row
+  would have recorded a MACHINE guarantee on PROSE evidence, which is the
+  precise failure the iron rule exists to stop.
+- **The test had to be safe if it failed, and it was designed that way.**
+  A live-fire force-push that is *not* blocked succeeds - it would rewind
+  the remote branch. I chose a rewind to `fe5dea7`, one commit back, with
+  the full history held locally, so the worst case was a one-command
+  restore. Same for `main`: a rewind to `746e465`, recoverable. I did not
+  test the one case whose failure mode is unrecoverable - a direct
+  fast-forward push to `main` to probe the required-status-check rule -
+  because if it had succeeded, `main` would carry a direct push in
+  violation of R9 and I could not have rewound it (force-push being, if
+  the test worked, blocked). That rule got proven for free instead: the
+  `main` force-push rejection named it explicitly.
+- **Pre-declaration, not confession.** PROTOCOL §8 says deliberate tests
+  of protections are pre-declared to the sponsor or covered by an ADR'd
+  procedure. I declared this test in my last message to the sponsor
+  before running it, and the A7 row is itself the procedure covering it.
+  L-E06 - disclosure after the fact is not authorization before it.
+- **Three rules, three different evidence classes, deliberately not
+  flattened.** This is the part worth getting right:
+  - *No-force-push*: live fire, both branches, rejected, SHAs unchanged.
+    **Measured.** This is a real MACHINE guarantee now.
+  - *No-deletion*: the live-fire delete attempt died on a proxy-level
+    HTTP 403 before GitHub could adjudicate. The branch survived - but I
+    cannot attribute its survival to the ruleset, because the request
+    never reached the ruleset. As a live-fire test that is **NO-VERDICT**
+    (L-D04), not a pass. I verified the rule's *presence* by reading the
+    rules API instead, and recorded exactly that distinction rather than
+    letting a surviving branch imply a working rule.
+  - *Empty bypass list*: the rules API does not expose bypass actors, so
+    I cannot verify the list is empty in general. What I can say is
+    stronger than nothing and weaker than the full claim: the force-push
+    was rejected for the credential *this session pushes with*, which is
+    the owner's - had an admin bypass existed, it would have succeeded.
+    Proven where it matters, unproven in general, and written that way.
+- **What the `main` rejection bought.** It named both rules in one
+  response - `Required status check "journal-check" is expected` and
+  `Cannot force-push to this branch`. That is simultaneous live proof
+  that both rulesets are Active and both target `main`, from a single
+  safe test. The API read then confirmed the target split is correct:
+  `main-requires-ci` is on `main` only. Had it also covered the working
+  branch, every future push of mine would have been rejected and the
+  program would have stopped dead.
+
+### Actions
+- Ran three live-fire attempts (results in Evidence) and one read-only
+  rules-API query per branch.
+- `docs/gates/G0-checklist.md`: A7 signed to `J-orchestrator-0042`,
+  recording both ruleset names and ids, the live-fire rejections, and the
+  deletion rule's NO-VERDICT-as-live-fire status explicitly.
+- `tasks/BOARD.md`: escalations section retitled "None live" - all four
+  E0 contacts discharged; A7 bullet rewritten as a configured-and-verified
+  record carrying the three per-rule evidence classes; gates table and
+  current-milestone paragraph updated to show G0 open on A9 alone.
+
+### Evidence
+All commands run at `4c2bc9b`; remote SHAs read before and after each.
+- `git push --force origin fe5dea7:refs/heads/claude/project-investigation-54wqwc`
+  → `remote: error: GH013: Repository rule violations found` /
+  `remote: - Cannot force-push to this branch` /
+  `! [remote rejected]`, **exit 1**. Remote branch SHA before and after:
+  `4c2bc9b55f8f6a85ead2e74f0a278558b3793f72` (unchanged). *Measured.*
+- `git push origin --delete claude/project-investigation-54wqwc`
+  → `error: RPC failed; HTTP 403 curl 22`, **exit 1**. Proxy-level
+  rejection, no GitHub rule cited. **NO-VERDICT as a live-fire test.**
+  Remote branch SHA unchanged. *Measured, but does not support the claim.*
+- `git push --force origin 746e465:refs/heads/main`
+  → `remote: - Required status check "journal-check" is expected.` /
+  `remote: - Cannot force-push to this branch` / `! [remote rejected]`,
+  **exit 1**. Remote `main` SHA before and after:
+  `0a60b2ae001cb62ec017d6f949dda3ef4d388321` (unchanged). *Measured.*
+- `curl -s https://api.github.com/repos/renatom11/my-project/rules/branches/main`
+  → `required_status_checks` (context `journal-check`, ruleset 20463601);
+  `deletion` and `non_fast_forward` (ruleset 20463571). *Measured.*
+- Same endpoint for `claude/project-investigation-54wqwc` → `deletion`
+  and `non_fast_forward` (ruleset 20463571) **only** - `main-requires-ci`
+  correctly absent. *Measured.*
+
+### Outcome
+DoD met. **A7 signed; every G0 sponsor row is now discharged.** G0 stands
+open on **A9 alone**, in flight as WO-0001. R9's no-force-push guarantee
+is MACHINE here as of this entry; its no-deletion half is configured but
+unproven by live fire, and is recorded as such rather than as verified.
+Handoff: none - the auditor's return is the next event.
+
+### Open-questions
+- **The deletion rule has no live-fire proof** and may not get one: the
+  session's git proxy refuses delete operations before they reach GitHub.
+  A future session on a different path could close it; until then the
+  board carries the honest split.
+- **The empty bypass list is unverified in general**, proven only for the
+  pushing credential. Naming this rather than claiming the general case.
+- Unchanged: the shell defect stays unfiled pending sponsor authorization.
+
+### Files-in-this-commit
+- docs/gates/G0-checklist.md
+- tasks/BOARD.md
