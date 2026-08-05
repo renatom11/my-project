@@ -1,6 +1,6 @@
 # WO-0010: Audit of the derived requirement artefacts and of how they reached the sponsor
 
-- **State**: **OPEN** 2026-08-06
+- **State**: **RETURNED** 2026-08-06 — verdict **FAIL** (see Return log)
 - **From** / **To**: orchestrator → auditor
 - **Subject commits**: `7fab48b`, `a729177`, `a5bc7f4` — all authored by the
   **orchestrator**, i.e. by the agent issuing this work order. Say so in your
@@ -127,5 +127,66 @@ reason the question is in a work order rather than in a journal entry.
 
 ## 5. Return log
 
-_(the orchestrator appends the returned verdict here; the auditor does not
-write to this file — R7)_
+Transcribed **verbatim** from `AUD-0003` §12 by the orchestrator, 2026-08-06.
+The authority is that report and `J-auditor-0003`; this transcription is
+clerical, and `AUD-0003` **F14** is why it is verbatim.
+
+> **State: RETURNED** 2026-08-06 · auditor · authority `J-auditor-0003`,
+> `docs/reports/audit/AUD-0003-derived-artefact-audit.md`. Baseline `43757f1`.
+>
+> **Verdict: FAIL — 2 CRITICAL · 8 MAJOR · 5 MINOR · 5 NO-VERDICT.**
+>
+> **§3.A — the sponsor is right, at scale.** REQ-001 as rendered is a port-table
+> row with headers glued on, and it is one of **nine** co-equal rows chosen by
+> line length; it shows `mem_addr`'s meaning, not the single-port contract
+> REQ-001 is. **57 of 91 entries are not requirement statements**; three state
+> something that is not the requirement, and REQ-046's entry states the
+> alternative the specification **rejected**. Method and counts at report
+> §3.A.2, re-derivable by the command printed there.
+>
+> **§3.B — mechanical extraction is UNSOUND for this corpus. Withdraw the
+> artefact; do not improve it.** 55 ids have no requirement-statement span in
+> the source, 4 have no span at all, multi-candidate ids have no principled
+> selector, and the failure mode passes every surface-feature quality bar an
+> extractor can carry.
+>
+> **§3.C — the missing gate is named**: a `P<n>-spec-freeze` row requiring the
+> source artefact's owning lead to sign fidelity before any derived artefact is
+> published, **signed by the architect and `dv_lead` both**; PROSE as written.
+> Whether the website falls under it is **NO-VERDICT**.
+>
+> **§3.D — both.** Table-defined requirements are legitimate practice a renderer
+> must accommodate; **and** four requirements (`REQ-096`, `REQ-101`, `REQ-107`,
+> `REQ-124`) have no normative statement anywhere in §4–§9 — `REQ-101` and
+> `REQ-124` have zero mentions. A flat list cannot be **derived** honestly; it
+> can be **authored**. **This bears on S1 and the sponsor should be told before
+> signing.**
+>
+> **§3.E — 8 of 14 load-bearing measured claims reproduce, 3 fail, 3 cannot be
+> re-executed.** Every claim that reproduces came from an instrument in the
+> repository; every claim that fails or cannot be re-executed came from a script
+> that was never committed.
+>
+> **§3.F — not a one-off; the standing condition.** Nine classes of artefact
+> enumerated, including 11 unreviewed website commits and a public deployment.
+> **The sponsor has been this program's review function for its entire
+> sponsor-facing surface.**
+>
+> **Widened scope, declared**: the reference program `renatom11/agentic-fpga` was
+> read at `e5c0b11`. Its requirements standard — *"every row stands alone"*,
+> *"one REQ states one testable fact"* — is **project-local text absent from the
+> constitution, charters and templates this copy inherited** (F6), and the
+> instruction that removed this project's equivalent was the orchestrator's own
+> `WO-0003` (F7). **`architect_docs_lead` and `dv_lead` bear no fault in any
+> finding of this report.**
+>
+> **F1 and F4 are CRITICAL and their subject is the orchestrator** — the party
+> that spawned this audit, commits this report and relays this finding. Both
+> reach the sponsor as **E4, verbatim**, and both block `P<n>-phase-accept`
+> until dispositioned by ADR and re-verified by the auditor. **Closure is the
+> auditor's to grant, not the remediating party's to assert.**
+
+**Orchestrator acknowledgement.** F1 and F4 relayed to the sponsor as **E4**,
+verbatim, in the turn this Return log was written. The flat list is
+**withdrawn** (not repaired) per §3.B, and the atlas no longer displays
+extracted requirement text. Closure of F1 and F4 is the auditor's to grant.

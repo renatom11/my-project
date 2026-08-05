@@ -5963,3 +5963,105 @@ commits happened.
 
 ### Files-in-this-commit
 - agents/handoffs/WO-0010_derived-artefact-audit.md
+
+## [J-orchestrator-0070] 2026-08-06T02:10Z | task:WO-0010 | AUD-0003 returns FAIL; the list is withdrawn, not repaired
+
+### Trigger
+`AUD-0003` returned **FAIL — 2 CRITICAL, 8 MAJOR, 5 MINOR, 5 NO-VERDICT**
+against WO-0010. Both CRITICALs name me. The sponsor additionally asked for
+feedback text to carry into the session that maintains the shell.
+
+### Inputs
+- `docs/reports/audit/AUD-0003-derived-artefact-audit.md` (committed `e24f2bd`)
+- `J-auditor-0003`; the report's §12 return block
+- `docs/reports/SHELL-FEEDBACK-0001.md` as I had drafted it before the audit
+
+### Reasoning
+- **F1 is the finding that matters and it is worse than the sponsor's
+  example.** The list did not merely fail to state requirements; for three of
+  them it stated something that **is not the requirement**, and REQ-046's
+  entry stated the design alternative the specification **rejected**. That is
+  an artefact in the sponsor's open decision path asserting the inverse of a
+  frozen document. The non-normative disclaimer does not cure it: *"where the
+  two differ the spec wins"* cannot help a reader who does not know they
+  differ.
+- **So the artefact is withdrawn, not repaired.** §3.B says mechanical
+  extraction is unsound for this corpus; the auditor's instruction is
+  explicit — *withdraw, do not improve*. I deleted the generator, replaced
+  the list with a withdrawal notice, removed the CI regeneration step, and
+  **took the extracted text out of the website atlas too**, because the atlas
+  runs the same extractor and therefore carries the same defect class. The
+  cards now show only what §10 actually asserts: id, handle, section, hook.
+  **A fifth repair round was available and would have been wrong.**
+- **F7 is the finding I would not have written about myself.** The
+  instruction that left the standalone requirement statement homeless was
+  **my own WO-0003** — *"Do not renumber or restate REQ ids"*. The architect
+  complied and disclosed it. So the shell defect (F6) is real **and** does
+  not relocate the fault, and the auditor said so in the same report that
+  granted F6. I had drafted the shell-feedback document opening on F6, which
+  framed an event whose proximate cause was mine as a structural story. I
+  disclosed that framing to the auditor with an instruction to discount it;
+  it did, and found F7. **That is the review working exactly as intended, on
+  me.**
+- **My own feedback document contained a fabricated measurement.** "55 of 91
+  are table rows" was `91 − 36` presented as a count (F12); the real figure
+  is 49. In a document arguing for measurement discipline. Corrected in place
+  with the correction visible rather than silently.
+- **The corpus is better than I said.** 36 requirements carry standalone
+  statements and the auditor graded 33 of those good. The corpus is
+  *inconsistent*, not bad, and I had overstated it in the direction that made
+  my own extraction failure look more excusable.
+- **F4's number is the one to carry forward**: 69 of 78 commits unreviewed,
+  nine artefact classes, 11 website commits and a public deployment. The
+  auditor's sentence — *"the sponsor has been this program's review
+  function"* — is the true summary of this program to date.
+
+### Actions
+- Committed `AUD-0003` and `J-auditor-0003` under the auditor's name (`e24f2bd`).
+- Withdrew `docs/specs/REQUIREMENTS-LIST.md`; deleted `scripts/gen_req_list.mjs`;
+  removed the CI regeneration step.
+- Withdrew extracted requirement text from the atlas; added a banner stating
+  why, naming F1.
+- Transcribed §12 **verbatim** into WO-0010's Return log (F14 is why verbatim);
+  marked the packet RETURNED.
+- Revised `SHELL-FEEDBACK-0001.md` against the audit: correction notice, F7
+  section, corrected counts, and a postscript recording that the document's
+  own two defects were caught only by independent review.
+- Relayed F1 and F4 to the sponsor as **E4, verbatim**, in this turn.
+
+### Evidence
+- Atlas cards still displaying extracted requirement text after the change:
+  **0** of 91. *Measured* by counting `<p class="req-text">` in
+  `site/dist/atlas/index.html` — and note the instrument is ad hoc again,
+  which is F9's complaint; the count is one grep and is stated as such.
+- `scripts/test_protocol.sh`: **49 passed, 0 failed**. *Measured.*
+- `AUD-0003` findings against `architect_docs_lead` or `dv_lead`: **zero** —
+  both are exonerated in the findings' own text. *Relayed* from the report.
+
+### Outcome
+The misleading artefact is out of the sponsor's path. **S1 remains unsigned**,
+and `AUD-0003` §3.D says the sponsor should be told before signing that four
+requirements have no normative statement anywhere — which this turn does.
+
+### Open-questions
+- **F1 and F4 need an ADR disposition and auditor re-verification**, and I am
+  the subject of both, so I must not propose the disposition. That now blocks
+  `P<n>-phase-accept` twice over.
+- **F6 is the fourth shell defect under the filing hold** and the most
+  important; the backlog of unfiled defects is itself becoming the pattern
+  the auditor named.
+- **Two prior findings remain open and un-re-verified** (`AUD-0001-F3`,
+  `AUD-0002-F1`). Two follow-up audits owed.
+- **Who authors the flat list, to what standard.** It can be authored, not
+  derived. That is architect work under a work order, against a standard the
+  shell does not carry — so the standard has to be written first.
+
+### Files-in-this-commit
+- .github/workflows/build.yml
+- agents/handoffs/WO-0010_derived-artefact-audit.md
+- docs/reports/SHELL-FEEDBACK-0001.md
+- docs/specs/REQUIREMENTS-LIST.md
+- scripts/gen_req_list.mjs
+- site/assets/style.css
+- site/build.mjs
+- site/content.mjs
