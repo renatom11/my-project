@@ -325,3 +325,376 @@ candidate never self-assigns one):
 
 - docs/reports/dv/DV-P1-testability.md
 - agents/handoffs/WO-0004_p1-testability-countersignature.md
+
+## [J-dv_lead-0002] 2026-08-05T19:44Z | task:WO-0007 | P1 confirmatory pass — NOT COUNTERSIGNED at ddc06dc; A-1..A-6 and OQ-4 confirmed; four blocking defects in the text added beyond them; NV-1 and NV-3 discharged by measurement
+
+### Trigger
+
+Spawned by the orchestrator with spawn short-id `WO-0007/2026-08-05T18:12Z`,
+carrying `agents/handoffs/WO-0007_p1-confirmatory-countersignature.md`
+(ISSUED 2026-08-05). This is the second entry of the `dv_lead` chain and the
+countersignature my own report at `54a7221` promised as
+`J-dv_lead-0002`. The packet's §0 standing obligations bind this entry.
+The task: confirm the six amendments landed over spec §13.1's enumerated
+surface, judge the three additions applied beyond my text, grade OQ-4's
+closure, confirm REQ-115 closes F-5 and whether the silent-ignore
+presentation needs a bench-side guard, confirm the derived-width rule holds
+for every derived width, state what remains owed on NV-3, and issue the
+testability countersignature or withhold it.
+
+### Inputs
+
+- `agents/charters/dv_lead.md`; `agents/PROTOCOL.md` (v2)
+- `agents/handoffs/WO-0007_p1-confirmatory-countersignature.md`
+- `docs/specs/SPEC-P1-core-cpu.md` at `ddc06dc` — §2, §4.0–§4.3, §4.A–§4.D,
+  §5.0–§5.5, §6.1.1, §6.6, §7.1, §7.4, §7.7, §8, §9, §10, §11, §12, §13.1
+- `docs/specs/requirements.md` — all 91 rows, parsed and diffed against §10
+- `docs/adr/ADR-0018-p1-core-cpu-design-choices.md` Amendments **A1** and **A2**
+- `docs/reports/dv/DV-P1-testability.md` (my own, at `f9a6bef`) — §3, §7, §8, §11
+- `tasks/BOARD.md` (P1 revision block, D-8/D-9 routing, declared packs: none)
+- `docs/LESSONS.md` — L-A04, L-A07, L-B01, L-B04, L-B12, L-C05, L-C08, L-C09,
+  L-D04, L-D11, L-D12, L-D16, L-E02, L-E03, L-F03
+- `.github/workflows/build.yml` — the R-CI-d source guard and its de-gating
+  condition, read before placing any file under `test/`
+- `agents/handoffs/templates/WO-template.md`; `agents/handoffs/WO-0004_*.md`
+  (Return-log form)
+- **No RTL.** `rtl/` does not exist in this tree at `5dfe877`. Independence is
+  still structural, as it was at `J-dv_lead-0001`.
+
+### Reasoning
+
+**Scope first.** My §8 pre-commitment at `54a7221` bound this pass to the
+amended text. Spec §13.1 enumerates every propagation edit deliberately, so
+the surface was a list rather than a diff hunt, and I worked the list: six
+amendment landings, four propagation sites, the three additions the architect
+flagged for grading, OQ-4's normative text, REQ-115 (new), and D-8/D-9 (new).
+The 84 requirements and 30 ports stayed closed. Re-opening them would have
+cost a round for nothing and made the pre-commitment worthless.
+
+**The decision that shaped the round: I measured instead of reading.** Icarus
+12.0, Verilator 5.020 and cocotb 1.9.2 are present in this checkout. At
+`J-dv_lead-0001` I wrote "nothing in this report is measured, because nothing
+was run" and left three NO-VERDICT rows. Reading the amended text would have
+confirmed the words; running the toolchain confirms the mechanism. I chose to
+build a harness (`test/spikes/`) shaped like §5.5's package and §4.B's memory,
+because the two load-bearing new clauses — REQ-115's override path and
+REQ-014's ordered clauses — are claims about *elaboration and time zero*,
+which are exactly what a scratch harness can settle without any design. This
+also let me confirm the architect's measurements with my own hands rather than
+relay them, which matters for a countersignature: a relayed measurement is not
+a countersignature's evidence, it is the other party's.
+
+**Placement of the harness.** `test/**` is my scope, but `build.yml`'s R-CI-d
+source guard keys on `test/test_*.py` and its written de-gating condition ties
+de-gating to the commit landing the first `rtl/` module *and* the first bench.
+A measurement instrument that trips that guard would short-circuit a recorded
+sequencing constraint I myself flagged at `54a7221` §9. So the driver is named
+`run_spike.py`, no file matches the glob, the guard stays armed, and all build
+output goes to a temp tree outside the repository so the determinism job sees
+no untracked files.
+
+**Amendments: six for six, and the additions are where the work was.** A-1
+landed with propagation to five further sites carrying the same literals, plus
+a note recording that no width changes value at the default — better than I
+asked for. A-2 landed verbatim plus the enumeration paragraph that makes
+REQ-123 discharged rather than asserted (L-D12). A-6 landed verbatim plus the
+propagation to §2 and §10, with the A-3/A-6 pairing recorded. Those three are
+confirmed and closed. The other three were applied *plus something*, and an
+amendment plus an addition is not the amendment I wrote, so each addition was
+graded on its own:
+
+- **A-3's addition (derived widths derive in the module).** Necessary, and it
+  catches a defect *my own two amendments would have created together* — A-1
+  widens `obs_sp` to `SP_W`, A-3 makes `STACK_DEPTH` a module parameter, and a
+  package-derived `SP_W` does not follow the override. I wrote A-1 and A-3 as
+  independent repairs and reviewed them as independent repairs; the composition
+  was invisible to me. I verified it myself rather than accepting the relay:
+  measured 3 against 5 in both lanes. But its scope is narrower than its class
+  and its inventory claim is false — see B-3.
+- **A-4's addition (two comparisons, two domains).** The distinction is right
+  and I want it: §6.6 frees whether `obs_*` is registered, so a mid-instruction
+  value is deterministic but unspecified, and a literal A-4 would have licensed
+  asserting it against the model. But "at retirement … and nowhere else" is a
+  universal, and no faulting instruction ever retires. Read strictly it strands
+  the whole fault surface — the five conditions of §9 and the 65536-encoding
+  sweep, my largest committed campaign — plus the `mem` array, outside the
+  comparison domain, which narrows README's signed full-state criterion by a
+  subordinate clause. That is F-9's own defect in a new place: a comparison
+  domain that gets settled in a bench because the spec's version is wrong
+  rather than absent.
+- **A-5's addition (a literal default is the defect this requirement names).**
+  This is the one that withholds the signature. Measured: Icarus 12.0 cannot
+  bind a package `string` parameter inside a module parameter's default
+  expression, the compilation-unit import form fails the same way, and the
+  package accessor-function form crashes the tool. Package `int`, `logic`
+  vector, `bit` and enum defaults all work — it is `string` specifically, and
+  therefore `MEM_INIT_FILE` specifically, the one parameter §5.4 says every
+  test sets. So REQ-115 mandates a form that does not elaborate and REQ-109's
+  addition forbids the only form that does. There is no third row. That is F-5
+  alive, arriving through F-5's own repair.
+
+**Why NOT COUNTERSIGNED rather than COUNTERSIGNED WITH FINDINGS.** I weighed
+signing with the four items recorded, because the program has already spent one
+round and the orchestrator framed this one as terminal. I rejected it on my own
+grading standard: at `54a7221` I defined BLOCKING as a defect that "would have
+to be repaired by a post-freeze spec diff plus an ADR if it froze in its
+current form", and all four qualify. B-1 in particular is not a tension a
+careful reader resolves — it is a measured impossibility, where both compliant
+readings fail and the failure lands on the mechanism every P1 test depends on.
+Signing text I had just measured to be unimplementable would be indefensible at
+audit and would be exactly the "countersigning around a gap" the packet
+forbids. A conditional signature is not a signature: a signature covers its
+documents at one SHA (L-E04), and I cannot sign a correction that has not been
+written.
+
+**What I did instead, to keep the round cheap.** Each of the four repairs is
+written as exact replacement text in report §8, sized as one sentence or one
+table cell, changing no behaviour; and I pre-commit again that a revision whose
+diff from `ddc06dc` is exactly those four needs no further review round —
+verifying it is a transcription check, not a review. That is the same device
+that turned the first rejection into one round rather than two.
+
+**Grade discipline, stated because four blockers invites inflation.** I
+considered grading B-2, B-3 and B-4 as CARRIED and holding only B-1 as
+blocking. I rejected that: B-2 is two normative clauses giving opposite
+instructions about one name, which is the F-2 test verbatim; B-3 is a factual
+claim in normative text that I measured to be false, and its width half fails
+*silently* where its behavioural half fails loudly; B-4 leaves my largest
+campaign with no licensed comparison point. Each is independently defensible
+and each costs one clause. What I did *not* do is inflate F-15 through F-18 —
+the enum-override waiver, the M01/M04 entailment, the §13.1 clerical slip and
+D-8's Closes-by cell are all genuinely non-blocking and are graded as such.
+
+**OQ-4.** The closure is correct and its text is testable, and testable better
+than I expected: an uncovered location is observable **in-band** through
+`ANNN` + `FX65` + `obs_v` at retire, needing no hierarchical handle in either
+lane, which keeps the check on the architectural path where a spec-derived
+check belongs. The per-location phrasing covers the hole-in-the-middle case and
+more: because clause 1 quantifies over locations before any image is applied,
+the answer is independent of the image's shape entirely, so there is no
+shape-dependent residue for a future image generator to fall into. I measured
+the sparse case both ways to be sure. The tabulated non-conformant row is a
+runnable deliberate-mismatch check with three qualifications, and the third is
+the one that matters: `COCOTB_RESOLVE_X=ZEROS` silently resolves the `X` and
+the check passes green. One environment variable turns the four-state
+authoritative lane into a second two-state lane for every X-related check in
+the program. That is a silently-always-pass hazard in my instrument rather than
+in the design, nothing in the repository pins it today, and closing it is mine.
+
+**F-5's presentation is worse than the packet's framing, and the guard is
+mine.** The packet flagged `-Ppkg.P=` as the silent form a test author tries
+first. Measured, the form a test author actually writes is cocotb's documented
+`parameters={"MEM_INIT_FILE": path}` — and cocotb 1.9.2 formats parameters with
+no type awareness and no quoting, so in the Icarus lane iverilog prints
+`error: invalid value specified for defparam`, **exits 0**, emits a working
+simulation, and the test runs green over an unloaded memory. The lane asymmetry
+runs the wrong way twice: the authoritative X-detecting lane fails silently and
+the fast lane fails loudly. All four ways a P1 test can end up running 4096
+zero bytes print something and none fails the run. So the guard cannot be
+log-based: it asserts the load **through the design** (first post-reset event
+is the expected instruction's retire, not a halt), intent is declared rather
+than inferred, the runner has one construction site, and the bench pins its own
+X-resolution policy. Each guard is run against the defect it names before it is
+relied on (L-B04, L-D11); the four negative controls are committed.
+
+**What I rejected.** (a) Re-opening the 84 requirements — barred by my own
+pre-commitment and pointless. (b) Asking for an `obs_mem_*` bundle or an
+FSM-state output — declined at `54a7221` and nothing this round changes that;
+NV-1's positive discharge removes the last reason anyone might have revisited
+it. (c) Requesting that REQ-109's A-5 addition simply be deleted — it is
+necessary, and the real defect is that `MEM_INIT_FILE` was never a package
+value in the first place; deleting a correct rule to accommodate one
+misclassified row would have been the wrong repair. (d) Grading F-15 (the
+Verilator enum-override refusal) as blocking — it has a bench-side workaround
+and an RTL-side alternative, neither needing a spec change. (e) Minting a
+lesson from the §13.1 clerical slip — one clerical error is a war story at
+most, and LH2 would bar the specificity anyway.
+
+### Actions
+
+- Read the charter, the protocol and WO-0007 before anything else, then spec
+  §13.1 as the packet directed, then the amended text, ADR-0018 A1 and A2, and
+  my own report §8.
+- Confirmed A-1…A-6 and the four "beyond the amendments" corrections over
+  §13.1's enumerated surface, checking each propagation site against the clause
+  it was supposed to preserve.
+- Graded the three additions individually.
+- Built a measurement harness under `test/spikes/` (package + top + cocotb
+  probe + driver + two `$readmemh` images), deliberately outside `build.yml`'s
+  R-CI-d glob, and ran 10 configurations in each of the two lanes.
+- Isolated the Icarus package-string failure to its narrowest form with five
+  hand-written variants.
+- Parsed §10 and `docs/specs/requirements.md` and diffed them mechanically.
+- Wrote `docs/reports/dv/DV-P1-countersignature.md` (verdict, the three
+  additions judged, OQ-4 graded, the derived-width inventory, the guard, the
+  four repairs as exact text, the evidence, the NO-VERDICT register, D-8).
+- Appended the RETURNED entry to WO-0007's Return log.
+- **No git command was run. No file under `rtl/**` was created, read or
+  implied.**
+
+### Evidence
+
+Toolchain in this checkout, measured: `iverilog -V` → **Icarus Verilog 12.0
+(stable)**; `verilator --version` → **Verilator 5.020 2024-01-01 rev (Debian
+5.020-1)**; `python3 -c "import cocotb; print(cocotb.__version__)"` → **1.9.2**.
+What was measured is the language and the toolchain; **no design was measured,
+because no RTL exists**.
+
+Everything below reproduces from a checkout at this commit with:
+
+```
+python3 test/spikes/run_spike.py            # both lanes, 10 configurations
+python3 test/spikes/run_spike.py icarus     # one lane
+```
+
+1. **B-1 — package `string` as a module parameter default (Icarus 12.0):**
+   `iverilog -g2012 -o a.vvp -s top a.sv` →
+   ``a.sv:5: error: Unable to bind variable `S' in `p'`` , 1 error, exit 1.
+   Package `int` / `logic [11:0]` / `bit` / enum defaults all elaborate
+   (`N=7 PS=200 B=1 E=1`, exit 0). Compilation-unit `import` fails identically.
+   A package accessor function aborts the tool:
+   `ivl: elab_expr.cc:5585: ... Assertion 'tmp' failed. Aborted` (exit 134).
+   Verilator lints the same source clean.
+2. **B-2 / B-3 — derived widths under override**, config `C2-stackdepth`,
+   `parameters={"STACK_DEPTH": 4}`, **both lanes identical**:
+   `SP_W module/package = 3 / 5`; `obs_stack width module/package = 48 / 192`.
+3. **NV-3 end to end.** `inspect.getsource(cocotb.runner.Icarus._get_parameter_options)`
+   → `-P{toplevel}.{name}={value}`; Verilator → `-G{name}={value}`; no type
+   awareness, no quoting. SV-quoted string → image loads in both lanes.
+   **Unquoted string (the natural form) → Icarus prints
+   `<command line>: error: invalid value specified for defparam:
+   spike_top.MEM_INIT_FILE`, exits 0, and the test runs green with memory
+   all-zero**; Verilator errors loudly and the runner raises. Isolated:
+   `iverilog ... -Ptop.S=/abs/path.hex` → error printed, **exit code 0**,
+   `vvp` prints `S=[] mem0=00`.
+   Package-scope override: `-Pp.N=99` → no diagnostic, exit 0, value unchanged
+   (`pkg N=7`); `-Ptop.N=99` for a parameter not in `top` → error, exit 2.
+   Enum-typed parameter: Icarus accepts (`2 / 2`); Verilator
+   `%Error-ENUMVALUE` unless `-Wno-ENUMVALUE -Wno-WIDTHTRUNC`, then `2 / 2`.
+4. **OQ-4, `mem[0..15]` after elaboration** — conformant prefix image:
+   `11 22 33 00 00 00 00 00 00 00 00 00 00 00 00 00` in both lanes.
+   Non-conformant (no zero-fill): Icarus
+   `11 22 33 xx xx xx xx xx xx xx xx xx xx xx xx xx`, Verilator all `00`
+   (blind). **Sparse image** (`@0000`, `@000C`) without zero-fill: Icarus
+   `11 22 33 xx xx xx xx xx xx xx xx xx aa bb xx xx` — the hole in the middle
+   reads `xx`; **with** zero-fill:
+   `11 22 33 00 00 00 00 00 00 00 00 00 aa bb 00 00` in both lanes. Missing
+   path → all `00`, run continues, exit 0, with
+   `ERROR: $readmemh: Unable to open ...` printed but non-fatal.
+5. **The instrument's own blindness.** Same non-conformant build with
+   `COCOTB_RESOLVE_X=ZEROS`: `mem[3] resolvable=False`, **`int=0`** — the `X`
+   resolves silently. Without it:
+   `RAISED:ValueError:Unresolvable bit in binary string: 'x'`.
+6. **NV-1 discharged positive.** `dut.mem[0]` read through cocotb 1.9.2:
+   `ok: True` in **both** lanes. Measured at 16 elements; the 4096-element cost
+   is unmeasured and folds into NV-2.
+7. **Matrix consistency**: a parse of spec §10 and `docs/specs/requirements.md`
+   reports `spec rows 91 / matrix rows 91 / only in spec: [] / only in matrix:
+   [] / hook mismatches: []`; `grep -o "^| REQ-[0-9]*" | sort -u | wc -l` → 91.
+
+Ephemeral: the simulation build trees live under a `tempfile.mkdtemp` root and
+are deleted with the run; the committed harness is what reproduces them.
+
+### Outcome
+
+**DoD: met.** One unambiguous verdict over the amended surface only —
+**NOT COUNTERSIGNED at `ddc06dc`**.
+
+**I withhold my signature on gate `P1-spec-freeze`, row "dv_lead countersigns
+testability"** (PROTOCOL §7, L-E03 — a signature's authority is this entry, and
+this entry states the withholding rather than a signature). Spec §12's
+countersignature row and the gate checklist's dv_lead row both stay empty.
+The signature issues as `J-dv_lead-0003` against a revision applying report
+§8's four repairs; I pre-commit that verifying that diff is a transcription
+check and not a further review round.
+
+Confirmed and closed, not to be re-opened: A-1…A-6 as landed; the four
+beyond-the-amendments corrections; OQ-4's closure and its normative text; the
+traceability matrix; the 84 requirements and 30 ports graded at `54a7221`.
+
+Handoff: `docs/reports/dv/DV-P1-countersignature.md` to the orchestrator, for
+relay to `architect_docs_lead` (the four repairs, verbatim), plus F-15…F-18 and
+the D-8 *Closes by* correction.
+
+Harvest, per PROTOCOL §7.1 and charter §3 — a gate-facing signature carries one
+whether it issues or is withheld. **Span: `J-dv_lead-0002..0002`**, tiling
+exactly from the previous harvest's `0001..0001`. No worker spans: I
+commissioned none. **Yield: three tier-1 candidates, one tier-2, one war
+story.** Final ids belong to the landing fence.
+
+- **LC-03 (tier 1, general).** *A set of individually correct repairs may
+  compose into a new defect that none of them contains; a review that grades
+  proposed repairs one at a time and never as a set will approve the
+  composition.* LH2-g: no proper noun of any project or domain. LH3 — what
+  breaks without it: two approved fixes land together and reinstate the defect
+  one of them was written to remove, and the review record shows both as
+  correct because each was correct alone. LH1: this entry; report §4.1 and §6;
+  the near-miss recorded at ADR-0018 A2.4 and at `J-architect_docs_lead-0003`;
+  my own A-1 and A-3 at `f9a6bef`.
+- **LC-04 (tier 1, general).** *A diagnostic message is not a failure signal:
+  confirm a configuration by observing the configured system, never by reading
+  the tool's log, because a build step that prints an error and exits zero
+  carries a silently mis-configured run all the way to a green result.* LH2-g:
+  no proper nouns. LH3: a run that loaded nothing reports success, and the
+  result is read as an ordinary outcome because the observable it produces is
+  a legal one. LH1: this entry, Evidence 3; report §7.2.
+- **LC-05 (tier 1, general).** *The party applying an approved repair
+  enumerates its own additions, in the record, at the granularity of the
+  repair: text added beyond what was approved is unreviewed text, and it
+  inherits none of the approval.* LH2-g: no proper nouns. LH3: an addition made
+  in good faith inside an approved change is never graded by anyone, because
+  the reviewer confirms the approved part and the author considers the whole
+  thing accepted. LH1: this entry; report §4; the enumeration at spec §13.1 is
+  what made the defect findable, and the defect was in an addition.
+- **LD-02 (tier 2, domain — prospective pack `open-source-rtl-toolchains`, the
+  pack named at G0 and not yet created).** *An elaboration-time parameter
+  override path is qualified per parameter TYPE and over the whole path —
+  generator API, tool flag, elaborated value read back — because refusals are
+  type-specific: string and enumeration parameters fail where integers pass,
+  and a path proven with one representative type is not proven.* LH2-d:
+  elaboration, parameter, simulator, string/enumeration — domain vocabulary
+  only, no project noun. LH3: a configuration mechanism is declared working on
+  the strength of one type, and the types that carry the test's actual payload
+  fail later — silently in one lane, loudly in another. LH1: this entry,
+  Evidence 1 and 3; report §7 and §9.3; ADR-0018 A2.5's own "does not measure
+  cocotb's `parameters=` mapping end to end".
+- **War story (fails LH2, kept with the criterion named).** A general rule
+  stated in commentary beneath a normative table, and narrowed in the
+  requirement the commentary points at, is enforced at its narrow form —
+  §4.A's note says "any other width derived from an overridable parameter"
+  while REQ-115 says "the only such case". The candidate cannot be stated
+  without naming a document structure specific to this program's spec
+  template, so it fails **LH2-g** on generality of statement rather than on
+  substance. Kept for a later harvest that finds a second instance.
+
+### Open-questions
+
+- **The four blocking repairs are with the architect** (report §8). None
+  changes a behaviour; all four together are four sentences.
+- **NV-2 remains open** and now carries the 4096-element array-read cost as
+  well as the sweep's wall-clock; **NV-4 is new** (what X-resolution policy the
+  CI environment actually provides). Both discharged by one spike before the
+  first bench.
+- **D-8 stays open and is not mine to close**: the external-anchor decision is
+  E3-shaped and settles **before the first `SO-` PASS**, which precedes
+  `P1-module-ready` — the spec's *Closes by* cell says the later gate and
+  should say the earlier one (F-18).
+- **F-15's cost is unresolved**: the fast lane needs `-Wno-ENUMVALUE
+  -Wno-WIDTHTRUNC` for four of REQ-095's six vectors, and that waiver
+  suppresses a real type check globally. The alternative is an RTL type choice.
+  Neither needs a spec change; the choice is rtl_lead's with my input, at the
+  first RTL work order.
+- **The sequencing constraint from `54a7221` §9 stands**: `build.yml`'s R-CI-d
+  guard is deleted in the same commit that lands the first `rtl/` module and
+  the first bench. This round deliberately did not trip it.
+
+### Files-in-this-commit
+
+- docs/reports/dv/DV-P1-countersignature.md
+- agents/handoffs/WO-0007_p1-confirmatory-countersignature.md
+- test/spikes/spike_pkg.sv
+- test/spikes/spike_top.sv
+- test/spikes/spike_probe.py
+- test/spikes/run_spike.py
+- test/spikes/img_prefix.hex
+- test/spikes/img_sparse.hex
