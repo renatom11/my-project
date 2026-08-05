@@ -5198,3 +5198,88 @@ cannot perform or verify from here.
 ### Files-in-this-commit
 - site/package.json
 - site/package-lock.json
+
+## [J-orchestrator-0061] 2026-08-05T22:10Z | task:none | Deploy failure reproduced and root-caused; a plausible fix measured and rejected
+
+### Trigger
+The sponsor: "i want to pull it down, go to site, run npx wrangler deploy
+its not working." No error text supplied, so I reproduced the flow rather
+than asked.
+
+### Inputs
+- A fresh `git clone` of this branch into a scratch directory, twice.
+- `site/wrangler.toml`, `site/.gitignore`, `site/package.json`.
+- Wrangler 4.119.0 behaviour, observed directly.
+
+### Reasoning
+- **Reproduce before diagnosing.** The sponsor gave a symptom, not an error.
+  Guessing would have produced a plausible answer with no evidence behind
+  it - the exact shape of `AUD-0002-F1`. So the first act was a bare clone
+  and their literal command, which failed immediately and unambiguously:
+  *"The directory specified by the `assets.directory` field in your
+  configuration file does not exist: .../site/dist"*.
+- **Root cause is mine and it is in the documentation, not the tooling.**
+  `dist/` is git-ignored - correctly, it is build output - so a fresh clone
+  has nothing to deploy, and `npx wrangler deploy` never builds it.
+  `site/README.md` listed `npm run build` and `npx wrangler deploy` as
+  separate steps, and my message to the sponsor compressed them into a
+  three-line block that read as if the last line stood alone. The user
+  followed the shape of the instruction, not its fine print.
+- **I tried the fix that would have made their exact command work, and it
+  does not work.** Wrangler supports a `[build]` block that runs before
+  deploy. I added it, re-cloned, re-ran: **same error**. So I probed rather
+  than assume why - wrote a marker file into the build command, ensured
+  `dist/` existed so the assets check could not be what failed, and re-ran.
+  **The marker was never created.** Wrangler skips `[build]` entirely for
+  assets-only Workers, which have no `main` entry point. That is now
+  measured, and it is recorded in `wrangler.toml` so the next person does
+  not spend the same twenty minutes rediscovering it.
+- **I removed the `[build]` block rather than leave it.** A config stanza
+  that looks like it does something and does nothing is worse than its
+  absence: it would have taught a future reader that the build is handled,
+  and the failure would then look like a wrangler bug rather than a missing
+  step. Dead configuration is a lie with a plausible cover story.
+- **The honest answer is that `npx wrangler deploy` cannot work here**, and
+  the documentation now says that in the negative - naming the command that
+  fails, quoting the error it produces, and saying why the obvious fix is not
+  available. A README that only lists the happy path leaves the reader with
+  no way to recognise their own failure in it.
+
+### Actions
+- Reproduced the failure on a bare clone; captured the exact error.
+- Added a `[build]` block, re-tested, and **measured it inert** for
+  assets-only Workers via a marker-file probe; removed it.
+- Rewrote `site/wrangler.toml`'s header to name the working command, the
+  failing command, its verbatim error, and the measured reason `[build]`
+  does not help.
+- Rewrote `site/README.md`'s deploy section to the same effect.
+- Verified the documented path end to end on a third bare clone.
+
+### Evidence
+- Bare clone, `npx wrangler deploy` → `ERROR The directory specified by the
+  "assets.directory" field ... does not exist: /tmp/fresh/site/dist`, exit
+  non-zero. *Measured.*
+- With `[build]` configured **and** `dist/` pre-created, the build command's
+  marker file was **not** created and `dist` was not regenerated — wrangler
+  did not execute `[build]`. *Measured.*
+- Bare clone → `npm install` → `npm run build` → `npx wrangler deploy
+  --dry-run` → `Read 52 files from the assets directory`, `Total Upload:
+  0.31 KiB`, no error. *Measured.*
+- **Still not measured**: a real deploy. No Cloudflare account is reachable
+  from here; the chain is verified to the last step before the network.
+
+### Outcome
+DoD met. The documented command is `npm run deploy` and it is verified from
+a bare clone. The failing command, its error text, and the measured reason
+the obvious fix does not apply are recorded in both `wrangler.toml` and
+`site/README.md`. Handoff: the sponsor.
+
+### Open-questions
+- **The real deploy remains unverified**; a Worker-name collision on
+  `chip8-sv` is the most likely first-run snag and is a one-line edit.
+- Unchanged and still owed: S1, AUD-0002-F1's disposition, the outer-hop PR,
+  AUD-0001-F3's closure, three unfiled shell defects.
+
+### Files-in-this-commit
+- site/wrangler.toml
+- site/README.md

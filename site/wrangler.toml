@@ -1,8 +1,21 @@
 # Cloudflare Workers static-assets config.
 #
-#   npm install
-#   npm run build      -> emits ./dist
-#   npx wrangler deploy
+# DEPLOY WITH:
+#
+#     npm install            (once)
+#     npx wrangler login     (once)
+#     npm run deploy         <- builds ./dist, then deploys
+#
+# NOT `npx wrangler deploy` on its own. `dist/` is git-ignored build output,
+# so it does not exist in a fresh clone, and wrangler will fail with:
+#
+#     ERROR  The directory specified by the "assets.directory" field in your
+#            configuration file does not exist: .../site/dist
+#
+# A [build] block does NOT fix this: wrangler skips [build] entirely for
+# assets-only Workers (no `main` entry point) — measured, not assumed.
+# `npm run deploy` runs the build itself, which is why it is the documented
+# command.
 #
 # Rename `name` if it collides with an existing Worker in your account.
 name = "chip8-sv"

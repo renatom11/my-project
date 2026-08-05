@@ -8,13 +8,18 @@ Cloudflare Workers.
 ```sh
 cd site
 npm install
-npm run build          # emits ./dist
 npx wrangler login     # once
-npx wrangler deploy
+npm run deploy         # builds ./dist, then deploys
 ```
 
-`npm run deploy` does the build and the deploy in one step. `npm run dev`
-serves it locally through wrangler.
+**Use `npm run deploy`, not `npx wrangler deploy`.** `dist/` is git-ignored
+build output, so it does not exist in a fresh clone and wrangler fails with
+*"The directory specified by the assets.directory field ... does not
+exist"*. A `[build]` block in `wrangler.toml` does **not** fix it — wrangler
+skips `[build]` entirely for assets-only Workers, which was measured rather
+than assumed. `npm run deploy` runs the build itself.
+
+`npm run dev` serves it locally through wrangler.
 
 Edit `name` in `wrangler.toml` if it collides with an existing Worker in
 your account. Nothing here needs a Cloudflare account at build time — you
