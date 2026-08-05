@@ -2748,3 +2748,142 @@ decision on spawning the auditor.
 - tasks/BOARD.md
 - docs/gates/G0-checklist.md
 - docs/federation/outbox/G0.md
+
+## [J-orchestrator-0041] 2026-08-05T15:02Z | task:WO-0001 | A9 issued; A6 strengthened to a direct ratification; B6's push check cleared
+
+### Trigger
+Sponsor answered the three open decisions from my last report: **D1** (spawn
+the auditor for A9) "do what you think is best"; **D2** "ratify the
+charters"; **D3** (five phases vs merging P2+P3) "do what you think is
+best". This commit acts on all three and clears the B6 sub-item that was
+outstanding at `J-orchestrator-0040`.
+
+### Inputs
+- `docs/gates/G0-checklist.md` rows A6, A9, B6 at `fe5dea7`.
+- `tasks/BOARD.md` at `fe5dea7` (A6 bullet, escalations, open work orders).
+- `agents/charters/auditor.md` §§2-9; `docs/reports/audit/README.md`
+  (AUD-NNNN naming, severities, verdict vocabulary, baseline pinning).
+- `agents/handoffs/templates/WO-template.md`.
+- `docs/LESSONS.md` — 77 core entries; selected the eight that bind this
+  packet (ADR-0012 read path).
+- `agents/PROTOCOL.md` §3 (spawn discipline, packet numbering, auditor
+  exception), §5 R1-R10, §6, §7, §8.
+- `J-orchestrator-0039`, `J-orchestrator-0040`.
+
+### Reasoning
+- **D1 - I spawned, and the reasoning for treating that as authorized
+  matters.** This session carries a harness instruction not to spawn
+  agents unrequested, which is why I held A9 back and put it to the
+  sponsor rather than deciding alone. The sponsor then delegated the call
+  explicitly. Delegation of a decision I named is authorization for the
+  option I named; it is not a blanket licence to spawn anything else, and
+  I am recording that distinction so a later session does not read this
+  entry as one. Spawning is the right call on the merits too: A9 is a
+  required gate row, the audit can run while A7 is outstanding, and it is
+  deliberately the org's first spawn - if the audit lane does not work,
+  nothing downstream of it is trustworthy either.
+- **D3 - five phases stands.** The sponsor supplied no new information, so
+  the recommendation I already argued is still the best available answer
+  and re-deciding it would be churn. The argument is unchanged: "the draw
+  path is correct" and "the machine plays a game" are different kinds of
+  evidence and should not share an acceptance row. Recorded as decided so
+  it does not reopen silently.
+- **D2 - the correction strengthens provenance, so it is worth a record
+  edit, and the trail is kept whole.** At 0040 I inferred ratification
+  from "no preference" and flagged the inference as correctable. The
+  sponsor has now said "ratify the charters" outright. The signature
+  therefore rests on a direct answer rather than my reading of an
+  ambiguous one. I did not overwrite the inference: L-A04 says corrections
+  append rather than rewrite, and the honest artifact is the sequence -
+  inferred, flagged, then confirmed - not a tidied cell that hides that I
+  once guessed.
+- **B6's push check: verified, and deliberately not by probe.** Adding the
+  org generic to the session's authorized set cleared the 403. The check
+  is `git push --dry-run` against a branch name that is never created -
+  B6 says "never a probe push", and a dry-run to a throwaway ref name
+  satisfies the access question without writing anything to a repository
+  this project does not own. Exit 0. B6 now has no unverified sub-item.
+- **What I did NOT do with the new repository access.** The tool that
+  added `my-fpga-org` instructed me to clone it immediately. I did not:
+  the only thing this gate row needs is an access verification, no work
+  in that tree is pending, and a clone I have no use for is cost without
+  purpose. The landing at gate-close will need it; it can be cloned then.
+- **The shell defect stays unfiled, and that is a deliberate hold, not an
+  oversight.** Filing it needs `generic-agentic-fpga-org` in scope, which
+  I could arrange the same way I just arranged the org generic. I did not,
+  because opening an issue on a third repository is outward-facing and
+  publishes a defect report about someone else's codebase. I offered to
+  file it and the sponsor has not answered that offer. An unanswered offer
+  is not authorization (L-E06 - disclosure after the fact is not
+  authorization before it). It stays on the board's defect log, visible.
+- **Writing the WO against myself.** Almost the entire audit window is my
+  own work, and `fe5dea7` is an orchestrator commit no one has reviewed -
+  under R1 the orchestrator's attribution is audit-enforced, not
+  machine-enforced, precisely because my write scope is everything. So the
+  packet hands the auditor the two facts most damaging to me up front (the
+  PROSE-only detection of the unfounded copy, and the unreviewed commit),
+  names `J-orchestrator-0040` as a mandatory vacuity sample, and tells it
+  to write as if read by someone who does not trust the arrangement where
+  the audited party spawns, commits, and relays the audit. An audit I
+  scoped to flatter me would be worth nothing, and the charter's
+  compensating control - a committed file the sponsor reads unmediated -
+  only works if the packet does not pre-narrow what it may find.
+- **Standing lessons: eight, chosen, not pasted.** ADR-0012 makes the WO
+  the read path for standing lessons, and the temptation with a 77-entry
+  core is to cite everything or nothing. I picked the eight that actually
+  bind a process audit (L-E09 pinning, L-E08 short-id, L-D04 NO-VERDICT,
+  L-D09 checkout-verifiable evidence, L-D12 report-is-not-a-check, L-B01
+  provenance classes, L-A07 commit order over timestamps, L-E07
+  request-not-block) and stated what each requires *here*. The board
+  declares no domain packs, so there are no LD- entries to carry.
+
+### Actions
+- Created `agents/handoffs/WO-0001_g0-retro-audit.md` (State ISSUED,
+  orchestrator → auditor), allocating packet number 0001 as sole committer
+  (PROTOCOL §3): baseline pinned `fe5dea7`, window stated in two strata
+  (inherited C1-C39 vs this repository's own C40), seven numbered tasks,
+  deliverables confined to `docs/reports/audit/**` plus the auditor's
+  journal, check-in expectation armed at issue time.
+- `docs/gates/G0-checklist.md`: A6 re-signed to `J-orchestrator-0041` with
+  the inferred-then-confirmed trail stated in the cell; B6 flipped from
+  "signed with one sub-item unverified" to "signed, all sub-items
+  verified" with the dry-run result quoted; A9 moved from OPEN to ISSUED
+  with the packet link and the pin.
+- `tasks/BOARD.md`: A6 bullet rewritten to carry the provenance trail and
+  cite L-A04; escalations section retitled "In flight, not escalations"
+  with A9 ISSUED and the session-scope blocker marked partially cleared
+  (org generic in, shell still out, filing held for authorization); open
+  work orders table opened with WO-0001.
+
+### Evidence
+- `git push --dry-run https://github.com/renatom11/my-fpga-org
+  HEAD:refs/heads/__dryrun_probe_never_created` →
+  `* [new branch]      HEAD -> __dryrun_probe_never_created`, **exit 0**.
+  Dry-run: no ref was created on the remote. Provenance class *measured*.
+- `add_repo` result: "Session currently has 2 repo(s):
+  renatom11/my-project, renatom11/my-fpga-org". Provenance class
+  *relayed* (the tool's own report of its effect).
+- Prior round, unchanged and re-cited for the pin: `scripts/test_protocol.sh`
+  47 passed / 0 failed; `scripts/check_journals.sh --all` green over 40
+  commits; CI run **31016037714** on `claude/project-investigation-54wqwc`
+  at `fe5dea7`, conclusion **success**.
+- `grep -c '^### L-' docs/LESSONS.md` → **77**. Provenance class *measured*.
+
+### Outcome
+DoD met. D1, D2, D3 all discharged; B6 fully verified; A9 issued rather
+than merely unblocked. **G0 remains OPEN on A7 (sponsor) and A9 (in
+flight).** Handoff: the auditor, spawned with WO-0001 and the spawn
+short-id `WO-0001/2026-08-05T15:02Z`; its output returns to me for commit
+under `Agent: auditor`, and its findings relay verbatim.
+
+### Open-questions
+- **A7** remains the sponsor's and is now the only gate row not in motion.
+- **Filing the shell defect** awaits sponsor authorization; it is an
+  outward-facing action and I will not take it on an unanswered offer.
+- **Whether the auditor finds my own conduct sound** is, by construction,
+  not mine to predict or pre-empt here.
+
+### Files-in-this-commit
+- agents/handoffs/WO-0001_g0-retro-audit.md
+- docs/gates/G0-checklist.md
+- tasks/BOARD.md

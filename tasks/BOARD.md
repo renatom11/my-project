@@ -70,7 +70,9 @@ the rows below are its roadmap view. Changing either is an E2 escalation.
 
 ## Open work orders
 
-_None._
+| Packet | From → To | State | Subject |
+|---|---|---|---|
+| [`WO-0001_g0-retro-audit.md`](../agents/handoffs/WO-0001_g0-retro-audit.md) | orchestrator → auditor | **ISSUED** 2026-08-05 | G0 row A9 — retro-audit of the seed commit range, baseline pinned `fe5dea7` |
 
 ## Pending escalations to sponsor
 
@@ -87,17 +89,23 @@ discharged: A6 ratification (2026-08-05), A8 branch-flow decision
   (no force push, no deletion) is convention only here — enforced by
   nothing**, and G0 cannot close.
 
-**Queued, not yet escalations:**
+**In flight, not escalations:**
 
-- **A9 — the retro-audit**, the org's first spawn. Unblocked by the intake
-  record (spawn ordering, G0 checklist Exit) and pending the orchestrator
-  spawning the auditor against a pinned baseline SHA (PROTOCOL §3).
-- **Session-scope blocker on B6 and the G0 landing** — the git proxy will
-  not mint a credential for `renatom11/my-fpga-org` (403; it is not in
-  this session's authorized repository set). Consequences: B6's
-  `git push --dry-run` access check is **unverified** (read access via
-  `git ls-remote` **is** verified), and the G0 harvest's automatic inner
-  hop cannot land. Both clear with a one-time repository add; neither
+- **A9 — the retro-audit**, the org's **first spawn**, now **ISSUED** as
+  [`WO-0001_g0-retro-audit.md`](../agents/handoffs/WO-0001_g0-retro-audit.md)
+  with the baseline pinned at `fe5dea7` (PROTOCOL §3, L-E09). The sponsor
+  delegated the spawn/defer call to the orchestrator on 2026-08-05; the
+  orchestrator spawned. Returns to the orchestrator for commit under
+  `Agent: auditor`; findings relay **verbatim**, CRITICAL as class E4.
+- **Session-scope blocker — partially cleared 2026-08-05.**
+  `renatom11/my-fpga-org` is now in this session's authorized repository
+  set, which **cleared B6's push check** (`git push --dry-run` succeeded,
+  exit 0, no branch created — never a probe push) and unblocks the G0
+  harvest's inner hop for when the gate signs. **Still blocked**:
+  `renatom11/generic-agentic-fpga-org` is not in the set, so the
+  freeze-inheritance shell defect (defect log below) cannot be filed —
+  and filing it is an outward-facing action on a third repository, held
+  for explicit sponsor authorization, which has not been given. Neither
   blocks M1 work.
 
 ## Decisions on record
@@ -123,9 +131,13 @@ discharged: A6 ratification (2026-08-05), A8 branch-flow decision
 - **Org ratification (G0 A6)**: the org chart and all nine charters
   **ratified as written, without amendment**, sponsor decision
   2026-08-05. Provenance class *relayed* (PROTOCOL §7 — the sponsor holds
-  no journal); the sponsor's response was "no preference", read by the
-  orchestrator as no amendments requested and recorded as such in
-  J-orchestrator-0040 so the reading is correctable on the record.
+  no journal). The trail is kept whole rather than tidied: the sponsor
+  first answered "no preference", which J-orchestrator-0040 recorded as an
+  **inferred** reading and flagged as correctable; the sponsor then
+  confirmed **"ratify the charters"** explicitly (J-orchestrator-0041).
+  The signature rests on the direct answer; the inference is retained
+  above it so the strengthening is visible rather than silent (L-A04 —
+  corrections append, they never rewrite).
 - Constitution ADR-0001..0007 pre-adopted at seeding (see each ADR's
   provenance).
 - **Declared domain packs**: **none loaded** (G0 B6, 2026-08-05). The only
