@@ -17,9 +17,9 @@ checklist is [`BOOTSTRAP.md`](../../BOOTSTRAP.md).
 | A3 | `journal-check` CI green on the pushed branch (full-history re-verification) | orchestrator | ✅ satisfied at seeding | J-orchestrator-0002 (run 1, conclusion success) · verify: Actions tab → `journal-check` on the latest push, or `bash scripts/check_journals.sh --all` |
 | A4 | Charters, org chart, and spawn launchers committed and mutually consistent (roster 1:1 across `ORG_CHART.md`, `agents/charters/`, `.claude/agents/`) | orchestrator | ✅ satisfied at seeding | J-orchestrator-0002 · verify: `ls agents/charters .claude/agents` against the ORG_CHART roster table |
 | A5 | Journals seeded, append-only from birth; `agents/journals/INDEX.md` committed | orchestrator | ✅ satisfied at seeding | J-orchestrator-0001, J-orchestrator-0002 · verify: `bash scripts/check_journals.sh --all` |
-| A6 | **Sponsor**: charter critique round — org chart + all nine charters read, critiqued, and ratified (or amended by ADR before ratification) | sponsor | OPEN | <sponsor approval date, recorded in an orchestrator journal entry> |
+| A6 | **Sponsor**: charter critique round — org chart + all nine charters read, critiqued, and ratified (or amended by ADR before ratification) | sponsor | ✅ **ratified as written, no amendment** — 2026-08-05 | J-orchestrator-0040 (provenance class *relayed*, PROTOCOL §7 — the sponsor holds no journal; response "no preference", read as no amendments requested and recorded as such so the reading is correctable) |
 | A7 | **Sponsor**: branch protection on `main` AND the working branch — exact click-path below. Until this is done, PROTOCOL §5 R9's no-force-push guarantee is convention only | sponsor | OPEN | <sponsor configured date + ruleset names; rejection verified by live fire, journal ref> |
-| A8 | **Decision**: single-branch mode (work lands on `main` directly) vs PR-flow mode (working branch + milestone PRs into `main`, R9). **Default: single-branch mode** — the orchestrator proposes it in the intake proposal and the sponsor overrides only if they want PR-flow; either way the choice rides the E0 setup, no open-ended question asked. Decide with A7 — it changes which ruleset binds what — and record the decision and the working-branch name on [`tasks/BOARD.md`](../../tasks/BOARD.md) | sponsor + orchestrator | OPEN | <BOARD updated at SHA; journal ref> |
+| A8 | **Decision**: single-branch mode (work lands on `main` directly) vs PR-flow mode (working branch + milestone PRs into `main`, R9). **Default: single-branch mode** — the orchestrator proposes it in the intake proposal and the sponsor overrides only if they want PR-flow; either way the choice rides the E0 setup, no open-ended question asked. Decide with A7 — it changes which ruleset binds what — and record the decision and the working-branch name on [`tasks/BOARD.md`](../../tasks/BOARD.md) | sponsor + orchestrator | ✅ **PR-flow mode**, working branch `claude/project-investigation-54wqwc` — 2026-08-05 | J-orchestrator-0040 · BOARD "Branch flow (G0 A8)" · chosen over the single-branch default because only PR-flow lets `journal-check` bind `main` as a *required* check |
 | A9 | Auditor's G0 retro-audit of the seed commit range committed to `docs/reports/audit/` — the new org's **first spawn**, and the first proof the audit lane works | auditor | OPEN | <J-auditor-NNNN — verdict + report path> |
 
 ### A7 click-path (branch rulesets)
@@ -80,27 +80,88 @@ The B rows may be filled by questionnaire or, expectedly, by the sponsor's
 brain dump digested into one signed proposal (BOOTSTRAP.md Section B,
 Path B). The rows below are the record either way.
 
-| B1 | **The project, decomposed into phases**: what is being built, split into orderable phases with a one-line scope each | README phase table + BOARD roadmap | OPEN | <J-orchestrator-NNNN> |
-| B2 | **Scope parameters and performance criteria**: the interface parameters, throughput/latency/capacity figures, and any resource envelope the design must meet — stated as numbers, since PROTOCOL §10's evidence rules and SPEC-TEMPLATE §8's stress obligation will bind to them | README phase table + BOARD | OPEN | <J-orchestrator-NNNN> |
-| B3 | **External references and toolchain candidates, each with a license class**: every reference design, document, dataset, or candidate toolchain lane the org may consult or adopt, classed **free-use** (may be vendored verbatim with provenance, never edited in place) or **consult-only** (design study only — never ported, never quoted into shipped source), per PROTOCOL §10. Toolchain candidates feed the M1 E3 decision | BOARD (decisions on record) | OPEN | <J-orchestrator-NNNN> |
-| B4 | **The simulation-first boundary**: what this program validates in simulation, and where (if anywhere) hardware bring-up sits — phases and success criteria must not silently assume lab equipment nobody has | README phase table + BOARD | OPEN | <J-orchestrator-NNNN> |
-| B5 | **Success criteria per phase**: for each phase, the evidence that closes its `P<n>-phase-accept` gate — replay/validation runs, performance figures, audit state. These become the gate checklists' acceptance rows (see [`templates/`](templates/)) | README phase table + BOARD | OPEN | <J-orchestrator-NNNN> |
-| B6 | **Federation founding record**: this project's org generic = `<URL>`, proposed by the orchestrator from the fork relationship (clone case: one line in the same signed proposal — the intake signature covers it); push access verified **read-only** (`git ls-remote` + `git push --dry-run` — never a probe push or probe commit); the **project slug** recorded on the BOARD (lowercase-hyphenated, unique in the org — it keys every landing, [`docs/FEDERATION.md`](../FEDERATION.md) §5.1); the **fork-point harvest baseline** recorded on the BOARD (last inherited entry id per journal chain — the first harvest tiles from baseline + 1, ADR-0010); the board's **Repo role** line completed to `project` (or `solo-collapsed`) and its **This repository** line re-recorded to this project's own URL, ADR-0011; the board's **outer-hop standing pre-answer** line confirmed — kept, set (YES or NO), or left empty so the per-gate question stands ([`docs/FEDERATION.md`](../FEDERATION.md) §7). For a solo-collapsed copy, BOOTSTRAP Stage 0 steps 5–6 also run here: the freeze bullet re-scoped to *"no new law until this repository's first lessons landing completes"*, and the upstream defect channel confirmed. An org generic itself keeps the canonical shell on this line; a solo-collapsed copy does too ([`docs/FEDERATION.md`](../FEDERATION.md) §0, §5.1) | BOARD (decisions on record) | OPEN | <J-orchestrator-NNNN> |
+| B1 | **The project, decomposed into phases**: what is being built, split into orderable phases with a one-line scope each | README phase table + BOARD roadmap | ✅ **signed** 2026-08-05 — 5 phases (P1 core CPU · P2 display/draw · P3 I/O + first light · P4 quirks/compat/formal · P5 synthesis/delivery) | J-orchestrator-0040 |
+| B2 | **Scope parameters and performance criteria**: the interface parameters, throughput/latency/capacity figures, and any resource envelope the design must meet — stated as numbers, since PROTOCOL §10's evidence rules and SPEC-TEMPLATE §8's stress obligation will bind to them | README phase table + BOARD | ✅ **signed** 2026-08-05 — full parameter set in README's scope paragraph; fmax bar ≥ 25 MHz post-P&R on iCE40 HX8K, resource bar ≤ 50% logic cells, stack depth 16 (parameterized) | J-orchestrator-0040 |
+| B3 | **External references and toolchain candidates, each with a license class**: every reference design, document, dataset, or candidate toolchain lane the org may consult or adopt, classed **free-use** (may be vendored verbatim with provenance, never edited in place) or **consult-only** (design study only — never ported, never quoted into shipped source), per PROTOCOL §10. Toolchain candidates feed the M1 E3 decision | BOARD (decisions on record) | ✅ **signed** 2026-08-05 — docs consult-only; test ROMs free-use (licenses to verify before vendoring); **game ROM fetched, never vendored**; toolchain candidates all free-use, with the two capability findings recorded | J-orchestrator-0040 |
+| B4 | **The simulation-first boundary**: what this program validates in simulation, and where (if anywhere) hardware bring-up sits — phases and success criteria must not silently assume lab equipment nobody has | README phase table + BOARD | ✅ **signed** 2026-08-05 — everything in simulation; **no board, no bitstream deployment, no lab equipment, at any phase**; synthesis runs full P&R for reports only | J-orchestrator-0040 |
+| B5 | **Success criteria per phase**: for each phase, the evidence that closes its `P<n>-phase-accept` gate — replay/validation runs, performance figures, audit state. These become the gate checklists' acceptance rows (see [`templates/`](templates/)) | README phase table + BOARD | ✅ **signed** 2026-08-05 — one criterion per phase in README's table; P3 = Pong to a scored point, P4 = test suite green in ≥2 quirk configurations, P5 = published timing + browser-playable build | J-orchestrator-0040 |
+| B6 | **Federation founding record**: this project's org generic = `<URL>`, proposed by the orchestrator from the fork relationship (clone case: one line in the same signed proposal — the intake signature covers it); push access verified **read-only** (`git ls-remote` + `git push --dry-run` — never a probe push or probe commit); the **project slug** recorded on the BOARD (lowercase-hyphenated, unique in the org — it keys every landing, [`docs/FEDERATION.md`](../FEDERATION.md) §5.1); the **fork-point harvest baseline** recorded on the BOARD (last inherited entry id per journal chain — the first harvest tiles from baseline + 1, ADR-0010); the board's **Repo role** line completed to `project` (or `solo-collapsed`) and its **This repository** line re-recorded to this project's own URL, ADR-0011; the board's **outer-hop standing pre-answer** line confirmed — kept, set (YES or NO), or left empty so the per-gate question stands ([`docs/FEDERATION.md`](../FEDERATION.md) §7). For a solo-collapsed copy, BOOTSTRAP Stage 0 steps 5–6 also run here: the freeze bullet re-scoped to *"no new law until this repository's first lessons landing completes"*, and the upstream defect channel confirmed. An org generic itself keeps the canonical shell on this line; a solo-collapsed copy does too ([`docs/FEDERATION.md`](../FEDERATION.md) §0, §5.1) | BOARD (decisions on record) | ⚠️ **signed with one sub-item unverified** 2026-08-05 — org generic `renatom11/my-fpga-org` (read verified, `main` @ `0a60b2a`); slug `chip8-sv`; baseline orchestrator 0039, all other chains none; role → `project`; This-repository → `renatom11/my-project`; upstream → the org generic; standing pre-answer confirmed unset. **`git push --dry-run` returned 403** — the git proxy will not mint a credential for a repository outside this session's authorized set; clears with a one-time repository add | J-orchestrator-0040 |
 
 ## Section C — Lessons harvest
 
-<!-- Instantiate docs/gates/templates/lessons-harvest-block.md here when
-     Section B closes (PROTOCOL §7.1) — the program's FIRST harvest,
-     mining the bring-up spans from the fork-point baseline recorded at
-     B6, + 1 ("first harvest" tiling; entry 0001 only in a repo with no
-     inherited history — ADR-0010). G0 is sponsor-signed, so the block runs
-     the automatic org-generic landing and records the sponsor's one
-     outer-hop yes/no beside the ratification — or the standing
-     pre-answer's board reference, where one stands
-     (docs/FEDERATION.md §0, §7).
-     A nil yield at G0 is normal and declared — there is
-     no warm-up gate exempt from the precondition, and this section is
-     what makes that sentence true on day zero. -->
+### Lessons harvest — G0
+
+<!-- Bars and classifier: docs/gates/templates/lessons-harvest-block.md,
+     top half. The export contract: docs/FEDERATION.md. -->
+
+#### Span record
+
+Fork-point baselines are the B6 record: `orchestrator` 0039, every other
+chain none (header-only at clone). First harvests therefore tile from
+baseline + 1. No worker span has been commissioned yet — no lead has been
+spawned — so there are no lead-mined worker rows.
+
+| Journal chain | Miner | Span (`J-<agent>-NNNN..NNNN`) | Tiles with (previous harvest · its `to`) | Harvest note (miner's journal entry) | Yield (ids or NIL) |
+|---|---|---|---|---|---|
+| `J-orchestrator` | `orchestrator` | `J-orchestrator-0040..0040` | first harvest (baseline 0039) | `J-orchestrator-0040` | `LC-01`, war story `WS-01` |
+| `J-architect_docs_lead` | `architect_docs_lead` | `(idle)` | first harvest (baseline none) | — | NIL |
+| `J-rtl_lead` | `rtl_lead` | `(idle)` | first harvest (baseline none) | — | NIL |
+| `J-dv_lead` | `dv_lead` | `(idle)` | first harvest (baseline none) | — | NIL |
+| `J-auditor` | `auditor` | `(idle)` | first harvest (baseline none) | — | NIL |
+
+#### Yield — three-way disposition
+
+| Candidate | Tier | Target | Disposition |
+|---|---|---|---|
+| `LC-01 enumerated-identity check that validates one value` | 1 | core `docs/LESSONS.md` (org generic, then onward) | in export packet |
+
+#### War stories
+
+| Candidate | Failed criterion | Kept where |
+|---|---|---|
+| `WS-01 verify the simulator implements the testbench features the DV plan assumes` | **LH1** — anticipatory, not provenance-pinned: the gap was caught at intake before any test was written, so there is no incident commit to cite. Re-read at P1 if it bites. | `J-orchestrator-0040`; export packet appendix |
+
+#### Export packet and transmission
+
+- Export packet: [`docs/federation/outbox/G0.md`](../federation/outbox/G0.md),
+  committed in this same commit — carries `LC-01` with a self-contained
+  incident description and `WS-01` in the war-story appendix.
+- Transmission — **NOT RUN; G0 is not yet signed.** G0 is a sponsor-signed
+  parent, so the inner hop runs automatically *after* the gate signature
+  and never before (`docs/FEDERATION.md` §5.1). Two things stand between
+  here and that:
+  - the gate is still open on **A7** and **A9**;
+  - even once signed, the landing is **blocked**: the git proxy returns
+    403 for `renatom11/my-fpga-org`, which is outside this session's
+    authorized repository set, so no `fed/**` branch can be pushed.
+    Clears with a one-time repository add.
+- Outer-hop decision: **not asked** — it rides the gate signature, and the
+  board's standing pre-answer is confirmed unset, so the per-gate
+  default-yes question stands and will be put at signature time.
+
+#### Preconditions (these gate the parent record)
+
+- [x] Every active persistent journal chain has a span row, and every
+      commissioned worker span has a lead-mined row (none commissioned).
+- [x] Spans tile: `orchestrator` from baseline 0039 + 1 = 0040 ✓; the four
+      idle chains from baseline none, unchanged.
+- [x] Every yield cell carries candidate ids or a declared NIL — no blank
+      cells, no counts.
+- [x] Every candidate is dispositioned exactly once, and the war story
+      names its failed criterion (LH1).
+- [x] Export packet produced and cited above.
+- [ ] **Transmission recorded** — open. Blocked on the gate signature
+      (A7, A9) and, beyond it, on repository access for the landing push.
+
+The parent gate is **not fully signed** until every box above is checked
+(PROTOCOL §7.1).
+
+**Note on what is deliberately *not* here.** The freeze-inheritance
+problem found during this bring-up is a **shell defect**, not a lesson: it
+is a broken step in the shell's own law, and it travels as a GitHub issue
+on the canonical shell. Routing it through this pipeline would be a
+category error — LH2 bars the specificity a defect report needs. It is
+recorded in the BOARD's defect log instead.
 
 ## Exit
 

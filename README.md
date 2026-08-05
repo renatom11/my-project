@@ -42,9 +42,34 @@ canonical statement of scope, phases, and success criteria (PROTOCOL §1);
 it changes only by sponsor decision (escalation class E2 — a scope
 change).
 
+**The project**: a synthesizable SystemVerilog implementation of the **CHIP-8
+virtual machine** (1977), verified and delivered entirely in simulation using
+free, open-source tools. 4 KB single-port RAM · 16 × 8-bit registers · 12-bit
+index register · 16-entry call stack · two 60 Hz countdown timers · 16-key
+hexadecimal keypad · 64 × 32 monochrome display · 35 fixed-width 2-byte
+instructions. Recorded at G0 intake, 2026-08-05.
+
 | Phase | Scope | Success criteria |
 |---|---|---|
-| _—_ | _recorded at G0 intake_ | _recorded at G0 intake_ |
+| **P1 — Core CPU** | Single-port 4 KB RAM, register file, call stack, multicycle fetch/decode/execute FSM, and every instruction that is neither draw nor I/O (arithmetic, logic, conditional skips, jumps, subroutine calls, RNG). Python golden model and lockstep harness stood up as the phase's verification instrument. | Lockstep parity against the golden model over directed vectors and constrained-random instruction streams for the covered opcode subset; full architectural-state compare after every instruction; divergence reported at the instruction of first difference. |
+| **P2 — Display and draw path** | Framebuffer in flip-flops, 64-bit barrel shifter, `DXYN` with XOR commit and collision→VF, `00E0` clear, font ROM and `FX29`. | Draw-path lockstep including full framebuffer compare; unaligned positioning, edge wrap/clip and multi-row sprites covered; collision flag correct in both directions (set on erase, cleared otherwise). |
+| **P3 — I/O, timing, first light** | 60 Hz delay and sound timers, 16-key keypad, `EX9E`/`EXA1`/`FX0A` blocking wait, `FX07`/`FX15`/`FX18`. | Pong runs to a scored point end-to-end in simulation under scripted keypad input, framebuffer matching the golden model frame-for-frame; 60 Hz tick verified against cycle count. |
+| **P4 — Quirks, compatibility, formal** | Every divergent CHIP-8 behaviour exposed as a compile-time parameter (defaulting to 1977 COSMAC VIP semantics); community test-ROM suite; formal property proofs. | Test-ROM suite green with framebuffer compared against reference images, in the 1977 default configuration **and** at least one alternate quirk configuration; formal proofs of stack-never-overflows/underflows, PC-never-leaves-valid-memory, I-never-addresses-out-of-range. |
+| **P5 — Synthesis, timing, delivery** | Yosys → nextpnr → timing flow for resource and fmax reports; Verilator → Emscripten WebAssembly build; CI badge. | Post-place-and-route fmax and resource report published with the critical path identified; WebAssembly build playable in a browser from a link with no install; CI green on every push. |
+
+**Scope parameters** (PROTOCOL §10 evidence rules and SPEC-TEMPLATE §8 bind to
+these numbers): RAM 4096 × 8 bit, single-port synchronous, one access per
+cycle; program load address `0x200`; font ROM 16 glyphs × 5 bytes at
+`0x000`–`0x04F`; V0–VF 16 × 8 bit with VF as carry/borrow/collision flag; I and
+PC 12 bit; stack 16 × 12 bit (parameterized); DT and ST 8 bit each decrementing
+at 60 Hz; framebuffer 64 × 32 × 1 bpp = 2048 flip-flops; sprites 8 wide × 1–15
+rows; barrel shifter 64 bit, shift 0–63; 35 instructions, fixed 2 bytes,
+big-endian. Cycle budget: 3 cycles fetch-hi/fetch-lo/decode (decode may fold
+into fetch-lo → 2), ~4 cycles for a simple ALU instruction, 4 + N for `DXYN`,
+4 + (X+1) for `FX55`/`FX65`, `FX0A` blocks indefinitely. Instruction issue rate
+500–1000/s (throttled); nominal clock 12 MHz, 60 Hz tick divider 200,000.
+Synthesis target iCE40 HX8K (7680 LUT4 / 7680 FF), fmax bar ≥ 25 MHz
+post-place-and-route, resource bar ≤ 50% logic cells.
 
 ## The org
 

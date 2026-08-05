@@ -2584,3 +2584,167 @@ is the sponsor's ruleset.
 
 ### Files-in-this-commit
 - tasks/BOARD.md
+
+## [J-orchestrator-0040] 2026-08-05T14:34Z | task:none | G0 intake signed: this copy is founded as the chip8-sv project
+
+### Trigger
+Sponsor session opened with "Investigate this project". Per `CLAUDE.md`
+the boot path is fully determined and the phrasing does not steer it: I
+rehydrated, found the board's `This repository` line
+(`renatom11/my-fpga-org`) disagreeing with `origin`
+(`renatom11/my-project`), and resolved it by the First-session rule — a
+fresh copy of an **org generic** is a **new project**, milestone M0. I
+verified the seeded state, greeted the sponsor with the state and the
+ask, received a brain dump (BOOTSTRAP Path B), returned one proposed
+intake, and the sponsor answered: (1) Sign, (2) confirm, (3) no
+preference. This commit records the signed intake.
+
+### Inputs
+- `tasks/BOARD.md` at `0a60b2a` (identity lines, freeze bullet, inherited
+  shell history, queued law-debt).
+- `agents/PROTOCOL.md` §1, §3, §5 R1-R10, §6, §7, §7.1, §8, §9, §10, §11.
+- `ORG_CHART.md`; `BOOTSTRAP.md` Stage 0 and Stage 1; `README.md`.
+- `docs/gates/G0-checklist.md`; `docs/gates/templates/lessons-harvest-block.md`.
+- `docs/FEDERATION.md` §5.1, §6, §7; `docs/domains/README.md`.
+- Journal tail `J-orchestrator-0039`; `agents/journals/INDEX.md`.
+- The sponsor's brain dump (this session, verbatim in context): CHIP-8 in
+  SystemVerilog, simulation-only, open-source toolchain.
+
+### Reasoning
+- **Which repository am I in, and what does that make me.** The board and
+  `origin` disagreed, which `CLAUDE.md` defines as a fresh, unfounded
+  copy. The role line said `org-generic`, so what I found it as follows
+  from what the *parent* was: a copy of an org generic is a new project,
+  not a second org generic. That single reading determined everything
+  after it - M0 path, G0 intake, the B6 re-record - and it is the reading
+  the third field defect exists to protect.
+- **The detection was PROSE, and saying so is load-bearing.** `R-ROLE-1`
+  did not fire: it compares origin against a `canonical-shell` claim
+  only, and this copy claimed `org-generic`. CI was green over the whole
+  history of a repository whose own board asserted it was a different
+  repository. Under the `CLAUDE.md` iron rule I tag this MACHINE-absent
+  and PROSE-present wherever I state it, and I mint it as `LC-01` rather
+  than let the board's queued law-debt line stand as the only record -
+  independent re-derivation is exactly what the recurrence machinery
+  (ADR-0010) wants recorded.
+- **The inherited freeze cannot be obeyed as written.** Its end condition
+  names a landing in `my-fpga-org`, an event this repository cannot
+  observe, and B6 re-scopes the freeze only for a `solo-collapsed` copy.
+  Read literally it bars the M1 toolchain ADR that BOOTSTRAP Stage 2
+  mandates - the copy cannot both obey the freeze and follow the
+  bootstrap. Two readings were available: treat the freeze as binding and
+  stall M1, or treat it as never having bound this repository. I took the
+  second, because a rule that forbids the procedure it ships with is a
+  defect in the rule, not an instruction to stop. Recorded on the board
+  with the reasoning exposed so it is correctable, and filed as a shell
+  defect - not a lesson, because a broken step in the shell's own law is
+  an issue and LH2 bars the specificity a defect report needs.
+- **Digesting the dump was my work, not the sponsor's.** The dump was
+  rich but underdetermined in three places. Stack depth: the project's
+  own philosophy is "default to 1977", which argues for the authentic
+  VIP's 12 - but 12 is a correctness cliff rather than a behavioural
+  flavour, and ROMs assume 16, so I broke the philosophy deliberately and
+  said why. ROM provenance: "freely available" is not a license, so I
+  recommended fetch-with-checksum over vendoring, which sidesteps
+  redistribution entirely and rides machinery PROTOCOL §5 already
+  prescribes. Phase count: I proposed 5 over 4 because "the draw path is
+  correct" and "the machine plays a game" are different kinds of
+  evidence and should not share an acceptance row, and offered the merge
+  as a one-line override.
+- **Two toolchain findings belonged in the intake, not at M1.** SV
+  constrained randomization is absent from both candidate simulators, so
+  the dump's constrained-random strategy has to live in Python under
+  cocotb; and Verilator is 2-state, so reset/init bugs are invisible in
+  the primary lane. Both change the DV architecture. Surfacing them at
+  intake costs one paragraph; surfacing them at P1 costs a rewritten
+  verification plan.
+- **Independence extends to the golden model.** PROTOCOL §10 binds
+  shipped RTL to be written from specs. The dump proposes a Python
+  reference model, and a model ported from an existing interpreter would
+  not be an independent anchor - it would share any misreading with the
+  hardware and agree with it silently. I recorded the rider at intake
+  rather than discovering it at the first lockstep disagreement.
+- **Reading "no preference" as ratification.** A6 asks the sponsor to
+  ratify or amend; "no preference" is not literally either. I read it as
+  no amendments requested, recorded that reading explicitly in the
+  checklist cell and on the board so it is visible and correctable, and
+  kept the provenance class *relayed* (PROTOCOL §7) - honestly weaker
+  than a self-journaled signature.
+- **What I did not do.** A9's retro-audit is the org's first spawn and is
+  now unblocked by this intake record, but this session carries a
+  harness instruction not to spawn agents unrequested. G0 cannot close
+  while A7 is open regardless, so deferring A9 costs the program nothing
+  and I raised it to the sponsor rather than resolving the conflict
+  silently in either direction.
+- **Domain packs: none, and no new pack minted.** `ethernet-networking`
+  is the only pack in the inventory and nothing in the material puts it
+  in play. I deliberately did not create a CPU or toolchain pack: packs
+  are created at a landing fence from screened candidates, never by a
+  project declaring one. `WS-01` names a prospective pack without
+  creating it.
+
+### Actions
+- `README.md`: replaced the placeholder phase row with the five-phase
+  table (P1 core CPU, P2 display/draw, P3 I/O + first light, P4
+  quirks/compat/formal, P5 synthesis/delivery), each with its success
+  criterion, plus the scope-parameter paragraph carrying every B2 number.
+- `tasks/BOARD.md`: milestone FOUNDED/org-generic to M0/project; roadmap
+  rewritten to M0, M1, P1-P5; G0 row opened; escalations reduced to A7
+  with A9 and the session-scope credential blocker queued below it;
+  identity lines re-recorded (role `project`, This-repository, upstream to
+  the org generic, slug `chip8-sv`, baselines per chain); freeze recorded
+  NOT ENGAGED with the reasoning; A6, A8, B3, B4 decisions added; defect
+  log opened with the freeze-inheritance defect.
+- `docs/gates/G0-checklist.md`: signed A6, A8, B1-B5; B6 signed with the
+  push-check sub-item flagged unverified; instantiated Section C from the
+  harvest-block template with span record, yield, war story, export
+  citation, and transmission recorded as not run.
+- `docs/federation/outbox/G0.md`: created the export packet - `LC-01`
+  with a self-contained incident description, `WS-01` in the appendix.
+
+### Evidence
+- `bash scripts/test_protocol.sh`: **47 passed, 0 failed** (41 scenarios).
+- `bash scripts/check_journals.sh --all`: green, **39 commits** satisfy
+  the protocol, journal volume chains verified at range head (R10);
+  advisory `WARN-SEAL` x3 and `WARN-GRAMMAR` on three inherited commits.
+- CI run **31012592559**, workflow `journal-check`, branch `main`, head
+  `0a60b2a`: conclusion **success**. This is the run that passed on an
+  unfounded copy - `LC-01`'s incident evidence.
+- `git ls-remote --heads https://github.com/renatom11/my-fpga-org`:
+  `refs/heads/main` = `0a60b2ae001cb62ec017d6f949dda3ef4d388321`,
+  identical to this repository's head - read access verified, clone
+  parentage confirmed.
+- `git push --dry-run https://github.com/renatom11/my-fpga-org ...`:
+  **failed, 403** - "renatom11/my-fpga-org is not in this session's
+  authorized repository set". B6's push check is unverified; the G0
+  landing is blocked on the same.
+- Baselines measured by the INDEX.md regeneration recipe: orchestrator
+  `J-orchestrator-0039`; all eight other chains produce no output
+  (header-only).
+
+### Outcome
+DoD met for the intake round: B1-B6 recorded in README's phase table and
+on the BOARD in this same commit, signatures transcribed, Section C
+instantiated, export packet committed. **G0 remains OPEN** on A7
+(sponsor ruleset, class E0) and A9 (retro-audit, unblocked but not
+spawned). B6 is signed with one sub-item unverified. No agent has been
+spawned; no work order issued. Handoff: the sponsor, for A7 and for a
+decision on spawning the auditor.
+
+### Open-questions
+- **A7** is the sponsor's and the last E0 contact; until it is
+  configured PROTOCOL §5 R9 is convention only here.
+- **A9** is unblocked but unspawned - see the harness-instruction
+  conflict in Reasoning; the sponsor's call.
+- **Repository access** for `renatom11/my-fpga-org` blocks B6's push
+  check and the G0 inner-hop landing, and access to
+  `renatom11/generic-agentic-fpga-org` blocks filing the freeze defect.
+  All three clear with repository adds; none blocks M1.
+- **Licenses of the three test-ROM suites** are unverified and must be
+  before any of them is vendored.
+
+### Files-in-this-commit
+- README.md
+- tasks/BOARD.md
+- docs/gates/G0-checklist.md
+- docs/federation/outbox/G0.md
