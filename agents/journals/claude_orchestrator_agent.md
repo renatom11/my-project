@@ -5875,3 +5875,91 @@ together. **S1 remains unsigned and remains the sponsor's.**
 ### Files-in-this-commit
 - docs/specs/REQUIREMENTS-LIST.md
 - site/requirements.mjs
+
+## [J-orchestrator-0069] 2026-08-06T01:10Z | task:WO-0010 | The sponsor asked whether anyone reviewed this; nobody did, and I issued the audit packet
+
+### Trigger
+The sponsor: *"This is still horrible. Spin up an audit agent. [REQ-001 as
+rendered] would not pass in an official engineering inspection. Did the
+auditor even take a look at this? Did verification read? How did any of this
+get to me? Did you let it through? Were you audited to make sure it was
+good?"*
+
+### Inputs
+- The sponsor's message, quoted into WO-0010 §1 verbatim
+- `docs/specs/REQUIREMENTS-LIST.md` at `a5bc7f4`; `site/requirements.mjs`
+- `ORG_CHART.md` (auditor's remit and the verbatim-relay rule); PROTOCOL §7
+
+### Reasoning
+- **Every one of the four questions has a bad answer and I gave them
+  straight.** The auditor has never seen these artefacts. `dv_lead`
+  countersigned the specification and has never seen the atlas, the list or
+  the extractor. I wrote the extractor, judged its output acceptable, and
+  published it: **author, reviewer and approver were one agent.** Nothing was
+  audited. Answering otherwise was not available and would not have been
+  worth the attempt.
+- **The sponsor's engineering charge is correct and it is not a bug report.**
+  `Port: mem_addr · Dir: out · Width: ADDR_W · Meaning: …` is a port-table
+  row with its column headers glued back on. No subject, no normative verb,
+  no testable predicate. **It is a transcription, not a requirement.** I
+  built a mechanism that reformats tables and called its output a
+  requirements list, and reformatting cannot produce a requirement. That is a
+  defect in the approach, not in the regexes — which is why WO-0010 §3.B
+  tells the auditor to test the *assumption* rather than the implementation.
+  A finding that mechanical extraction cannot work at all is a finding I want
+  returned if it is true, and my last four commits are evidence that I would
+  otherwise keep improving a thing that cannot be made good.
+- **My review loop is the actual failure.** Rounds one to three of atlas
+  defects were caught by the sponsor. Round four I caught myself, and only
+  because a question about a file path made me read my own output back. There
+  is no gate on derived artefacts in this program — PROTOCOL §7 gates specs
+  and modules and says nothing about what gets rendered for the sponsor. I am
+  not writing that rule myself: **the agent that skipped the gate should not
+  design it**, so §3.C asks the auditor for it.
+- **§3.F is the question I cannot grade.** "What else reached the sponsor
+  with no independent review?" I have an answer and it is worth nothing,
+  because I am the one who let it through. It goes in a work order for that
+  reason.
+- **The audit's subject is me, again.** Second time (AUD-0002 was the first).
+  I named the subject commits as mine in the packet header rather than
+  letting the auditor discover it, and told it to state findings against me
+  without softening.
+
+### Actions
+- Wrote `agents/handoffs/WO-0010_derived-artefact-audit.md`: six questions
+  (A–F), five artefacts in scope, no-repair constraint, verbatim relay.
+- Answered the sponsor's four questions directly before issuing the packet,
+  rather than letting the audit stand in for an answer I owed immediately.
+- Committing the packet myself: R7 bars the auditor from `agents/handoffs/**`
+  (`AUD-0002-F5`), and a spawn prompt that tells it otherwise is the mistake
+  that finding recorded.
+
+### Evidence
+- WO-0010 exists at this commit with the sponsor's words quoted verbatim in
+  §1. *Measured.*
+- Audit reports naming the atlas, the list, or the extractor before this
+  packet: **zero** (`docs/reports/audit/` holds AUD-0001 and AUD-0002 only).
+  *Measured.*
+- `dv_lead` reports naming them: **zero**. *Measured.*
+- Rounds of defects in these artefacts found by the sponsor: **three**
+  (`J-orchestrator-0064`, `0065`, and this one); found by me: **one**
+  (`0068`). *Measured* from the journal chain.
+
+### Outcome
+Packet issued; the auditor is spawned against it in the same turn. **No
+further fixes to the extractor until the audit returns** — continuing to
+patch an approach whose soundness is the open question is how the last four
+commits happened.
+
+### Open-questions
+- **Whether mechanical extraction is capable of this at all** (WO-0010 §3.B).
+  If it is not, `REQUIREMENTS-LIST.md` should be withdrawn rather than
+  improved, and I should say so to the sponsor before they rely on it.
+- **Whether the six unquotable requirements are a spec property** (§3.D) —
+  now inside the audit rather than waiting on my own escalation to the
+  architect, which is the better routing.
+- Unchanged and still owed: AUD-0002-F1's disposition, the outer-hop PR,
+  AUD-0001-F3's closure, three unfiled shell defects, an unverified deploy.
+
+### Files-in-this-commit
+- agents/handoffs/WO-0010_derived-artefact-audit.md
