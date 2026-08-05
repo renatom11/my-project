@@ -3274,3 +3274,134 @@ gate. Handoff: none - the reviewer's return is the next event.
 
 ### Files-in-this-commit
 - (none)
+
+## [J-orchestrator-0045] 2026-08-05T15:40Z | task:none | G0 PASSED: the inner hop completed, LC-01 landed as L-D16, milestone flips to M1
+
+### Trigger
+§5.1 step 6 — record the org-generic landing SHAs in this project's
+harvest block — and, with that, the last unchecked precondition of G0's
+Section C. This entry declares **G0 passed** and flips the board to M1.
+
+### Inputs
+- The landing, executed at the org fence and journaled in *that*
+  repository's chain: `J-orchestrator-0040` (steps 0-2),
+  `J-orchestrator-0041` (step 3), `J-orchestrator-0042` (steps 4-5) of
+  `renatom11/my-fpga-org`.
+- `docs/federation/landed/chip8-sv/G0.screen.md` at `5a6f53a` — the
+  reviewer's verdicts.
+- `docs/gates/G0-checklist.md` Section C; `docs/FEDERATION.md` §5.1 step 6,
+  §5.2, §7; PROTOCOL §7, §7.1.
+- `docs/reports/audit/AUD-0001-g0-retro-audit.md` at `93fd657`.
+
+### Reasoning
+- **The pipeline's first end-to-end execution succeeded, and that claim
+  needs its caveat attached.** This board's own standing finding is that
+  the federation pipeline has **zero mechanical test coverage** and that
+  the first landing is its designated first test. It is now run: ledger
+  check clean, verbatim staging, independent screening, fence-allocated
+  id, atomic transcription-plus-ledger, fast-forward integration. What
+  that establishes is that the procedure *executes*; it does not establish
+  that the procedure is *tested*, because nothing mechanical would have
+  caught me doing it wrong. The evidence class here is a successful
+  operation, not a passing test, and I will not let the two blur.
+- **No race, and I should say why rather than imply robustness I did not
+  demonstrate.** §5.2's serialization law is the pipeline's hardest part -
+  discard-and-redo on a rejected push, ids re-derived per attempt. None of
+  it was exercised: this org has one project, this was its first landing,
+  and the push was uncontended. Attempt 1 succeeded. The concurrency law
+  remains entirely unexercised and should be treated as untested when the
+  second project arrives.
+- **The reviewer earned its independence.** I recorded at the org fence
+  that I had noticed `LC-01` sitting near section D and that the
+  redundancy question was not mine. The reviewer reached a stronger
+  conclusion than I had: that `L-A11` and `L-D11` were *in force and
+  satisfied* at the incident and the defect passed through both, and that
+  `L-D10`'s remedy had nothing to bite on because the OK line sits inside
+  the guarded branch. A lesson that survives its nearest neighbours being
+  satisfied is not redundant with them. Had I screened my own candidate I
+  would have argued adjacency and might have merged it by citation - which
+  would have lost exactly the finding that makes it worth landing.
+- **NARRATIVE-ONLY for a better reason than the packet gave.** The packet
+  said "narrative only at the source". The reviewer supplied the
+  structural reason: an amendment obligation opened at the org fence could
+  not be discharged there, because the defective check lives in the
+  canonical shell. Undischargeable-by-construction is the right test, and
+  it is why step 4b opened nothing and step 4c's ledger field reads `—`.
+- **Two obligations cross the gate undischarged, and the board says so in
+  the milestone header rather than in a footnote.** The outer-hop PR is
+  authorized by the sponsor's YES and blocked on repository access; the
+  danger is that a carried obligation quietly decays into a no, so it is
+  recorded on both this board and the org generic's sent-ledger line with
+  the reason. AUD-0001-F3's closure belongs to the auditor and a follow-up
+  audit is owed; the danger there is that G0's passage reads as absolution,
+  so the gate row itself says F3 is not closed by it.
+- **Passing the gate with four MAJOR findings open is correct, not
+  lenient.** The audit README makes CRITICAL the gate-blocking class and
+  requires MAJOR to be dispositioned before the next gate signature that
+  touches them - which is what happened: four remedied, one forward-only,
+  one deliberate no-patch, one logged, one carried, one upheld, one
+  closure withheld. Nothing was waved through and nothing was called
+  closed that the auditor has not closed.
+- **What G0 actually established, stated plainly for the M1 session.** The
+  machine floor holds (R1-R10 green over the full history by two
+  independent executions, CI verified un-bypassed, branch protection live
+  and force-push rejection verified by live fire). The prose layer is
+  where every audit finding landed. That is the standing risk profile this
+  program carries into M1, and the first M1 artifact - the toolchain ADR -
+  is prose.
+
+### Actions
+- Recorded the landing in `docs/gates/G0-checklist.md` Section C: the four
+  step-by-step commits, the `LC-01 → L-D16` id mapping, the 4b/4c
+  dispositions, the fast-forward integration, and the outer-hop YES with
+  its PR recorded as owed. Checked the last precondition box; the harvest
+  block is complete.
+- `tasks/BOARD.md`: milestone header flipped to **M1** with G0 recorded
+  passed and the two carried obligations stated up front; roadmap M0 →
+  Complete, M1 → Active; gates table G0 → PASSED with the landing summary;
+  open-work-orders table closed with WO-0001 ACCEPTED and the next step
+  named as the E3 toolchain escalation.
+- `agents/journals/INDEX.md` refreshed at this gate boundary (PROTOCOL §9):
+  orchestrator and auditor rows updated, the auditor's row carrying its
+  owed follow-up audit.
+
+### Evidence
+- Org generic `renatom11/my-fpga-org`, `main`: `0a60b2a` → **`849843f`**,
+  **fast-forward** (`git merge-base --is-ancestor origin/main HEAD`
+  returned true before the push; the push reported `0a60b2a..849843f`, a
+  non-forced update). No merge commit created. *Measured.*
+- Landing commits: `7f7c9e1` (packet verbatim — `diff -q` against this
+  repository's outbox copy returned no output), `5a6f53a` (screening
+  report), `849843f` (transcription + sent-ledger line, one commit).
+  *Measured.*
+- Staging branch `fed/chip8-sv/G0/1` pushed and retained as the auditable
+  record (§5.2 clause 10). *Measured.*
+- `bash scripts/check_journals.sh --all` in the org generic after the
+  landing: **42 commit(s) satisfy the journal/commit protocol**, volume
+  chains verified at range head. The landing left that repository green
+  under its own rules — the §5.1 identity rule's requirement. *Measured.*
+- Final id allocated at the fence against its own head: section D's last
+  entry was `L-D15`, so `LC-01 → **L-D16**`. *Measured.*
+- Reviewer totals: 1 accept, 0 merges, 0 recurrence drops, 0 escalations,
+  0 rejects, 1 war story, 0 packs created. *Relayed* (`G0.screen.md`).
+
+### Outcome
+**G0 is PASSED.** Every Section A row signed, every Section B row signed,
+Section C's harvest block complete with its landing recorded. The board
+reads M1; M1 work orders may issue, the first being the toolchain ADR as
+an E3 escalation. Handoff: the sponsor, for that E3 decision — prepared
+decision-ready before any lead is spawned.
+
+### Open-questions
+- **Outer-hop PR owed** (sponsor said YES; blocked on repository access).
+- **AUD-0001-F3 closure owed** to a follow-up audit pinned at/after
+  `4c2bc9b`; F1/F2/F4 dispositions stand pending the same auditor's review.
+- **Three shell defects unfiled**, held on repository access and, for the
+  filing itself, on sponsor authorization.
+- **§5.2's concurrency law is unexercised** and should be treated as
+  untested when a second project first lands here.
+
+### Files-in-this-commit
+- docs/gates/G0-checklist.md
+- tasks/BOARD.md
+- agents/journals/INDEX.md

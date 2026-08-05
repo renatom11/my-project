@@ -126,18 +126,33 @@ spawned — so there are no lead-mined worker rows.
 - Export packet: [`docs/federation/outbox/G0.md`](../federation/outbox/G0.md),
   committed in this same commit — carries `LC-01` with a self-contained
   incident description and `WS-01` in the war-story appendix.
-- Transmission — **NOT RUN; G0 is not yet signed.** G0 is a sponsor-signed
-  parent, so the inner hop runs automatically *after* the gate signature
-  and never before (`docs/FEDERATION.md` §5.1). Two things stand between
-  here and that:
-  - the gate is still open on **A7** and **A9**;
-  - even once signed, the landing is **blocked**: the git proxy returns
-    403 for `renatom11/my-fpga-org`, which is outside this session's
-    authorized repository set, so no `fed/**` branch can be pushed.
-    Clears with a one-time repository add.
-- Outer-hop decision: **not asked** — it rides the gate signature, and the
-  board's standing pre-answer is confirmed unset, so the per-gate
-  default-yes question stands and will be put at signature time.
+- Transmission — **INNER HOP COMPLETE** (`docs/FEDERATION.md` §5.1),
+  authority: the sponsor's G0 signature, journaled at
+  `J-orchestrator-0044`. Landing key `chip8-sv` + `G0`, **attempt 1**, no
+  retries, no race. Landing commits in the org generic
+  `renatom11/my-fpga-org`, staging branch `fed/chip8-sv/G0/1` (retained as
+  the auditable record, §5.2 clause 10):
+
+  | Step | Commit | What |
+  |---|---|---|
+  | 2 — stage | `7f7c9e1` | Export packet copied **verbatim** (byte-identity confirmed by `diff`) to `docs/federation/landed/chip8-sv/G0.md` |
+  | 3 — screen | `5a6f53a` | Fresh reviewer agent's report at `docs/federation/landed/chip8-sv/G0.screen.md` — **`LC-01` ACCEPT** (all four screens PASS), `WS-01` war story confirmed with LH1 the correct failed criterion |
+  | 4–5 — transcribe + ledger | `849843f` | `LC-01` transcribed as **`L-D16`** into `docs/LESSONS.md` section D; sent-ledger line written in the **same commit** (atomic), obligations field `—` |
+  | 5 — integrate | `0a60b2a..849843f` | **Fast-forward** onto the org generic's `main`. No merge commit created |
+
+  **Id mapping** (owed to the outer hop): **`LC-01` → `L-D16`**.
+  Step 4b opened **no amendment obligation** — `L-D16` is NARRATIVE-ONLY,
+  because the check it concerns lives in the canonical shell and an
+  obligation recorded at the org fence could not be discharged there.
+  Step 4c's DEFERRED backlog sweep ran and found the backlog **empty**.
+  No domain pack was created.
+- Outer-hop decision: **YES** — asked at signature time because the board's
+  standing pre-answer is confirmed unset, answered "yes" by the sponsor,
+  journaled verbatim at `J-orchestrator-0044`. **The PR is owed and not yet
+  opened**: `renatom11/generic-agentic-fpga-org` is outside this session's
+  authorized repository set. The obligation is carried on the org
+  generic's sent-ledger line and on this project's board — **not**
+  discharged, and not silently converted to a no.
 
 #### Preconditions (these gate the parent record)
 
@@ -150,10 +165,16 @@ spawned — so there are no lead-mined worker rows.
 - [x] Every candidate is dispositioned exactly once, and the war story
       names its failed criterion (LH1).
 - [x] Export packet produced and cited above.
-- [ ] **Transmission recorded** — open. Blocked on the gate signature
-      (A7, A9) and, beyond it, on repository access for the landing push.
+- [x] **Transmission recorded** — the org-generic landing commits are
+      recorded above (`7f7c9e1`, `5a6f53a`, `849843f`, integrated
+      fast-forward), and the sponsor's outer-hop decision (**YES**) is
+      journaled at `J-orchestrator-0044`. The outer-hop **PR itself is
+      owed and blocked on repository access**; per the block, what gates
+      the parent record is that the landing commits are recorded and the
+      decision taken — both are — and the §7 hop is carried as an open
+      obligation rather than a precondition of this gate.
 
-The parent gate is **not fully signed** until every box above is checked
+Every box above is checked. **G0's harvest block is complete**
 (PROTOCOL §7.1).
 
 **Note on what is deliberately *not* here.** The freeze-inheritance

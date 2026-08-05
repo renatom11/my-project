@@ -7,14 +7,30 @@ agents with open work.
 
 ## Current milestone
 
-**M0 — bring-up.** This repository is the **CHIP-8 in SystemVerilog**
-project: a clone of `renatom11`'s org generic
-(https://github.com/renatom11/my-fpga-org), founded as a project on
-2026-08-05. The intake is **signed and recorded** (G0 Section B); G0
-itself remains **OPEN** on one row — **A9**, the auditor's retro-audit,
-in flight as WO-0001. Every sponsor row is discharged. Working branch:
+**M1 — toolchain, build CI, spec regime. G0 PASSED 2026-08-05.**
+This repository is the **CHIP-8 in SystemVerilog** project: a clone of
+`renatom11`'s org generic (https://github.com/renatom11/my-fpga-org),
+founded as a project on 2026-08-05. Working branch:
 `claude/project-investigation-54wqwc`, PR-flow mode (A8), both branches
 under the `protect-history` ruleset (A7).
+
+**G0 passed** with every Section A and B row signed, the A9 retro-audit
+returned PASS WITH FINDINGS (0 CRITICAL), and the Section C harvest block
+complete including its org-generic landing. **M1 work orders may now
+issue** — the first is the toolchain ADR, an **E3** escalation.
+
+**Two obligations carried past the gate, neither of them discharged:**
+
+1. **The outer-hop PR is owed.** The sponsor answered **YES** to sending
+   G0's lessons onward to the canonical shell (`J-orchestrator-0044`).
+   The PR cannot be opened — `renatom11/generic-agentic-fpga-org` is
+   outside this session's authorized repository set. Carried here and on
+   the org generic's sent-ledger line. A later gate's yes may flush it
+   (`docs/FEDERATION.md` §7), but it is **not** to be quietly re-read as
+   a no.
+2. **AUD-0001-F3's closure requires a follow-up audit**, pinned at or
+   after `4c2bc9b`. Closure is the auditor's to grant. No gate signature
+   may treat F3 as closed.
 
 Founded from the org generic at
 `0a60b2ae001cb62ec017d6f949dda3ef4d388321` (C39), which is the SHA the
@@ -60,8 +76,8 @@ the rows below are its roadmap view. Changing either is an E2 escalation.
 
 | Milestone | Scope | Status |
 |---|---|---|
-| M0 | Bring-up: G0 intake, org ratification, branch protection, enforcement self-test green | **Active** — intake signed; A7 + A9 open |
-| M1 | Toolchain ADR (E3), build CI instantiation, SPEC-TEMPLATE §4.1 interface regime | Opens at the G0 flip |
+| M0 | Bring-up: G0 intake, org ratification, branch protection, enforcement self-test green | ✅ **Complete** — G0 passed 2026-08-05 |
+| M1 | Toolchain ADR (E3), build CI instantiation, SPEC-TEMPLATE §4.1 interface regime | **Active** — opened at the G0 flip, 2026-08-05 |
 | P1 | Core CPU — memory, register file, stack, multicycle FSM, non-draw/non-I/O instructions, golden model + lockstep harness | Not started |
 | P2 | Display and draw path — framebuffer, 64-bit barrel shifter, `DXYN` XOR + collision, `00E0`, font ROM + `FX29` | Not started |
 | P3 | I/O, timing, first light — 60 Hz timers, keypad, `FX0A` blocking wait; Pong runs end-to-end | Not started |
@@ -72,14 +88,19 @@ the rows below are its roadmap view. Changing either is an E2 escalation.
 
 | Gate | Status | Checklist |
 |---|---|---|
-| G0 | **All rows signed; OPEN on Section C transmission only.** A1–A5 re-verified and re-pointed (AUD-0001-F2); A6 ratified; A7 configured and verified by live fire; A8 decided and re-pointed (AUD-0001-F4); B1–B6 signed; **A9 complete — AUD-0001, PASS WITH FINDINGS, 0 CRITICAL, no gate-blocking finding**. What remains is the harvest's transmission, which cannot run before the gate signature: it needs **the sponsor's one outer-hop yes/no** (default yes), after which the inner-hop landing runs automatically and the gate is declared passed | [docs/gates/G0-checklist.md](../docs/gates/G0-checklist.md) |
+| G0 | ✅ **PASSED 2026-08-05.** All Section A and B rows signed; A9 retro-audit returned **PASS WITH FINDINGS, 0 CRITICAL** (AUD-0001); Section C harvest complete — `LC-01` landed in the org generic as `L-D16` at `849843f`, fast-forward, attempt 1. Outer-hop **YES** recorded, its PR owed and blocked on repository access | [docs/gates/G0-checklist.md](../docs/gates/G0-checklist.md) |
 | P1..P5 | Instantiated from [templates](../docs/gates/templates/) at each phase's spec freeze | — |
 
 ## Open work orders
 
+_None open._ Closed this milestone:
+
 | Packet | From → To | State | Subject |
 |---|---|---|---|
-| [`WO-0001_g0-retro-audit.md`](../agents/handoffs/WO-0001_g0-retro-audit.md) | orchestrator → auditor | **ISSUED** 2026-08-05 | G0 row A9 — retro-audit of the seed commit range, baseline pinned `fe5dea7` |
+| [`WO-0001_g0-retro-audit.md`](../agents/handoffs/WO-0001_g0-retro-audit.md) | orchestrator → auditor | ✅ **ACCEPTED** 2026-08-05 | G0 row A9 — retro-audit of the seed commit range, baseline `fe5dea7`. Verdict PASS WITH FINDINGS (AUD-0001); dispositions in "Audit findings" below |
+
+**Next work order**: the M1 toolchain ADR is an **E3** sponsor escalation,
+prepared decision-ready by the orchestrator before any lead is spawned.
 
 ## Pending escalations to sponsor
 
