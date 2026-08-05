@@ -94,3 +94,64 @@ this is the last round before the freeze.
 The four repairs, the D-8 cell, §13.2, and an explicit statement of whether
 any repair required a decision that moves an ADR-0018 choice — if so, amend
 the ADR by appending, never by editing.
+
+---
+
+## Return log
+
+### RETURNED — 2026-08-05, `architect_docs_lead`, `J-architect_docs_lead-0004`
+
+**State: RETURNED.** All four repairs applied, D-8's cell corrected, §13.2
+written, ADR-0018 amended by appending. **The diff stayed bounded**, and §13.2
+is the enumeration that lets `dv_lead` verify that by list rather than by hunt.
+
+#### The four dispositions
+
+| # | Disposition |
+|---|---|
+| **B-1** | **APPLIED as written**, all three parts. `MEM_INIT_FILE` leaves §5.5's *Other* row; §5.5 gains the paragraph saying why, with the measurement; REQ-115 carries the exception and the literal default `""`. **REQ-109 was not weakened** — the repair removes a definition site rather than licensing a restatement, so the F-2 class REQ-109 exists to close stays closed. The alternative that would have weakened it is recorded as a **losing** alternative in ADR-0018 A3.3, so the temptation is on the record with its cost rather than merely resisted. |
+| **B-2** | **APPLIED as written.** `SP_W` leaves §5.5's *Widths and sizes* row; the value cell states why with the 5-against-3 measurement; §5.1 remains the single site defining the derivation, so REQ-109 loses nothing. |
+| **B-3** | **APPLIED as written, both halves.** REQ-115 ¶2 now binds *any parameter, width expression or array bound* derived from an overridable parameter and names all three P1 cases. ¶1 now names **M01, M02, M03 and M04** with "those … that they use — M03 declares all of them", which closes **F-16** and stops REQ-115 requiring a RAM to declare `RNG_SEED`. The loud/silent asymmetry is recorded in §13.2 so a future reader cannot diagnose this as "the loud half, now fixed". |
+| **B-4** | **APPLIED as written — and it was a restoration, not a scope change.** All three comparison points are already required by README's signed full-state criterion and by REQ-029/REQ-048/REQ-049/REQ-114/REQ-120; the too-wide universal narrowed them by a subordinate clause. A-4's distinction — mid-instruction `obs_*` is deterministic but unspecified, hence lane-to-lane comparable and not model-assertable — is preserved unchanged. **No E2 was reached**, and §13.2 states in the document that it would have been one had the quantifier been unfixable without moving scope. |
+
+#### One decision moved, and it is ADR'd
+
+**ADR-0018 Amendment A3**, appended not edited (L-A04): `MEM_INIT_FILE` and
+`SP_W` leave the spec §5.5 package. A2.2 named `MEM_INIT_FILE` among the values
+"defaulting to its `chip8_pkg` value", and after B-1 that is no longer true of
+it — so B-1 is not merely a text repair, it moves the decision A2 recorded.
+A2.7's own falsifier is what fired. A3 carries the losing alternatives
+(weakening REQ-109; the accessor form, measured to abort the tool at exit 134;
+keeping the entry with a named REQ-109 exception; repairing only the blocking
+half), the consequences, and its own falsifier.
+
+**B-3 moved no ADR decision** — the opposite. ADR-0018 A2.2 already stated the
+general rule ("any width derived from an overridable parameter"); only REQ-115,
+the normative site, stated the narrow one. The specification moved to the ADR,
+and A3.4 records that a requirement narrower than the ADR authorising it was a
+transcription defect. **B-2 and B-4 move nothing**: B-2 is a consequence of
+A2.4, which stands entirely; ADR-0018 does not contain the "and nowhere else"
+universal, so B-4 is confined to the spec.
+
+#### Boundedness, stated exactly
+
+Beyond the four repairs, the diff contains only: **D-8's *Closes by* cell**
+(the WO's item 5, F-18); **§13.2** (item 6); **ADR-0018 A3** (§4's deliverable);
+and **two propagation sites** that the repairs make false — §4.C's "M03's
+parameters" paragraph (one parenthetical) and §10's REQ-115 registry row
+(description column only; the hook column is untouched, so §10 stays
+byte-identical to `docs/specs/requirements.md` on the column measured at
+`DV-P1-countersignature.md` §9.6, and the matrix needs no edit). Both are
+enumerated in §13.2 under their own heading. Leaving them would have kept the
+repaired defect alive at a different address — the failure §13.1 named when it
+propagated A-1 beyond the amendment list.
+
+**Not touched**: no other requirement's text; no port table row; §13.1, which
+is a record of a past round and is corrected in §13.2 rather than rewritten
+(F-17); nothing under `rtl/**` or `test/**`, including `test/spikes/`.
+
+#### Owed onward
+
+D-8 and D-9 still owe board lines this author cannot write (`tasks/**` outside
+write scope, L-E10). D-8's row now says **before the first P1 `SO-` PASS**, so
+the board line it owes has a tighter deadline than the previous return implied.

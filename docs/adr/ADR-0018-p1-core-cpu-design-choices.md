@@ -31,6 +31,14 @@
   document as a whole**: the repair §0 promised would be a separate packet has
   arrived as that packet, and the two are distinguishable by which section
   they live in — which is the point of appending rather than editing.
+- **Further amended by its own Amendment A3** (2026-08-05,
+  `J-architect_docs_lead-0004`, WO-0008), appended below. The bullet above
+  stands as written and is corrected by this one: **A3** amends **A2.2** —
+  `MEM_INIT_FILE` and `SP_W` leave the spec §5.5 package, because A2.7's
+  falsifier fired and a package `string` cannot appear in a module parameter's
+  default expression in the authoritative lane (`dv_lead`, measured,
+  `docs/reports/dv/DV-P1-countersignature.md` §9.1). Enforcement class
+  **PROSE**; no law touched; no `scripts/test_protocol.sh` scenario owed.
 - **Depends on**: ADR-0017 (toolchain lane) including Amendments A1 and A2;
   README.md's phase table and scope-parameter paragraph (the canonical scope
   statement, PROTOCOL §1); `tasks/BOARD.md` intake decisions B3 and B4.
@@ -1195,3 +1203,117 @@ module parameter in either lane — which would mean the runner does not map
 onto the flags measured above, and the repair would be a spec diff naming
 whatever mechanism does work. This is the remaining fraction of NV-3 and is
 discharged by `dv_lead`'s first bench, not by argument.
+
+---
+
+## Amendment A3 — `MEM_INIT_FILE` and `SP_W` leave the package (spec §5.5)
+
+Adopted 2026-08-05 at `J-architect_docs_lead-0004`, work order
+`agents/handoffs/WO-0008_p1-spec-repair-round-2.md`. Appended, not edited
+(L-A04): A2 stands as written and is corrected here, because a decision record
+that is silently rewritten is not a record.
+
+**A2.7's falsifier fired, and it fired in the direction A2 did not anticipate.**
+`dv_lead` ran the bench-level measurement A2.5 declined to claim
+(`docs/reports/dv/DV-P1-countersignature.md` §9.1, §9.3), and two of its results
+move a decision A2.2 recorded.
+
+### A3.1 — What was measured, and what it broke
+
+Provenance **measured** by `dv_lead`, Icarus Verilog 12.0, commands and outputs
+at `DV-P1-countersignature.md` §9.1. Relayed here; the authority is that report
+and `J-dv_lead-0002`, not this file.
+
+| Form | Icarus 12.0 |
+|---|---|
+| `parameter string S = pkg::S` — a package `string` in a module parameter's **default expression** | **`error: Unable to bind variable 'S' in 'p'`**, exit 1 |
+| the same package `string` referenced in the module **body** | works |
+| package `int`, `logic [11:0]`, `bit`, **enum** as a parameter default | all four work |
+| `localparam string` in the package, used as a default | error, exit 1 |
+| compilation-unit `import pkg::*;` then the bare name as a default | error, exit 1 |
+| package accessor `function automatic string get_s()` | **`ivl: elab_expr.cc:5585: Assertion 'tmp' failed. Aborted`, exit 134** |
+| `parameter string S = ""` — a literal default | works |
+
+A2.5's fourth row — *"a `string` module parameter feeding `$readmemh` works"* —
+is confirmed and was never the question. The question A2 did not ask is how
+that parameter gets its **default**, and for `string` specifically there is no
+package-referencing form that elaborates in the authoritative lane.
+
+So A2.2's decision, applied to `MEM_INIT_FILE`, mandated a form that does not
+exist, while the spec's own REQ-109 addition named the only form that does
+elaborate — a literal default — as a defect. **Two clauses, jointly
+unsatisfiable, for the one parameter §5.4 says every test sets.** That is F-5's
+own shape reinstated by F-5's repair, and it is why `dv_lead` withheld the
+signature at `ddc06dc`.
+
+### A3.2 — The decision
+
+Two names leave the package's normative content (spec §5.5):
+
+1. **`MEM_INIT_FILE` is not a package value.** It is declared only as the
+   module parameter of REQ-115, with the literal default `""`. A2.2's
+   enumeration is amended accordingly: every value it lists still defaults to
+   its `chip8_pkg` value **except** this one.
+2. **`SP_W` is not a package value.** REQ-115 already forbids a module to read
+   it from the package (A2.4); leaving it defined there left REQ-109 ¶1 — every
+   value in that table is referenced, never restated — ordering the opposite.
+   Its derivation stays defined once, at spec §5.1.
+
+**REQ-109 is not weakened, and that is the point.** The repair removes a
+definition site rather than licensing a restatement. `MEM_INIT_FILE` has no
+shared constant to drift — its "default" is the empty image, whose meaning
+REQ-014 clause 2 fixes normatively — so it fails the test for package
+membership that A2.3 and ADR-0017 Consequence 1 apply: one definition site
+exists to stop *two copies of a shared value* drifting silently, and a per-test
+input has no second copy.
+
+### A3.3 — Alternatives actually available
+
+| Alternative | Why it lost |
+|---|---|
+| **Weaken REQ-109's A-5 addition** so a literal default is no longer the defect it names | The cheapest edit and the wrong one. It trades a blocking defect for the **F-2 class** REQ-109 exists to prevent: once a literal default is licensed for one parameter, every `chip8_pkg` value acquires a legal second copy in a module header, and drift between them still compiles. The defect is not that REQ-109 is too strict; it is that a filename was in the package. |
+| **Package accessor function** (`function automatic string get_s()`), the standard workaround for exactly this | Measured: **crashes the tool** (SIGABRT, exit 134). A specification may not mandate a form that aborts the authoritative simulator, and a spec whose conformance depends on a tool bug being fixed is not frozen. |
+| **Keep `MEM_INIT_FILE` in the package and let the module parameter's default be the literal `""`, with REQ-109 carrying an explicit exception for it** | Preserves the package entry at the cost of a named exception to the single-definition-site rule, which is the rule's first erosion and would be cited as precedent. It also leaves a package value that nothing may reference — the same defect as B-2, one name over. |
+| **Move only `MEM_INIT_FILE`, leave `SP_W`** | Repairs the blocking half and leaves REQ-109 ¶1 and REQ-115 giving opposite instructions about `SP_W`. B-2 is a defect on its own terms, not a consequence of B-1. |
+| **Both names leave the package** (chosen) | Every remaining §5.5 entry is a genuinely shared constant with two or more copies to keep in step, which is the property the package was adopted for. REQ-109 applies to all of them without exception, REQ-115's derived-width rule has nothing left to contradict, and the module parameter's `""` default elaborates in both lanes (measured). |
+
+### A3.4 — What did *not* move, and why it is worth saying
+
+**A2.2's derived-width clause did not move; the specification moved to it.**
+A2.2 stated the general rule — *"any width derived from an overridable
+parameter is derived inside the module from that module's parameter"* — and
+spec §4.A's note stated it generally too. Only REQ-115, the normative site the
+matrix cites and the RTL implements against, stated the narrow version naming
+`SP_W` as "the only such case in P1", which `dv_lead` measured false (the
+`obs_stack` width expression reads 192 bits from the package against 48 from
+the module at `STACK_DEPTH = 4`). Spec B-3 restates the requirement at its
+class. **No decision changes here** — a requirement narrower than the ADR that
+authorised it was a transcription defect, and this records it as one.
+
+**A2.4 stands entirely.** Its measurement reproduces independently in
+`dv_lead`'s harness, in both lanes.
+
+### A3.5 — Consequences
+
+1. **Spec §5.5's normative package content loses two names.** `rtl/chip8_pkg.sv`
+   (D-3) must match §5.5 exactly, so this constrains what `rtl_lead` writes and
+   writes nothing itself.
+2. **A2.2's enumeration carries one exception**, stated in REQ-115 itself so a
+   reader of the requirement does not have to find this ADR to know it.
+3. **REQ-109 is unaffected in scope and stronger in fact**: it now binds a
+   table every one of whose entries can honour it.
+4. **No requirement is added, withdrawn or renumbered.** The count stays 91,
+   and no specified behaviour changes.
+5. **The `string`-default finding is a toolchain fact with a shelf life.** It is
+   recorded in spec §5.5 with the measurement, so if a future Icarus binds
+   package strings in default expressions, the reason this parameter sits
+   outside the package is still the one in A3.2 — the per-test-input argument —
+   and not the tool bug alone.
+
+### A3.6 — Falsifier
+
+A `chip8_pkg` value found to have a second copy anywhere in the shipped RTL or
+SystemVerilog bench that still compiles — which would mean the single-definition
+-site property is being maintained by convention rather than by the package, and
+that removing two names from it was treating a symptom. The check is a grep at
+the first `SO-` and is `rtl_lead`'s and the auditor's, not this author's.

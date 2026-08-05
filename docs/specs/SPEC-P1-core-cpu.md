@@ -249,8 +249,9 @@ this table.
 
 **M03's parameters** (A-3, F-5). M03 is not parameterless. It declares, as
 **module parameters**, every value a test overrides, each defaulting to its
-`chip8_pkg` value — this is **REQ-115**, and it is the only mechanism by which
-a test configures the machine. It adds no port, so REQ-112's closure below is
+`chip8_pkg` value — except `MEM_INIT_FILE`, which is not a package value and
+defaults to `""` (§5.5) — this is **REQ-115**, and it is the only mechanism by
+which a test configures the machine. It adds no port, so REQ-112's closure below is
 unaffected, and it adds no run-time control path, so §4.3 and REQ-096 are
 unaffected.
 
@@ -310,10 +311,12 @@ path**, and the two are different things — conflating them was F-5.
 
 ### 5.0 REQ-115 — the override path
 
-> **REQ-115 — the override path.** M02 and M03 SHALL each declare, as **module
-> parameters**, every value a test overrides — `MEM_INIT_FILE`, `RNG_SEED`,
-> `OBS_ENABLE`, `STACK_DEPTH`, `PROG_START`, and the five quirk parameters of
-> §5.2 — each **defaulting to its `chip8_pkg` value** and passed down to
+> **REQ-115 — the override path.** M01, M02, M03 and M04 SHALL each declare, as
+> **module parameters**, those of the values a test overrides that they use —
+> `MEM_INIT_FILE`, `RNG_SEED`, `OBS_ENABLE`, `STACK_DEPTH`, `PROG_START`, and
+> the five quirk parameters of §5.2; **M03 declares all of them** — each
+> **defaulting to its `chip8_pkg` value** — except `MEM_INIT_FILE`, which is
+> not a package value (§5.5) and defaults to `""` — and passed down to
 > submodules unmodified. This is the only mechanism by which a test configures
 > the machine, it is elaboration-time, and it adds no port and no run-time
 > control path, so §4.3 and REQ-096 are unaffected. A package parameter cannot
@@ -321,13 +324,15 @@ path**, and the two are different things — conflating them was F-5.
 > outside the DV write scope, so without this clause no test can place a
 > program in memory.
 >
-> **Derived widths follow the module, not the package.** Any parameter whose
-> value is *derived* from an overridable one — `SP_W` = `$clog2(STACK_DEPTH)+1`
-> is the only such case in P1 — SHALL be derived **inside the module from that
-> module's own parameter**, not read from `chip8_pkg`. A package-level `SP_W`
-> does not follow a module-level `STACK_DEPTH` override, so reading it from the
-> package would leave `obs_sp` 5 bits wide at `STACK_DEPTH = 4` and reinstate
-> F-2 through the override path itself.
+> **Derived widths follow the module, not the package.** Any parameter, width
+> expression or array bound whose value is *derived* from an overridable
+> parameter — `SP_W` = `$clog2(STACK_DEPTH)+1`, the `obs_stack` width
+> `ADDR_W*STACK_DEPTH`, and the stack array's own depth are P1's cases — SHALL
+> be derived **inside the module from that module's own parameter**, not read
+> from `chip8_pkg`. A package-level `SP_W` does not follow a module-level
+> `STACK_DEPTH` override, so reading it from the package would leave `obs_sp` 5
+> bits wide at `STACK_DEPTH = 4` and reinstate F-2 through the override path
+> itself.
 
 **Why this clause exists, measured rather than argued.** §5.4 states that
 every test sets `MEM_INIT_FILE`; before this revision the specification put
@@ -463,16 +468,24 @@ value that can drift while both copies still compile.
 > is written as a literal instead of as the package reference is exactly the
 > defect this requirement names.
 
+`MEM_INIT_FILE` is deliberately **not** a package value. It is a per-test input
+with no shared constant to drift, its "default" is the empty image whose
+meaning REQ-014 clause 2 already fixes normatively, and — measured in Icarus
+12.0 — a package `string` parameter cannot appear in a module parameter's
+default expression at all (`error: Unable to bind variable`), so the package
+reference this rule would otherwise require does not elaborate. It is declared
+only as the module parameter of REQ-115, with the literal default `""`.
+
 | Group | Names | Value / members |
 |---|---|---|
-| Widths and sizes | `ADDR_W`, `DATA_W`, `RAM_DEPTH`, `NUM_V`, `STACK_DEPTH`, `SP_W`, `INSTR_W` | §5.1; `INSTR_W = 16` |
+| Widths and sizes | `ADDR_W`, `DATA_W`, `RAM_DEPTH`, `NUM_V`, `STACK_DEPTH`, `INSTR_W` | §5.1; `INSTR_W = 16`. `SP_W` is **not** a package value: REQ-115 requires each module to derive it from that module's own `STACK_DEPTH`, and a package-level `SP_W` would not follow an override (measured: 5 against 3 at `STACK_DEPTH = 4`). Its derivation is defined once, at §5.1. |
 | Memory map | `PROG_START`, `FONT_BASE`, `FONT_BYTES` | §5.1 |
 | Quirks | `quirk_shift_e {SHIFT_SRC_VY, SHIFT_SRC_VX}`, `quirk_jump_e {JUMP_V0, JUMP_VX}`, `quirk_memi_e {MEMI_INC_X_PLUS_1, MEMI_INC_X, MEMI_UNCHANGED}`, and the five parameters `QUIRK_SHIFT_SRC`, `QUIRK_JUMP_OFFSET`, `QUIRK_MEM_I_MODE`, `QUIRK_VF_RESET`, `QUIRK_I_OVERFLOW_VF` | §5.2 |
 | Error codes | `err_e { ERR_NONE = 0, ERR_ILLEGAL_OPCODE = 1, ERR_DEFERRED_OPCODE = 2, ERR_STACK_OVERFLOW = 3, ERR_STACK_UNDERFLOW = 4, ERR_ADDR_RANGE = 5 }` | §9 |
 | Decode classes | `dclass_e { DC_IMPLEMENTED, DC_DEFERRED, DC_ILLEGAL }` | §6.3 |
 | Opcode encodings | High nibbles `OP_0`…`OP_F`; `SUB_CLS = 8'hE0`, `SUB_RET = 8'hEE`; ALU nibbles `ALU_LD=4'h0, ALU_OR=4'h1, ALU_AND=4'h2, ALU_XOR=4'h3, ALU_ADD=4'h4, ALU_SUB=4'h5, ALU_SHR=4'h6, ALU_SUBN=4'h7, ALU_SHL=4'hE`; F-group bytes `F_DT_GET=8'h07, F_KEY=8'h0A, F_DT_SET=8'h15, F_ST_SET=8'h18, F_ADDI=8'h1E, F_FONT=8'h29, F_BCD=8'h33, F_STORE=8'h55, F_LOAD=8'h65`; E-group bytes `E_SKP=8'h9E, E_SKNP=8'hA1` | §6.3, §6.4 |
 | RNG | `RNG_W = 16`, `RNG_SEED`, `RNG_POLY = 16'hB400`, `RNG_STEPS_PER_DRAW = 8` | §6.5 |
-| Other | `OBS_ENABLE`, `THROTTLE_DIV`, `MEM_INIT_FILE` | §5.3, §5.4 |
+| Other | `OBS_ENABLE`, `THROTTLE_DIV` | §5.3 |
 
 The deferred-phase encodings (`SUB_CLS`, `F_FONT`, `E_SKP`, `E_SKNP`,
 `F_DT_GET`, `F_KEY`, `F_DT_SET`, `F_ST_SET`) are named in the package **in
@@ -1153,8 +1166,12 @@ domain of *determinism* and of *lane-to-lane* comparison: both sides run the
 same RTL, so a value this specification leaves free (§6.6 frees whether
 `obs_*` is driven directly or through a register stage) is nonetheless fixed
 and comparable across the two lanes. The **model-to-DUT** comparison is a
-different and smaller thing: it happens at retirement, on the bundle REQ-029
-pins there, and nowhere else. A mid-instruction `obs_*` value is deterministic
+different and smaller thing: it happens at three points and nowhere else — at
+retirement, on the `obs_*` bundle REQ-029 pins there; on the `mem` array
+(REQ-114, REQ-120) at the same retirement; and, for an instruction that faults
+and therefore never retires, on `obs_halted`, `obs_err`, `obs_instr` and
+`obs_instr_addr` from the cycle `obs_halted` rises, which REQ-048 makes sticky
+and REQ-049 makes identifying. A mid-instruction `obs_*` value is deterministic
 but **unspecified**, so it is comparable lane-to-lane and is *not* assertable
 against the golden model. That distinction is the whole of ADR-0018 §6.6's
 back-door concern, and stating it here is the imperative that section could
@@ -1327,7 +1344,7 @@ statement rather than its concealment.
 | REQ-112 | Closure: no port other than those tabulated | §4.A–§4.D | I |
 | REQ-113 | `OBS_ENABLE` = 0 zeroes the observation outputs and changes nothing else | §5.3 | D (M01) |
 | REQ-114 | Memory observation contract: M02's storage is the array `mem` | §4.C | S + I |
-| REQ-115 | The elaboration-time override path: M02 and M03 declare module parameters defaulting to package values; derived widths follow the module | §5.0, §4.3, §4.C | S + D |
+| REQ-115 | The elaboration-time override path: M01, M02, M03 and M04 declare the module parameters they use, defaulting to package values (`MEM_INIT_FILE` excepted, §5.5); every derived parameter, width expression and array bound follows the module | §5.0, §4.3, §4.C | S + D |
 | REQ-120 | Full architectural state observable at every retirement | §4.C, §7.7 | S |
 | REQ-121 | Divergence localisation via `obs_instr` / `obs_instr_addr` | §4.A, §7.7 | D |
 | REQ-122 | Stimulus classes the campaign covers | §8 | I |
@@ -1381,7 +1398,7 @@ and this author does not.
 | D-4 | The 500–1000 instruction/second throttle is not implemented in P1. | **DEFERRED** · `THROTTLE_DIV = 0`, the core issues instructions back-to-back, and REQ-111 already fixes where the mechanism may be inserted so it cannot disturb anything frozen here. | Carry-forward row; P3 scope | architect_docs_lead | `P3-spec-freeze` |
 | D-5 | The 4209 `DC_DEFERRED` encodings become implemented in P2 and P3, which changes §6.3 of this frozen spec. | **DEFERRED** · in P1 they halt with `ERR_DEFERRED_OPCODE`; the change is a **spec diff plus an ADR** recorded in §13, never an edit. | §13 of this file | architect_docs_lead | `P2-spec-freeze`, `P3-spec-freeze` |
 | D-6 | No compile-checked interface evidence exists, by ADR-0017 Consequence 1. | **PERFORMED, awaiting the second signature** · the line-by-line grading ran at `54a7221` and is committed at `docs/reports/dv/DV-P1-testability.md` §3 — 30 ports across M01/M02/M04 plus M03's, four defects found (F-2, F-3, F-4, F-5), all in the width and parameter columns and none in the direction or meaning columns. The countersignature was **withheld** at that SHA and issues against this revision as `J-dv_lead-0002`. | §12 freeze record | dv_lead (countersignature) | `P1-spec-freeze` |
-| D-8 | **P1 has no external anchor.** Both artifacts the lockstep compares — the RTL and the Python golden model — derive from this one document (the B3 independence rider); every CHIP-8 reference at intake is **consult-only**; and the three free-use artifacts are test ROMs that §8 rules out for P1. So a P1 lockstep PASS proves the RTL implements this specification and proves nothing about whether this specification describes CHIP-8. Raised by `DV-P1-testability.md` F-11 and §10, which grades it MAJOR/ESCALATION and **not freeze-blocking**. | **DEFERRED** · OQ-3 already says this of the five quirk defaults; F-11 establishes it is true of the whole phase — the RNG sequence, the fault semantics, the decode partition, the cycle counts and all 25 instruction semantics. What a reader assumes meanwhile: P1's verdict is a self-consistency check, the mutation campaign is what qualifies the instrument (PROTOCOL §10, L-D11), and **P4's test-ROM campaign is the first external truth this program touches**. `dv_lead`'s options are (a) add one free-use CHIP-8 reference to the B3 intake as a differential oracle for the non-draw subset — an **E3**-shaped intake change; (b) anchor piecewise against non-CHIP-8 external truth (the LFSR recurrence, BCD against integer arithmetic, the classifier against §6.3's row totals); (c) declare NO-ANCHOR for P1 explicitly. Its recommendation is (a)+(b) with (c) as the honest fallback. **This row exists so the freeze is signed knowing it**, which is what F-11 asked for. | `DV-P1-testability.md` §10; board line owed | orchestrator → sponsor (E3-shaped) | `P1-module-ready` — **not** the freeze |
+| D-8 | **P1 has no external anchor.** Both artifacts the lockstep compares — the RTL and the Python golden model — derive from this one document (the B3 independence rider); every CHIP-8 reference at intake is **consult-only**; and the three free-use artifacts are test ROMs that §8 rules out for P1. So a P1 lockstep PASS proves the RTL implements this specification and proves nothing about whether this specification describes CHIP-8. Raised by `DV-P1-testability.md` F-11 and §10, which grades it MAJOR/ESCALATION and **not freeze-blocking**. | **DEFERRED** · OQ-3 already says this of the five quirk defaults; F-11 establishes it is true of the whole phase — the RNG sequence, the fault semantics, the decode partition, the cycle counts and all 25 instruction semantics. What a reader assumes meanwhile: P1's verdict is a self-consistency check, the mutation campaign is what qualifies the instrument (PROTOCOL §10, L-D11), and **P4's test-ROM campaign is the first external truth this program touches**. `dv_lead`'s options are (a) add one free-use CHIP-8 reference to the B3 intake as a differential oracle for the non-draw subset — an **E3**-shaped intake change; (b) anchor piecewise against non-CHIP-8 external truth (the LFSR recurrence, BCD against integer arithmetic, the classifier against §6.3's row totals); (c) declare NO-ANCHOR for P1 explicitly. Its recommendation is (a)+(b) with (c) as the honest fallback. **This row exists so the freeze is signed knowing it**, which is what F-11 asked for. | `DV-P1-testability.md` §10; board line owed | orchestrator → sponsor (E3-shaped) | **Before the first P1 `SO-` PASS**, which precedes `P1-module-ready` — **not** the freeze |
 | D-9 | **Fifteen `I` (inspection) hooks in §10 have no named performer**, and for REQ-100/107/108/112 the object is an RTL file — which `dv_lead`'s charter bars it from reviewing, so the performer cannot be the countersignatory. Raised by `DV-P1-testability.md` F-6 as a governance recommendation, MINOR/CARRIED. | **DEFERRED** · §10's hook legend states the gap in place rather than concealing it (L-F03). What a reader assumes meanwhile: an `I` hook is a claimed control with no named performer. The recommendation on the table is to name `rtl_lead` as performer with auditor sampling, and to convert what is cheaply machine-checkable — module inventory, port closure, "the package contains no behaviour" — into CI checks. **Assigning work to another lead is not this author's to do** (charter §7: downward work is a WO- request to the orchestrator), which is why this is a routed row and not a decision. | §10 hook legend; board line owed | orchestrator | `P1-module-ready` |
 | D-7 | The quirk-parameter set of §5.2 may be short by one: interpreter behaviour on unknown opcodes is divergent across the population, and README's P4 row requires "**every** divergent CHIP-8 behaviour" to be a compile-time parameter. Raised by ADR-0018 §7.1. | **DEFERRED** · P1 halts (REQ-041/REQ-042) and no such parameter exists; the requirements are unambiguous and nobody is blocked. The reading is arguable — the community quirk tables enumerate divergences in the semantics of CHIP-8 *instructions*, and these encodings are not instructions — and the evidence that would settle it (a conformant test ROM needing no-op) does not exist before P4. | ADR-0018 §7.1; board line owed | architect_docs_lead | `P4-spec-freeze` |
 
@@ -1526,3 +1543,94 @@ amendment set had its meaning revised**, and the propagation edits listed
 above change wording to preserve a meaning rather than to alter one. D-3
 (`rtl/chip8_pkg.sv`) remains `rtl_lead`'s and is untouched; nothing under
 `rtl/**` is created, implied or reserved by this revision.
+
+### 13.2 Pre-freeze repair record — WO-0008, 2026-08-05
+
+**Basis**: `docs/reports/dv/DV-P1-countersignature.md` §8 at `9f4e03b` (NOT
+COUNTERSIGNED at `ddc06dc`, four blocking defects **B-1…B-4**, exact
+replacement text supplied); `agents/handoffs/WO-0008_p1-spec-repair-round-2.md`.
+**Journal**: `J-architect_docs_lead-0004`.
+
+The enumeration below exists for the same reason §13.1's did, and it worked:
+`dv_lead` bounded its confirmatory surface by §13.1's list rather than by a
+diff hunt, which is why round two cost one pass. **Every edit this revision
+makes is in this list.** Nothing else in this document moved.
+
+#### The four repairs
+
+| # | Defect | Disposition | Where it landed |
+|---|---|---|---|
+| **B-1** | No conformant `MEM_INIT_FILE` declaration exists: REQ-115 requires a module parameter defaulting to its `chip8_pkg` value, REQ-109's A-5 addition names a literal default as the defect, and Icarus 12.0 will not bind a package `string` in a parameter default (measured, `DV-P1-countersignature.md` §9.1; the accessor form aborts the tool). | **APPLIED as written** | §5.5's *Other* row loses `MEM_INIT_FILE` and its §5.4 source pointer; §5.5 gains the paragraph stating why it is deliberately not a package value, with the measurement; REQ-115 gains the exception clause and the literal default `""`. **REQ-109 is not weakened** — the repair removes the second definition site rather than licensing a restatement, so the F-2 class REQ-109 exists to close stays closed. Recorded as **ADR-0018 Amendment A3**, because A2.2 named `MEM_INIT_FILE` among the values "defaulting to its `chip8_pkg` value" and that is no longer true of it. |
+| **B-2** | §5.5 defined `SP_W`, the value REQ-115 forbids a module to read, while REQ-109 ¶1 orders every value in that table referenced and never restated. | **APPLIED as written** | §5.5's *Widths and sizes* row drops `SP_W` and its value cell states why, with the measurement (5 against 3 at `STACK_DEPTH = 4`). §5.1 remains the single site where the derivation is defined, so REQ-109 loses nothing. |
+| **B-3** | REQ-115's parenthetical "`SP_W` … is the only such case in P1" is measurably false: the `obs_stack` width expression fails identically (48 against 192) and the stack array's depth is a third case. | **APPLIED as written, both halves** | REQ-115 ¶2 now binds *any parameter, width expression or array bound* derived from an overridable parameter and names all three P1 cases. REQ-115 ¶1 now names **M01, M02, M03 and M04** — closing F-16, since `obs_sp`, `obs_stack`, `STACK_DEPTH`, `PROG_START`, `OBS_ENABLE` and the quirk parameters live in M01 and `RNG_SEED` in M04 — with "those … that they use" and "M03 declares all of them", so a RAM is not required to declare `RNG_SEED`. This brings the **normative** site to the rule §4.A's note and ADR-0018 A2.2 already stated generally; the ADR does not move. Worth carrying forward: the `SP_W` half of this defect fails **loudly** (a short-stack overflow vector faults at the wrong call depth) and the width half fails **silently** (a 5-bit `obs_sp` carries 0…4 identically), so fixing the loud half alone would have looked like fixing the defect. |
+| **B-4** | A-4's added paragraph put the model-to-DUT comparison "at retirement … and nowhere else", which read strictly strands the five fault conditions of §9, the 65536-encoding decode sweep, and the `mem` array. | **APPLIED as written** | §8's "Two comparisons, two domains" paragraph now names **three** comparison points — the `obs_*` bundle at retirement; the `mem` array (REQ-114, REQ-120) at the same retirement; and, for an instruction that faults and therefore never retires, the sticky fault observation from the cycle `obs_halted` rises. **This restores a scope, it does not change one**: every one of the three points is already required by README's signed full-state criterion and by REQ-029/REQ-048/REQ-049/REQ-114/REQ-120, and the too-wide universal narrowed them by a subordinate clause. Had the quantifier been unfixable without dropping or adding a comparison, that would have been an **E2** for the sponsor and not an edit; it was not. A-4's distinction — mid-instruction `obs_*` is deterministic but unspecified, so lane-to-lane comparable and not model-assertable — is preserved unchanged. |
+
+**No specified behaviour changes in any of the four.** Each corrects a
+statement about a behaviour, or removes a trap; no requirement is added,
+withdrawn, renumbered or given a new meaning, and the count stays **91**.
+
+#### Two propagation sites, and why they are not diff creep
+
+REQ-115 is restated in two places outside §5.0, and both restatements are made
+**false** by the repairs above. Leaving either would keep the defect alive at a
+different address, which is the failure §13.1 named when it propagated A-1
+beyond `dv_lead`'s list.
+
+- **§4.C's "M03's parameters" paragraph** said every value M03 declares defaults
+  to its `chip8_pkg` value — no longer true of `MEM_INIT_FILE` (B-1). One
+  parenthetical added.
+- **§10's REQ-115 registry row** said "M02 and M03" and "derived widths" — the
+  narrow forms B-3 replaces. The row's **description** column is updated; its
+  **hook** column is untouched, so §10 stays byte-identical to
+  `docs/specs/requirements.md` on the column dv_lead diffed mechanically
+  (`DV-P1-countersignature.md` §9.6), and the matrix needs no edit this round.
+
+No other restatement of REQ-115 exists: §4.3 states only that the override is
+elaboration-time (unaffected), and §5.4's `MEM_INIT_FILE` row already said
+*module* parameter and names M02 and M03 correctly under the "those they use"
+rule, since M01 and M04 do not use it.
+
+#### Beyond the four, and bounded
+
+- **D-8's *Closes by* cell** (F-18, MINOR) now reads "before the first P1
+  `SO-` PASS, which precedes `P1-module-ready` — **not** the freeze". The old
+  cell was one step late by exactly the interval in which every P1 sign-off is
+  written, which is where charter §3's anchor-before-judge actually binds.
+- **This section**, for the reason its opening paragraph gives.
+- **ADR-0018 Amendment A3**, appended not edited (L-A04), recording the one
+  decision B-1 moved.
+
+#### Findings this round did not repair, and why
+
+- **F-15** (Verilator refuses an enum-typed parameter from the command line
+  without `-Wno-ENUMVALUE -Wno-WIDTHTRUNC`) — **no spec change owed**: §5.2
+  types the *package* enum and REQ-115 does not constrain the module
+  parameter's declared type, so the choice is `dv_lead`'s and `rtl_lead`'s to
+  make with the cost stated.
+- **F-16** — folded into B-3's second half above, not a separate edit.
+- **F-17** (§13.1 says the matrix "gains the corresponding row (REQ-124)"; the
+  row added is **REQ-115**) — clerical, and **corrected here rather than by
+  editing §13.1**, which is a record of a past round: the matrix row this
+  revision's predecessor added is REQ-115, and the matrix itself was correct
+  all along (91/91 rows, hook columns byte-identical to §10, measured at
+  `DV-P1-countersignature.md` §9.6). REQ-124 existed at `54a7221`.
+- **F-19** (the image-load guard, the runner-form ban, the X-resolution pin) —
+  `dv_lead`'s own, correctly declined by REQ-014's L-F03 paragraph, which
+  names the performer instead of pretending a requirement covers it.
+
+#### What was deliberately not touched
+
+`dv_lead`'s renewed pre-commitment is conditioned on the diff being exactly
+these repairs, so the constraint is a deliverable and not a preference. **No
+requirement other than REQ-115 had its text changed, and REQ-115's meaning is
+widened only to the class ADR-0018 A2.2 already stated.** No port table row, no
+decode partition, no cycle table and no §10 hook column moved; §13.1 is left as
+the record it is; nothing under `rtl/**` or `test/**` is created, implied or
+reserved.
+
+**One thing this round could not do, stated rather than assumed.** B-4 was the
+one repair that could have been an **E2**: if the quantifier could not be
+corrected without dropping or adding a comparison, that is a scope change and
+belongs to the sponsor, not to this author. It could be — all three points were
+already required elsewhere — so it was not escalated. Had it been otherwise,
+the repair owed here would have been an escalation packet and not a diff.

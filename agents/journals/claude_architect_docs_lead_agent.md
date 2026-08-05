@@ -1191,3 +1191,319 @@ tree, and §6.3 of the spec depends on it.
 - docs/adr/ADR-0018-p1-core-cpu-design-choices.md
 - docs/specs/requirements.md
 - agents/handoffs/WO-0005_p1-spec-revision.md
+
+---
+
+## [J-architect_docs_lead-0004] 2026-08-05T20:35Z | task:WO-0008 | Four repairs in text I added beyond the amendments: `MEM_INIT_FILE` leaves the package, and A-4's universal loses one word too many
+
+### Trigger
+
+Work order `agents/handoffs/WO-0008_p1-spec-repair-round-2.md`, spawn short-id
+`WO-0008/2026-08-05T19:55Z`, issued by the orchestrator against `dv_lead`'s
+second verdict — **NOT COUNTERSIGNED at `ddc06dc`**,
+`docs/reports/dv/DV-P1-countersignature.md` at `9f4e03b`, authority
+`J-dv_lead-0002`.
+
+The shape of that verdict is the thing worth recording. All six amendments
+landed and landed correctly; OQ-4's closure is right and was confirmed **by
+measurement in both lanes**, not by reading; the catch I made that neither of
+us had seen — A-1 and A-3 composing to reinstate F-2 — is confirmed and
+credited. **Every one of the four defects is in text I added beyond the
+amendments `dv_lead` wrote.** Three of the six amendments were applied *plus
+something*, and three of those additions carried a defect. That is the finding
+I take forward whatever else this round produced.
+
+### Inputs
+
+- `agents/charters/architect_docs_lead.md`; `agents/PROTOCOL.md` v2 (§3 packets,
+  §4 journals, §6 write scope, §7 gates and transcription, §8 escalation
+  classes, §10 evidence and provenance, §11 amendments)
+- `agents/handoffs/WO-0008_p1-spec-repair-round-2.md` — §0's eight standing
+  obligations bind this entry
+- `docs/reports/dv/DV-P1-countersignature.md` at `9f4e03b` **in full** — §0
+  verdict, §3 the amendment confirmations, §4 the three additions judged, §5
+  OQ-4 graded, §6 the derived-width inventory, §7 F-5 and the silent-ignore
+  presentation, **§8 the four repairs as exact text**, §9 evidence, §10 D-8,
+  §11 findings B-1…B-4 and F-15…F-19, §12 the NO-VERDICT register
+- `docs/specs/SPEC-P1-core-cpu.md` at `ddc06dc` — §4.A note, §4.C M03
+  parameters, §4.3, §5.0 REQ-115, §5.1, §5.4, §5.5, §8, §10 registry, §11
+  D-8/D-9, §13.1
+- `docs/adr/ADR-0018-p1-core-cpu-design-choices.md` — header, §0, §6.5, §6.6,
+  **Amendment A2 in full** (A2.1…A2.7)
+- `docs/specs/requirements.md` — REQ-115's row and the count sentence, to
+  establish whether the matrix needed an edit this round (it did not)
+- My own `J-architect_docs_lead-0003`, for the harvest-span arithmetic it left
+
+**No RTL read, because none exists.** No simulator run by me this round: every
+toolchain fact below is `dv_lead`'s measurement, provenance **relayed**, with
+the report and `J-dv_lead-0002` named as its authority (L-B01, `AUD-0002-F1`).
+
+### Reasoning
+
+**B-1 first, because the obvious repair is the wrong one.** The two clauses are
+jointly unsatisfiable: REQ-115 requires a module parameter defaulting to its
+package value, my A-5 addition names a literal default as "exactly the defect
+this requirement names", and Icarus 12.0 will not bind a package `string` in a
+parameter default expression at all. Two edits close it. Weakening REQ-109 is
+one word of work and is wrong: it licenses a literal second copy of *every*
+package value in a module header, which is the F-2 class REQ-109 was written to
+prevent, so it trades a blocking defect for the defect the requirement exists
+against. The other is to notice that a **filename never belonged in the
+package**. §5.5 exists because ADR-0017 Consequence 1 wants values that appear
+in both the RTL and the bench to have exactly one definition site *so they
+cannot drift* — and a per-test input has no second copy to drift against. Its
+"default" is the empty image, whose meaning REQ-014 clause 2 already fixes
+normatively. `MEM_INIT_FILE` fails the membership test §5.5 applies to
+everything else in it, and the tool merely made that visible.
+
+That is why the tool bug is not the argument. I put both reasons in the spec
+paragraph and the ADR, in that order, so that if a future Icarus binds package
+strings the reason this parameter sits outside the package still holds.
+
+**B-2 is the same table, one row up, and it is not a consequence of B-1.**
+REQ-115 forbids a module to read `chip8_pkg::SP_W`; REQ-109 ¶1 orders every
+value in that table referenced and never restated. Two normative clauses,
+opposite instructions, one name. Both defects are "a value in the
+single-definition-site table that has no business being there", found by two
+different routes, so I recorded them as one ADR amendment with two names rather
+than pretending B-2 fell out of B-1.
+
+**B-3: restate the rule at its class.** `dv_lead` measured `obs_stack`'s width
+expression failing identically to the named parameter — 48 against 192 at
+`STACK_DEPTH = 4` — and the stack array's own depth is a third case, so
+"`SP_W` … is the only such case in P1" is a factual claim in normative text
+that is false. What makes this one instructive rather than clerical is where
+the narrow version was: §4.A's note stated the general rule, and **ADR-0018
+A2.2 stated the general rule too**. Only REQ-115 — the normative site, the row
+the matrix cites, the text an RTL author implements against — carried the
+narrow one. So the specification was narrower than the ADR that authorised it,
+which is a transcription defect, and I recorded it as one in A3.4 rather than
+as a decision. The asymmetry `dv_lead` flags is the part worth carrying: the
+`SP_W` half fails loudly (a short-stack overflow vector faults at the wrong
+call depth, a directed test goes red) and the width half fails silently (a
+5-bit `obs_sp` carries 0…4 identically). A defect with a loud half and a silent
+half gets diagnosed as "the loud half, now fixed", so the enumeration in §13.2
+says so in the document rather than only here.
+
+**B-4 is the one I checked before editing, because it has an E2 shape.** "At
+retirement **and nowhere else**" — but no faulting instruction ever retires
+(REQ-029, REQ-049), so read strictly the clause strands the five fault
+conditions of §9, `dv_lead`'s 65536-encoding decode sweep, and the `mem` array.
+README's signed P1 criterion is a **full architectural-state compare after
+every instruction**, and narrowing a signed success criterion by a subordinate
+clause is a scope change, which is the sponsor's (E2) and not mine. So the
+question I had to answer first was whether the quantifier could be fixed
+*without* moving scope. It could: all three comparison points are already
+required by README's criterion and by REQ-029, REQ-048, REQ-049, REQ-114 and
+REQ-120, so naming them **restores** the domain rather than changing it. The
+edit is therefore in-role. Had it gone the other way the deliverable would have
+been an escalation packet and not a diff, and I wrote that counterfactual into
+§13.2 so the next reader knows the test was applied rather than skipped.
+
+The distinction A-4's paragraph draws is right and I kept it whole: a
+mid-instruction `obs_*` value is deterministic (both lanes run the same RTL) but
+unspecified (§6.6 frees the register stage), so it is lane-to-lane comparable
+and not model-assertable. Only the quantifier moved.
+
+**On keeping the diff bounded, and the two places I did not.** `dv_lead`
+renewed its pre-commitment conditioned on the diff being exactly these repairs,
+so boundedness is a deliverable here and not a preference. Two restatements of
+REQ-115 outside §5.0 are made **false** by the repairs — §4.C's "M03's
+parameters" paragraph, which says every declared value defaults to its package
+value, and §10's REQ-115 registry row, which says "M02 and M03" and "derived
+widths". Leaving either would keep the repaired defect alive at a different
+address, which is precisely the failure §13.1 named last round when it
+propagated A-1 beyond the amendment list. I made both edits minimal (one
+parenthetical; one description column, hook column untouched so §10 stays
+byte-identical to the matrix on the column `dv_lead` diffed mechanically) and
+gave them their own heading in §13.2 so the confirmatory surface stays a list.
+
+**F-17 I corrected by appending, not by editing.** §13.1 says the matrix "gains
+the corresponding row (REQ-124)"; the row added was REQ-115. §13.1 is a record
+of a past round, and rewriting a record to make it right is the failure mode
+L-A04 exists against — so the correction sits in §13.2's own list of findings
+not repaired by edit, with the reason.
+
+**Why §13.2 exists at all.** §13.1's enumeration is what let `dv_lead` bound
+its confirmatory pass by a list rather than by a diff hunt, and it is why round
+two cost one pass instead of a re-grade. It also flagged my own three additions
+so they were *graded rather than discovered* — which is the only reason B-1 was
+caught before RTL existed. The enumeration cost me a section and bought the
+program a review round; I wrote §13.2 the same way, including the two
+propagation sites and the dispositions of the findings I did not repair.
+
+**One decision moved and it is ADR'd by appending.** A2.2 named
+`MEM_INIT_FILE` among the values "defaulting to its `chip8_pkg` value", and
+after B-1 that is no longer true of it — so B-1 is not merely a text repair.
+**A2.7's own falsifier is what fired**, which is the outcome a falsifier is for,
+and I said so in A3 rather than presenting the amendment as a tidy-up. A3
+carries four losing alternatives with their costs — including weakening REQ-109,
+recorded as a *losing* alternative precisely so the temptation is on the record
+rather than merely resisted, and the accessor-function form, measured to abort
+the tool — and its own falsifier. B-2 is a consequence of A2.4, which stands
+entirely. B-3 moves nothing: the spec moved to the ADR. B-4 moves nothing:
+ADR-0018 does not contain the "and nowhere else" universal, so the defect is
+confined to the spec — I checked §6.5 and §6.6 for it rather than assuming.
+
+I also appended a header bullet naming A3 rather than editing the bullet that
+names A1 and A2, for the same reason A3 is appended.
+
+### Actions
+
+- `docs/specs/SPEC-P1-core-cpu.md`:
+  - **B-1** — §5.5 *Other* row loses `MEM_INIT_FILE` and its §5.4 pointer; §5.5
+    gains the "deliberately not a package value" paragraph; REQ-115 ¶1 gains the
+    exception clause and the literal default `""`.
+  - **B-2** — §5.5 *Widths and sizes* row loses `SP_W`; its value cell states
+    why, with the measurement, and points at §5.1 as the sole derivation site.
+  - **B-3** — REQ-115 ¶2 restated at its class (any parameter, width expression
+    or array bound; all three P1 cases named); REQ-115 ¶1 now names M01, M02,
+    M03 and M04 with "those … that they use — M03 declares all of them",
+    closing F-16.
+  - **B-4** — §8's "Two comparisons, two domains" paragraph now names three
+    comparison points; A-4's distinction preserved verbatim.
+  - **D-8's *Closes by* cell** → "**Before the first P1 `SO-` PASS**, which
+    precedes `P1-module-ready` — **not** the freeze" (F-18).
+  - **Propagation** — §4.C's M03-parameters paragraph (one parenthetical);
+    §10's REQ-115 registry row, description column only.
+  - **§13.2 added** — this round's enumeration: the four dispositions, the two
+    propagation sites and why they are not creep, the bounded extras, the
+    findings not repaired (F-15, F-16, F-17, F-19) with reasons, and the E2
+    counterfactual for B-4.
+- `docs/adr/ADR-0018-p1-core-cpu-design-choices.md`: **Amendment A3** appended
+  (A3.1 what was measured and what it broke; A3.2 the decision; A3.3 four
+  losing alternatives; A3.4 what did not move; A3.5 consequences; A3.6
+  falsifier), plus one appended header bullet naming it.
+- `agents/handoffs/WO-0008_p1-spec-repair-round-2.md`: Return log, state
+  RETURNED, carrying the four dispositions, the ADR movement, and an exact
+  statement of what else is in the diff.
+- **Not touched**: `docs/specs/requirements.md` (no matrix edit owed — REQ-115's
+  row carries id, sections and hook, no description, and the hook did not
+  change); §13.1; anything under `rtl/**` or `test/**`, including `dv_lead`'s
+  spike harness at `test/spikes/`.
+
+### Evidence
+
+**Provenance, stated first (L-B01, WO §0.7).** Every toolchain measurement
+cited in the spec and ADR text this round is **relayed** from
+`docs/reports/dv/DV-P1-countersignature.md` §9 at `9f4e03b`, authority
+`J-dv_lead-0002` — the `Unable to bind variable` error and its exit code, the
+accessor-function abort at exit 134, the four types that do work, `SP_W` 3
+against 5, and `obs_stack` 48 against 192. **I ran no simulator this round.**
+Where the spec quotes a measurement it names it as measured *by that report*,
+not by this file.
+
+The document-level claims below are **measured**, from a checkout at this
+commit:
+
+1. Neither name survives in §5.5's table:
+   ```
+   $ sed -n '/^| Group | Names | Value/,/^| Other/p' docs/specs/SPEC-P1-core-cpu.md \
+       | grep -c 'MEM_INIT_FILE'      → 0
+   $ sed -n '/^| Group | Names | Value/,/^| Other/p' docs/specs/SPEC-P1-core-cpu.md \
+       | grep -o '`SP_W`, ' | wc -l   → 0
+   ```
+2. The false parenthetical survives only as a quotation convicting it:
+   ```
+   $ grep -n 'only such case in P1' docs/specs/SPEC-P1-core-cpu.md
+   1565: | **B-3** | REQ-115's parenthetical "…" is measurably false: …
+   ```
+   — one hit, inside §13.2's disposition table. No normative site carries it.
+3. The repaired universal, and no stranded one:
+   ```
+   $ grep -n 'nowhere else' docs/specs/SPEC-P1-core-cpu.md
+   1071: `S_FETCH_HI`, and nowhere else**, …          # §7, unrelated clause, untouched
+   1169: … it happens at three points and nowhere else — at retirement, …
+   1566: … quoting the old clause in §13.2's B-4 row
+   ```
+4. No requirement added, withdrawn or renumbered, and the matrix still tiles:
+   ```
+   $ grep -o '^| REQ-[0-9]*' docs/specs/SPEC-P1-core-cpu.md | sort -u | wc -l      → 91
+   $ grep -o '^| \*\*REQ-[0-9]*\*\*' docs/specs/requirements.md | sort -u | wc -l  → 91
+   ```
+5. Diff size, for the boundedness claim:
+   ```
+   $ git diff --stat
+    docs/adr/ADR-0018-p1-core-cpu-design-choices.md | 122 +++++
+    docs/specs/SPEC-P1-core-cpu.md                  | 138 ++++++---
+   ```
+   with `agents/handoffs/WO-0008_p1-spec-repair-round-2.md` appended after that
+   snapshot. The spec's 15 deleted lines are the six repaired passages and
+   nothing else; the rest is §13.2 and the two propagation sites.
+
+**No interface compile-check evidence is cited or owed** — ADR-0017 Consequence
+1 puts this program in the reviewed-port-table fallback regime, and this
+revision moves no port table row.
+
+### Outcome
+
+**DoD met.** B-1…B-4 each **repaired**, none declined; D-8's *Closes by* cell
+corrected; §13.2 enumerates this round's edits as §13.1 did. `ADR-0018`
+amended by appending because B-1 moved A2.2's enumeration. Journal entry
+appended; Return log written; the packet is **RETURNED** to the orchestrator.
+
+`dv_lead`'s renewed pre-commitment is that a revision whose diff is exactly
+these repairs needs no further review round, and the countersignature then
+issues as `J-dv_lead-0003`. **Whether this diff qualifies is `dv_lead`'s call,
+not mine** — I have made the diff and enumerated it; I have not graded it. Spec
+§12's two signature rows stay empty and D-6 stays open until that entry exists.
+
+**Harvest note (PROTOCOL §7.1, charter §3).** Not a harvest round — this is the
+revision preceding the gate, and no gate signature or `SO-` packet is being
+issued. Carrying the arithmetic forward from `-0003`: my chain's fork-point
+baseline is **none**, so the first harvest span at `P1-spec-freeze` is
+`J-architect_docs_lead-0001..0004`, extended by this entry, unless further
+entries intervene. Recorded so the tiling stays exact and a skipped harvest
+would show as arithmetic rather than as silence.
+
+**One candidate I am carrying rather than minting, so it is not lost.** Two
+rounds running, the defects in my work were in text I added *beyond* the
+amendment I was applying, and both rounds the additions were caught only
+because I enumerated them for the reviewer. The rule that wants writing is
+about the party applying a repair enumerating its own additions — but
+`dv_lead` has already minted exactly that as **LC-05** at `J-dv_lead-0002`,
+from the other side of the same incident. Independent re-derivation of a
+candidate already in the pipeline is **recurrence evidence**
+(`docs/FEDERATION.md` §8), not a second candidate, so I record it as
+recurrence against LC-05 and mint nothing. The count matters: at the third
+independent arrival that entry opens a promotion obligation.
+
+### Open-questions
+
+1. **D-8's deadline is now tighter than the last return implied.** Its *Closes
+   by* cell reads **before the first P1 `SO-` PASS**, which precedes
+   `P1-module-ready` — the interval between them is exactly the window in which
+   every P1 sign-off is written. It still **owes a board line I cannot write**
+   (`tasks/**` outside my write scope, L-E10), and the line now carries the
+   earlier deadline.
+2. **D-9 — fifteen `I` hooks have no named performer**, four over RTL files the
+   countersignatory may not read. Routed to the orchestrator; assigning
+   `rtl_lead` is not mine to do (charter §7). Owes a board line.
+3. **NV-4 is new and is `dv_lead`'s** (`DV-P1-countersignature.md` §12):
+   `COCOTB_RESOLVE_X=ZEROS` silently resolves an `X` to zero, turning the
+   authoritative four-state lane two-state for every X-related check in the
+   program, and nothing in this repository pins it today. Not a spec defect —
+   REQ-014's L-F03 paragraph correctly names the performer — but it is a
+   silently-always-pass hazard in the instrument that a signer should know
+   exists, and its guard is `dv_lead`'s §7.3 item 4.
+4. **F-15 is a cost, not a defect, and someone must choose.** Verilator refuses
+   an enum-typed parameter from the command line without `-Wno-ENUMVALUE
+   -Wno-WIDTHTRUNC`, and four of REQ-095's six connectivity vectors set
+   enum-typed quirk parameters. §5.2 types the *package* enum and REQ-115 does
+   not constrain the module parameter's declared type, so the choice — global
+   waivers that suppress a real type check, or 2-bit `logic` parameters with a
+   cast inside — is `rtl_lead`'s and `dv_lead`'s. No spec change owed.
+
+Carried unchanged: **OQ-3** (relayed VIP defaults, subsumed by D-8); **D-3**
+(`rtl/chip8_pkg.sv`, `rtl_lead`'s, untouched — and §5.5's normative content is
+two names shorter than it was, which is a change to what that file must
+contain); **D-7**, a P4 carry-forward. **OQ-1** and **OQ-2** remain closed.
+
+Noted a fourth time rather than allowed to age into an assumption: the
+**L-D16 citation still does not resolve** in this tree, and §6.3 of the spec
+depends on it.
+
+### Files-in-this-commit
+- docs/specs/SPEC-P1-core-cpu.md
+- docs/adr/ADR-0018-p1-core-cpu-design-choices.md
+- agents/handoffs/WO-0008_p1-spec-repair-round-2.md
