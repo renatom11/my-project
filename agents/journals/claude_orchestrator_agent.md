@@ -3405,3 +3405,134 @@ decision-ready before any lead is spawned.
 - docs/gates/G0-checklist.md
 - tasks/BOARD.md
 - agents/journals/INDEX.md
+
+## [J-orchestrator-0046] 2026-08-05T15:52Z | task:none | M1 toolchain lane prepared decision-ready: ADR-0017 PROPOSED, escalated E3
+
+### Trigger
+G0 passed and the board reads M1. BOOTSTRAP §2.1 makes the toolchain ADR
+M1's first act, and PROTOCOL §8 makes it an **E3** — a sponsor-reserved
+class. The sponsor said "keep going", so I prepared the decision rather
+than asking whether to prepare it.
+
+### Inputs
+- `BOOTSTRAP.md` §2.1-2.4 (the ADR skeleton, CI instantiation, the §4.1
+  interface regime, lane amendments).
+- `tasks/BOARD.md` — the B3 intake record (toolchain candidates with
+  license classes; the two capability findings), the B4 simulation
+  boundary, the freeze bullet.
+- `README.md` phase table — P1's lockstep criterion, P5's WASM and
+  post-P&R timing criteria.
+- `agents/PROTOCOL.md` §6 (write-scope table), §8 (E3), §10 (a skipped
+  simulator is never a PASS), §11 (amendment procedure).
+- `scripts/policy.sh` `agent_may_write()`; `scripts/agent_commit.sh:187-191`;
+  `scripts/check_journals.sh:211-215`; `scripts/test_protocol.sh` R7 rows.
+- `docs/specs/SPEC-TEMPLATE.md` §4.1 regime options.
+
+### Reasoning
+- **The decision is really about where the golden model lives, and every
+  other consequence follows from that.** P1's success criterion is
+  per-instruction lockstep against a Python reference. Once that is fixed,
+  a lane is good in proportion to how little it separates the model from
+  the DUT. cocotb puts them in one process; a Verilator/C++ lane puts a
+  process boundary in the middle of the P1 critical path or forces a
+  duplicate C++ model - and a duplicated model is not merely wasteful, it
+  destroys the independence the B3 rider exists to protect. So Lane B is
+  worse for reasons the intake already decided, not for reasons of taste.
+- **Lane C is disqualified by a signed criterion, and I said so in those
+  terms.** Icarus cannot feed Emscripten, so P5's browser build is
+  unreachable. That is not a preference against Icarus - it is that
+  choosing C would require an E2 scope change to drop a success criterion
+  the sponsor signed. Naming the escalation class it would require is
+  more useful to the sponsor than calling it "not recommended".
+- **Lane A's real strength is that it answers both intake capability
+  findings structurally rather than by hope.** cocotb is
+  simulator-agnostic, so the *same* Python tests run under both
+  simulators: constrained-random lives in Python (where the missing SV
+  feature stops mattering) and the 4-state gap is covered by a second lane
+  running identical tests rather than a separate hand-maintained suite.
+  One suite, two engines, an environment variable between them.
+- **I stated R1 as a risk with a fallback rather than as a footnote.**
+  cocotb's Verilator support is narrower than its Icarus support. The
+  honest framing is not "this should be fine" but: Icarus is the
+  authoritative correctness lane, so if Verilator proves awkward under
+  cocotb we lose campaign *speed*, not any correctness capability, and
+  Verilator still serves the WASM build. I also made the spike that tests
+  R1 the first M1 work order, so the risk is retired before the P1 spec
+  freeze rather than discovered inside it.
+- **The interface regime is the decision I expect to be second-guessed,
+  so I gave it a mitigation instead of just a choice.** Compile-checked
+  interface records are the stronger regime where a toolchain supports
+  them. This one supports them unevenly - the *synthesis* half is the weak
+  point, and SV `interface` through Yosys is a rough path. Buying
+  simulation-side checking at the cost of synthesis-side breakage is a bad
+  trade on a design with single-digit modules. So: reviewed port tables,
+  the stated fallback, **plus** a shared SV package for parameters and
+  opcode encodings, so the values cannot drift silently even though the
+  port lists are review-checked. Recorded so a later reader does not read
+  the fallback as an absence of thought.
+- **I measured the amendment cost instead of estimating it.** Before
+  writing Consequence 4 I read `agent_may_write()` and found write scopes
+  are a `case` statement in `policy.sh`, consulted by `agent_commit.sh`
+  for R7 and re-checked by `check_journals.sh` in CI. So each new lane is
+  one pattern in one existing arm, plus - because this changes enforcement
+  semantics - one proving scenario each under §11, on the pattern of the
+  existing R7 rows. That is a small cost, but it is a law change and it
+  ships with its proof; saying "small" without having looked would have
+  been the kind of claim AUD-0001 was full of findings about.
+- **`syn/**` goes to rtl_lead, not dv_lead, and the reason is
+  independence.** Synthesis is not verification, but putting synthesis
+  artifacts in the DV lane blurs a boundary the whole org is built to keep
+  sharp, for no benefit. Synthesis reports concern the shipped HDL, so
+  they belong with the agent that owns it.
+- **I named the ADR's dependency on the freeze reading explicitly.** This
+  ADR is the artifact the freeze disapplication was made to permit, and
+  AUD-0001-F9 flagged that reading as the permissive one. Leaving that
+  implicit would let a sponsor sign the ADR without seeing that it rests
+  on a judgment call an auditor has already flagged. So Consequence 6 says
+  it: if the sponsor reverses the freeze reading, this ADR does not land.
+- **Status PROPOSED, and nothing is built against it.** BOOTSTRAP's
+  skeleton shows the final state as Accepted-on-sponsor-decision. Writing
+  it Accepted before the decision would be exactly the F3/F4 failure mode
+  the audit just found - a record asserting an authority it does not have.
+
+### Actions
+- Wrote `docs/adr/ADR-0017-toolchain-lane.md`, status **PROPOSED**: context
+  with the three binding intake constraints, three costed lanes, the
+  recommendation, and six consequences (interface regime with mitigation,
+  CI instantiation, the new-capability-is-a-new-E3 rule, the §6 amendment
+  with measured cost, dormant-worker activation, and the freeze dependency).
+- Recorded the **E3 escalation** on `tasks/BOARD.md`, replacing the "None
+  live" state, with the recommendation, the named risk, and the explicit
+  statement that no lead is spawned and no M1 artifact built until signed.
+
+### Evidence
+- `scripts/policy.sh` `agent_may_write()` is a `case` over agent then path;
+  `dv_lead` reads `test/*|tools/*|docs/reports/dv/*|agents/handoffs/*`.
+  Adding a lane is one pattern in one arm. *Measured.*
+- `scripts/agent_commit.sh:187-191` calls `agent_may_write` per staged
+  work path and fails with "path outside <agent>'s write scope (R7)";
+  `scripts/check_journals.sh:211-215` re-checks the same in CI. *Measured.*
+- Existing R7 proving scenarios in `scripts/test_protocol.sh` at lines 155,
+  163, 299, 394, 564 — the pattern a new lane's scenario copies. *Measured.*
+- Candidate licenses and the two capability findings are the B3 intake
+  record on `tasks/BOARD.md`. *Relayed* (recorded at G0, not re-verified
+  here; the ADR flags the OSS CAD Suite bundle contents as an
+  instantiation-time check rather than a present-tense claim).
+
+### Outcome
+DoD met: the E3 is prepared decision-ready — options, recommendation, cost,
+named risk, and the amendment it carries — and escalated. **M1 is blocked
+on the sponsor's decision by design**: no lead spawned, no work order
+issued, no CI template moved. Handoff: the sponsor.
+
+### Open-questions
+- **R1 (cocotb + Verilator) is unretired** until the M1 spike runs; the
+  fallback is stated in the ADR rather than left to be improvised.
+- **The OSS CAD Suite pin's contents are unverified** — an
+  instantiation-time check, flagged in the ADR as *relayed*.
+- Unchanged and still owed: the outer-hop PR, AUD-0001-F3's closure by
+  follow-up audit, and three unfiled shell defects.
+
+### Files-in-this-commit
+- docs/adr/ADR-0017-toolchain-lane.md
+- tasks/BOARD.md

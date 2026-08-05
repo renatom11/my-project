@@ -104,9 +104,22 @@ prepared decision-ready by the orchestrator before any lead is spawned.
 
 ## Pending escalations to sponsor
 
-**None live.** All four G0 E0 contacts are discharged: A6 ratification,
-A8 branch-flow decision, the B1–B6 intake signature, and **A7 branch
-protection** — all 2026-08-05.
+**Live — one, class E3 (toolchain lane and licensing).**
+
+- **M1 toolchain lane** — [ADR-0017](../docs/adr/ADR-0017-toolchain-lane.md),
+  status **PROPOSED**, prepared decision-ready 2026-08-05. Three lanes
+  costed; recommendation **Lane A** (cocotb driving both Icarus and
+  Verilator; Yosys → nextpnr → icetime for synthesis; SymbiYosys + Z3 for
+  formal; Emscripten for the WASM build). Carries one named risk (**R1** —
+  cocotb's Verilator support, with a structural fallback already stated),
+  the interface-regime decision (**reviewed port tables**, with the reason),
+  and a §11 amendment adding two write-scope lanes (`syn/**` → rtl_lead,
+  `web/**` → orchestrator) whose enforcement cost is measured, not guessed.
+  **No M1 artifact is built and no lead is spawned until this is signed.**
+
+All four G0 E0 contacts are discharged: A6 ratification, A8 branch-flow
+decision, the B1–B6 intake signature, and **A7 branch protection** — all
+2026-08-05.
 
 - **A7 — branch protection: CONFIGURED AND VERIFIED** (2026-08-05).
   Rulesets on this repository:
