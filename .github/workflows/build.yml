@@ -1,0 +1,151 @@
+# build.yml — the program's build/test CI. Instantiated at M1 for the
+# ADR-0017 Lane A toolchain (cocotb over Icarus + Verilator; Yosys for
+# synthesis). Only the orchestrator stages .github/** (PROTOCOL §6 R7).
+#
+# CI is the authoritative build environment: no gate signature rests on a
+# local build (PROTOCOL §10). Recipes and the R-CI rules: docs/playbooks/ci-evidence.md
+#
+# ── R-CI walk for these lanes (recorded in ADR-0017 A1.2 / A2) ──
+#   R-CI-a  each simulator is its OWN job, never a step in another
+#   R-CI-b  tools from the distribution archive (apt-get); the two
+#           exceptions (sby, emcc) are named in TOOLCHAIN.md and land with
+#           the P4/P5 lanes, not here
+#   R-CI-c  tool versions written to a .meta sidecar artifact, not only the log
+#   R-CI-d  ── THE SOURCE GUARD BELOW IS THE ONLY NON-BLOCKING ELEMENT ──
+#           De-gating condition, written here at landing as R-CI-d requires:
+#           the guard is deleted in the SAME COMMIT that lands the first
+#           module under rtl/ and its first bench under test/. From that
+#           commit on, an empty or unrunnable suite is a RED build. Until
+#           then the guard prints loudly and the job is honest about
+#           testing nothing — it never reports a pass over an absent suite.
+#   R-CI-g  same push trigger as everything else; never a schedule
+#   R-CI-h  no fetch step; reference inputs live in the checkout
+
+name: build
+
+on:
+  push:
+  pull_request:
+
+env:
+  DEBIAN_FRONTEND: noninteractive
+
+jobs:
+  # ── Lane 1: Icarus — four-state, event-driven, AUTHORITATIVE for correctness.
+  # Verilator is two-state and cannot see uninitialized-register or
+  # reset-domain defects; this lane is why that gap is covered (ADR-0017).
+  sim-icarus:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up toolchain (distribution archive — R-CI-b)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq iverilog
+          python -m pip install --quiet -r requirements.txt
+
+      - name: Record tool versions (R-CI-c sidecar)
+        run: |
+          mkdir -p "$RUNNER_TEMP/meta"
+          {
+            echo "lane=icarus"
+            echo "iverilog=$(iverilog -V 2>&1 | head -1)"
+            echo "cocotb=$(python -c 'import cocotb; print(cocotb.__version__)')"
+            echo "python=$(python --version 2>&1)"
+            echo "commit=$GITHUB_SHA"
+          } > "$RUNNER_TEMP/meta/icarus.meta"
+          cat "$RUNNER_TEMP/meta/icarus.meta"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: icarus-meta
+          path: ${{ runner.temp }}/meta/icarus.meta
+
+      - name: Run the suite (Icarus)
+        run: |
+          if [ ! -d test ] || [ -z "$(find test -name 'test_*.py' -print -quit 2>/dev/null)" ]; then
+            echo "==================================================================="
+            echo "SOURCE GUARD ACTIVE (R-CI-d) — no test/test_*.py in the checkout."
+            echo "This job tested NOTHING. It is not a pass over a green suite."
+            echo "De-gating: this guard is deleted in the same commit that lands"
+            echo "the first rtl/ module and its first test/ bench. From then on an"
+            echo "empty or unrunnable suite is a RED build."
+            echo "==================================================================="
+            exit 0
+          fi
+          SIM=icarus python -m pytest test -v
+
+  # ── Lane 2: Verilator — fast; also the compile-to-C++ path the P5
+  # WebAssembly build consumes. cocotb is pinned to 1.9.x for this pairing
+  # (ADR-0017 A2 — cocotb 2.x does not build against Verilator 5.020).
+  sim-verilator:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up toolchain (distribution archive — R-CI-b)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq verilator
+          python -m pip install --quiet -r requirements.txt
+
+      - name: Record tool versions (R-CI-c sidecar)
+        run: |
+          mkdir -p "$RUNNER_TEMP/meta"
+          {
+            echo "lane=verilator"
+            echo "verilator=$(verilator --version 2>&1 | head -1)"
+            echo "cocotb=$(python -c 'import cocotb; print(cocotb.__version__)')"
+            echo "python=$(python --version 2>&1)"
+            echo "commit=$GITHUB_SHA"
+          } > "$RUNNER_TEMP/meta/verilator.meta"
+          cat "$RUNNER_TEMP/meta/verilator.meta"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verilator-meta
+          path: ${{ runner.temp }}/meta/verilator.meta
+
+      - name: Lint the RTL (Verilator, warnings are errors)
+        run: |
+          if [ ! -d rtl ] || [ -z "$(find rtl -name '*.sv' -print -quit 2>/dev/null)" ]; then
+            echo "SOURCE GUARD ACTIVE (R-CI-d) — no rtl/*.sv yet; nothing linted."
+            exit 0
+          fi
+          verilator --lint-only -Wall $(find rtl -name '*.sv')
+
+      - name: Run the suite (Verilator)
+        run: |
+          if [ ! -d test ] || [ -z "$(find test -name 'test_*.py' -print -quit 2>/dev/null)" ]; then
+            echo "SOURCE GUARD ACTIVE (R-CI-d) — no test/test_*.py; tested NOTHING."
+            exit 0
+          fi
+          SIM=verilator python -m pytest test -v
+
+  # ── Determinism gate: catches an output that changed but was never
+  # promoted, generation that is not byte-reproducible, and a produced file
+  # never committed. Untracked files count, so stage everything first.
+  determinism:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify nothing was left unpromoted or non-deterministic
+        run: |
+          git add -A
+          git diff --cached --exit-code || {
+            echo '=== PROMOTION BLOCK: sha256 + base64 -w 400 of every staged path ==='
+            git diff --cached --name-only | while read -r f; do
+              if [ -f "$f" ]; then
+                echo "--- FILE $f"; sha256sum "$f"; base64 -w 400 "$f"; echo "--- END $f"
+              else
+                echo "--- DELETED $f"
+              fi
+            done
+            echo '=== END PROMOTION BLOCK ==='
+            exit 1
+          }

@@ -3785,3 +3785,129 @@ sponsor decision is open.
 - TOOLCHAIN.md
 - docs/adr/ADR-0017-toolchain-lane.md
 - tasks/BOARD.md
+
+## [J-orchestrator-0049] 2026-08-05T16:26Z | task:WO-0002 | M1 complete: build.yml instantiated; P1 opens with the spec work order
+
+### Trigger
+Sponsor: "keep going with this project step by step until the whole thing
+is finished." M1 had one item left (CI instantiation) and P1's first act is
+the spec freeze, which needs the architect spawned against a work order.
+
+### Inputs
+- `.github/workflows/build.yml.template` and its embedded R-CI notes.
+- `docs/playbooks/ci-evidence.md` §6 (lane wrapper seams), §7 (R-CI-a..h).
+- `docs/adr/ADR-0017-toolchain-lane.md` incl. A1.2 and A2.
+- `README.md` phase table row P1 and the scope paragraph.
+- `docs/specs/SPEC-TEMPLATE.md`; `agents/handoffs/templates/WO-template.md`.
+- `TOOLCHAIN.md`, `requirements.txt` at `2c0f962`.
+
+### Reasoning
+- **The hard question in instantiating `build.yml` now is that there is
+  nothing to build.** No `rtl/`, no `test/`. A workflow that runs a suite
+  which does not exist either fails immediately (a red build for the whole
+  of P1's spec phase, which trains everyone to ignore red) or silently
+  passes over an absent suite - which is PROTOCOL §10's silently-always-pass
+  class exactly, the defect whose symptom is a green run that checks
+  nothing. Neither is acceptable, and BOOTSTRAP still says instantiate at M1.
+- **R-CI-d resolves it, and it is the rule I would otherwise have bent.**
+  It permits a lane to land non-blocking *provided the de-gating condition
+  is written down at landing*. So the guard exists, it is loud, and its
+  removal condition is stated in the file itself: **deleted in the same
+  commit that lands the first `rtl/` module and its first `test/` bench,
+  after which an empty suite is a red build.** The guard's message says in
+  plain words "This job tested NOTHING. It is not a pass over a green
+  suite." A future reader scanning green checkmarks should not be able to
+  mistake this for coverage.
+- **Two simulator jobs, not two steps** (R-CI-a). Attributability is the
+  point: when the Verilator lane breaks on a cocotb pin and Icarus does
+  not, that must be visible as one red job rather than one red suite. It
+  also keeps each lane's dependencies off the other's critical path.
+- **The version sidecar is not decoration** (R-CI-c). ADR-0017's whole
+  pinning compromise - distribution installs plus committed floors - only
+  works if the *actual* versions are in the record per run. Writing them
+  to a `.meta` artifact rather than only the log is what makes a later
+  "which Verilator produced this result?" answerable. They go to
+  `$RUNNER_TEMP` (R-CI-e) so they never reach the determinism gate.
+- **The lint step earns its place before any RTL exists**, because
+  `verilator --lint-only -Wall` is the cheapest possible check and it will
+  be live from the first module. It carries its own guard for the same
+  reason as the suite.
+- **On WO-0002: I gave the architect a proposed opcode boundary and told
+  it to argue rather than adopt.** Handing a lead a list to rubber-stamp
+  produces a spec whose scope is mine, not the architect's, and then
+  nobody has actually checked the boundary. L-B12 is the rule here - read
+  the governing requirement, which is README's table, not my paraphrase of
+  it.
+- **The quirk-parameter instruction is the one design call I made inside
+  the packet, and I made it deliberately.** The compatibility campaign is
+  P4, so the natural reading is that quirks are a P4 concern. But three of
+  P1's own instructions (`8XY6`/`8XYE`, `BNNN`, `FX55`/`FX65`) are exactly
+  the divergent ones, and retrofitting a parameter into frozen RTL *and*
+  frozen benches costs more than declaring it unused for three phases. So
+  the parameters are declared in P1 and default to 1977. That is a scope
+  clarification within a signed phase, not a scope change - it adds no
+  requirement to P4 and drops none from P1.
+- **Illegal-opcode behaviour is a named task because of `L-D16`.** The
+  lesson this project just landed at the org generic is that a check
+  covering one value of an enumeration says nothing about the rest. A
+  decode spec that enumerates the legal opcodes and is silent on the
+  illegal 16-bit space leaves a hole the P4 formal properties would fall
+  into. Citing our own landed lesson back into a work order is what
+  ADR-0012's read path is for.
+- **What I did not do: spawn dv_lead in parallel.** Its P1 work (golden
+  model, lockstep harness) derives from the spec, and DV deriving tests
+  from an unfrozen spec is how spec-derivation independence quietly
+  becomes fiction. dv_lead spawns when the spec is drafted, to countersign
+  testability - not before.
+
+### Actions
+- `git mv .github/workflows/build.yml.template .github/workflows/build.yml`
+  and filled it for Lane A: `sim-icarus` and `sim-verilator` as separate
+  jobs, each installing from the distribution archive, each writing an
+  R-CI-c `.meta` sidecar to `$RUNNER_TEMP` and uploading it; a Verilator
+  lint step; the determinism gate retained; the R-CI walk recorded in the
+  file header; both guards carrying the written de-gating condition.
+- Wrote `agents/handoffs/WO-0002_p1-core-cpu-spec.md` (State ISSUED,
+  orchestrator → architect_docs_lead): eight numbered tasks, deliverables
+  bounded to the architect's write scope, five standing lessons named with
+  what each requires here, and an explicit out-of-scope list separating
+  P2's display work and P3's I/O from P1.
+- `tasks/BOARD.md`: M1 → Complete; P1 → Active; open-work-orders table
+  reopened with WO-0002.
+
+### Evidence
+- `.github/workflows/` now holds `build.yml` and `journal-check.yml`;
+  the `.template` file is gone (a rename, so its history follows).
+  *Measured.*
+- `python3 -c "import yaml; ..."` over `build.yml` → parses, jobs
+  `['sim-icarus', 'sim-verilator', 'determinism']`. *Measured.* Note this
+  proves the YAML is well-formed, **not** that the workflow passes - that
+  becomes measured on the next push, and the guards mean its first green
+  is a green over nothing, by design and by written statement.
+- `bash scripts/test_protocol.sh` → 49 passed, 0 failed (unchanged; this
+  commit alters no enforcement semantics). *Measured.*
+
+### Outcome
+DoD met. **M1 is complete.** P1 is open with WO-0002 issued; the architect
+is spawned with that packet and the spawn short-id
+`WO-0002/2026-08-05T16:26Z`. Its output returns to me for commit under
+`Agent: architect_docs_lead`, then to dv_lead for the testability
+countersignature, then to the sponsor for the P1 spec freeze (**E1**).
+
+### Open-questions
+- **The P1 spec freeze is an E1 sponsor signature.** The sponsor's standing
+  "keep going until finished" is not a pre-signature for gates the
+  constitution reserves to them; I will batch the gate decisions and put
+  them plainly rather than infer consent. Recorded now so the inference is
+  not made later by omission.
+- `build.yml`'s first run will be **green over nothing** until the guards
+  come off. That is stated in the file, in this entry, and in the guard's
+  own output.
+- Unchanged and still owed: the outer-hop PR, AUD-0001-F3's closure,
+  three unfiled shell defects, and `nextpnr`/`icetime` still *relayed*.
+
+### Files-in-this-commit
+- .github/workflows/build.yml
+- .github/workflows/build.yml.template
+- agents/handoffs/WO-0002_p1-core-cpu-spec.md
+- tasks/BOARD.md

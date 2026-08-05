@@ -77,8 +77,8 @@ the rows below are its roadmap view. Changing either is an E2 escalation.
 | Milestone | Scope | Status |
 |---|---|---|
 | M0 | Bring-up: G0 intake, org ratification, branch protection, enforcement self-test green | ✅ **Complete** — G0 passed 2026-08-05 |
-| M1 | Toolchain ADR (E3), build CI instantiation, SPEC-TEMPLATE §4.1 interface regime | **Active** — ADR-0017 **ACCEPTED** (Lane A); §11 lane amendment landed with its proving scenario; **R1 retired by measurement** (A2) and pin manifests committed. Remaining: `build.yml` instantiation, then the P1 spec freeze |
-| P1 | Core CPU — memory, register file, stack, multicycle FSM, non-draw/non-I/O instructions, golden model + lockstep harness | Not started |
+| M1 | Toolchain ADR (E3), build CI instantiation, SPEC-TEMPLATE §4.1 interface regime | ✅ **Complete** 2026-08-05 — ADR-0017 accepted (Lane A) with its §11 lane amendment and proving scenario; R1 retired by measurement (A2); pins committed; `build.yml` instantiated with both simulator lanes, the R-CI-c version sidecars, and one **written de-gating condition** for its source guard |
+| P1 | Core CPU — memory, register file, stack, multicycle FSM, non-draw/non-I/O instructions, golden model + lockstep harness | **Active** — spec work order WO-0002 issued to architect_docs_lead |
 | P2 | Display and draw path — framebuffer, 64-bit barrel shifter, `DXYN` XOR + collision, `00E0`, font ROM + `FX29` | Not started |
 | P3 | I/O, timing, first light — 60 Hz timers, keypad, `FX0A` blocking wait; Pong runs end-to-end | Not started |
 | P4 | Quirks, compatibility, formal — quirk parameters, test-ROM suite in multiple configs, formal properties | Not started |
@@ -93,7 +93,11 @@ the rows below are its roadmap view. Changing either is an E2 escalation.
 
 ## Open work orders
 
-_None open._ Closed this milestone:
+| Packet | From → To | State | Subject |
+|---|---|---|---|
+| [`WO-0002_p1-core-cpu-spec.md`](../agents/handoffs/WO-0002_p1-core-cpu-spec.md) | orchestrator → architect_docs_lead | **ISSUED** 2026-08-05 | P1 core-CPU spec + REQ-### requirements — the org's first product artifact |
+
+Closed:
 
 | Packet | From → To | State | Subject |
 |---|---|---|---|
