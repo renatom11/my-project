@@ -3536,3 +3536,125 @@ issued, no CI template moved. Handoff: the sponsor.
 ### Files-in-this-commit
 - docs/adr/ADR-0017-toolchain-lane.md
 - tasks/BOARD.md
+
+## [J-orchestrator-0047] 2026-08-05T16:05Z | task:none | ADR-0017 ACCEPTED (Lane A); its §11 lane amendment lands with its proving scenario; two self-corrections
+
+### Trigger
+The sponsor decided the M1 **E3**: **Lane A**, and **keep** the reviewed
+port tables interface regime. This entry accepts ADR-0017, lands the §11
+amendment it carries, and records two errors I found in my own accepted
+ADR while executing it.
+
+### Inputs
+- Sponsor decision (this session): Lane A; reviewed port tables kept.
+- `docs/adr/ADR-0017-toolchain-lane.md` as proposed at `a64cb5d`.
+- `scripts/policy.sh` `agent_may_write()`; `scripts/test_protocol.sh`
+  S6/S6b (R7 pattern), S28-S31 (volume rollover), S39/S40 (dynamic entry-id
+  derivation).
+- `docs/playbooks/ci-evidence.md` §7 — the R-CI checklist.
+- `.github/workflows/build.yml.template`.
+- PROTOCOL §6, §11; L-A04, L-A11, L-B01, L-D11.
+
+### Reasoning
+- **Two errors in my own ADR, found by reading the code and the playbook
+  its claims rested on.** Both were found *before* anything was built
+  against them, which is the only reason they are cheap.
+  - **The `web/**` lane does not exist.** Consequence 4 claimed two new
+    write-scope lanes. `agent_may_write()` opens with
+    `orchestrator) return 0` - the orchestrator may already stage every
+    path by construction. I asserted a law change that was not one, and
+    in the direction that flattered the ADR's thoroughness. Corrected to
+    **one** lane, one scenario.
+  - **The OSS CAD Suite pin violates two R-CI rules.** `ci-evidence.md`
+    §7's R-CI-b bars third-party archives and source builds; R-CI-h bars
+    run-time fetches. A dated tarball from a release page, downloaded at
+    job time, is both. I proposed it citing BOOTSTRAP §2.1's "pins live in
+    committed project files" - a real requirement, but not one that
+    licenses breaking two others. This is exactly L-D12's shape: I let a
+    document's convenience stand in for a check I had not run.
+- **The corrections append; they do not rewrite (L-A04).** ADR-0017's
+  original text stays as accepted, with Amendment A1 beneath it. A reader
+  should see that the ADR was wrong and how, not a tidied document that
+  was never wrong. This is the same discipline I applied to the A6
+  provenance trail, and it matters more here because the sponsor signed
+  the text that contained the errors.
+- **Reconciling BOOTSTRAP §2.1 with R-CI-b, rather than picking a
+  winner.** §2.1 wants pins in committed files; R-CI-b wants distribution
+  packages, which cannot be version-pinned reliably because the archive
+  rotates. The substance both are protecting is *the reproducibility
+  condition is in the record and checkable*. So: Python pinned exactly in
+  `requirements.txt` (and the P1 critical path depends only on those);
+  distribution tools installed unpinned but with **minimum acceptable
+  versions in a committed manifest** so a too-old runner fails loudly, and
+  **actual** versions captured to the R-CI-c sidecar every run. Two named
+  exceptions - SymbiYosys and Emscripten, which the distribution does not
+  carry - pinned by revision and confined to their own jobs, so the `build`
+  job takes neither dependency and neither sits on the P1 critical path.
+  R-CI-h explicitly invites a stated exception; taking it in writing is
+  the rule working, not a breach of it.
+- **The proving scenario asserts both directions, and the second one is
+  the one that matters.** S41 asserts rtl_lead *may* stage `syn/` and that
+  dv_lead *may not*. A grant-only scenario would pass just as well if the
+  path had been opened to everyone - and the whole reason `syn/**` went to
+  rtl_lead rather than dv_lead is the independence boundary. L-D11's
+  principle: an instrument must prove it can still fail.
+- **Writing the scenario surfaced two facts about the fixture I would
+  otherwise have guessed wrong**, and both are now comments in the file
+  for the next editor. By S41 rtl_lead's journal is a *chain* (S28-S31
+  rolled it to volume 2), so the append must target the active volume and
+  the entry id must be derived across the chain, not from volume 1.
+  And `dv_lead` has no journal in the fixture at all, so the negative
+  assertion would have failed for a missing journal rather than for R7 -
+  passing for the wrong reason, which `expect_fail`'s own reason-matching
+  exists to prevent. I seeded it under R8 instead.
+- **The failure was informative and I did not paper over it.** My first
+  S41 draft failed with `R10 - only the active volume may be appended`.
+  That is the suite proving my scenario wrong, which is what it is for.
+
+### Actions
+- `docs/adr/ADR-0017-toolchain-lane.md`: Status → **ACCEPTED** (sponsor,
+  E3, 2026-08-05, provenance *relayed*); appended **Amendment A1** with
+  the two corrections and the full R-CI checklist walk that
+  `ci-evidence.md` §7 requires be recorded in the lane's ADR.
+- `scripts/policy.sh`: added `syn/*` to the `rtl_lead|rtl_module_dev` arm
+  of `agent_may_write()`, with the reason (and the deliberate exclusion of
+  dv_lead) as a comment at the site.
+- `scripts/test_protocol.sh`: added **S41**, asserting both directions of
+  the new lane, with fixture notes for the next editor.
+- `tasks/BOARD.md`: E3 discharged with the decision and both corrections
+  recorded; M1 roadmap row updated; next work order set to the R1 spike.
+
+### Evidence
+- `bash scripts/test_protocol.sh` → **49 passed, 0 failed** (47 before this
+  change; +2 assertions, both in S41). *Measured.*
+- The intermediate failure, quoted because it is the evidence the scenario
+  is real: `PROTOCOL VIOLATION: staged change to frozen journal volume:
+  agents/journals/claude_rtl_lead_agent.md (R10 — only the active volume
+  agents/journals/claude_rtl_lead_agent.v2.md may be appended)`. *Measured.*
+- `agent_may_write()` orchestrator arm reads `orchestrator) return 0 ;;` —
+  the basis for correction A1.1. *Measured.*
+- `docs/playbooks/ci-evidence.md` §7 R-CI-b ("no third-party archives, no
+  source builds") and R-CI-h ("no fetch step ... state the exception
+  explicitly") — the basis for correction A1.2. *Measured.*
+
+### Outcome
+DoD met. ADR-0017 is accepted, its §11 amendment has landed **with** its
+proving scenario as §11 requires, and the self-test is green at 49/49.
+M1's remaining work is mechanical: instantiate `build.yml` from its
+template for this lane, commit the pin manifests, and run the R1 spike.
+No lead is spawned yet — the first spawn is the R1 spike's, and it is a
+DV-lane question. Handoff: none; the sponsor has no open decision.
+
+### Open-questions
+- **R1 is unretired** until the spike runs; fallback already written.
+- **The distribution-package availability of each named tool is
+  unverified** on the runner image — it becomes *measured* at the first
+  green `build` run, and until then the ADR's install list is *relayed*.
+- Unchanged and still owed: the outer-hop PR, AUD-0001-F3's closure by
+  follow-up audit, three unfiled shell defects.
+
+### Files-in-this-commit
+- docs/adr/ADR-0017-toolchain-lane.md
+- scripts/policy.sh
+- scripts/test_protocol.sh
+- tasks/BOARD.md

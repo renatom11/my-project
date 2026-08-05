@@ -663,6 +663,49 @@ expect_fail "backticked canonical-shell claim still rejected (R-ROLE-1)" "R-ROLE
   scripts/check_journals.sh --all
 git remote remove origin
 
+# ---- S41: the syn/** lane (R7, ADR-0017) ------------------------------------
+# ADR-0017 (M1 toolchain lane) grants rtl_lead|rtl_module_dev the syn/** path
+# for synthesis scripts and their resource/timing reports. That is an
+# enforcement change, so it ships with its proving scenario (PROTOCOL §11).
+# BOTH directions are asserted: the grant works, AND it did not leak to the DV
+# line — synthesis is not verification, and keeping that boundary sharp is the
+# reason the lane went to rtl_lead rather than dv_lead.
+#
+# Note for a later editor: by this point in the suite rtl_lead's journal is a
+# CHAIN (S28-S31 rolled it to volume 2), so the append must target the ACTIVE
+# volume and the entry id must be derived across the whole chain (R5/R10).
+say "S41: syn/** granted to the RTL line, barred from the DV line"
+rtl_vols() { ls agents/journals/claude_rtl_lead_agent.md \
+                agents/journals/claude_rtl_lead_agent.v*.md 2>/dev/null; }
+J_RTL_ACTIVE=$(rtl_vols | tail -1)
+R_LAST=$(rtl_vols | xargs grep -hoE "^## \[J-rtl_lead-[0-9]{4}\]" \
+         | grep -oE "[0-9]{4}" | tail -1)
+R_NEXT=$(printf "%04d" $((10#${R_LAST:-0000} + 1)))
+mkdir -p syn
+echo "# read_verilog; synth_ice40" > syn/ice40.ys
+entry rtl_lead "$R_NEXT" "synthesis script" syn/ice40.ys >> "$J_RTL_ACTIVE"
+git add syn/ice40.ys "$J_RTL_ACTIVE"
+expect_ok "rtl_lead may stage syn/ (R7, ADR-0017)" \
+  scripts/agent_commit.sh --agent rtl_lead --entry "J-rtl_lead-$R_NEXT" --work-order none -m "syn lane"
+
+# dv_lead has no journal in this fixture; seed one under R8 so the negative
+# assertion fails for the R7 reason and not for a missing journal.
+J_DV=agents/journals/claude_dv_lead_agent.md
+seed_journal "$J_DV" dv_lead
+O_LAST=$(grep -oE "^## \[J-orchestrator-[0-9]{4}\]" "$J_ORCH" | grep -oE "[0-9]{4}" | tail -1)
+O_NEXT=$(printf "%04d" $((10#$O_LAST + 1)))
+entry orchestrator "$O_NEXT" "seed dv_lead journal" "$J_DV" >> "$J_ORCH"
+git add "$J_DV" "$J_ORCH"
+scripts/agent_commit.sh --agent orchestrator --entry "J-orchestrator-$O_NEXT" \
+  --work-order none -m "seed dv journal" > /dev/null
+
+echo "# dv reaching into syn" > syn/dv_sneak.ys
+entry dv_lead 0001 "dv touches syn" syn/dv_sneak.ys >> "$J_DV"
+git add syn/dv_sneak.ys "$J_DV"
+expect_fail "dv_lead writing syn/ rejected (R7, ADR-0017)" "R7" \
+  scripts/agent_commit.sh --agent dv_lead --entry J-dv_lead-0001 --work-order none -m "dv-syn"
+git reset -q; git checkout -q -- "$J_DV"; rm -f syn/dv_sneak.ys
+
 # ---- summary ----------------------------------------------------------------
 say ""
 say "protocol self-test: $PASS passed, $FAIL failed"

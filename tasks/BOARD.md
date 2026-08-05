@@ -77,7 +77,7 @@ the rows below are its roadmap view. Changing either is an E2 escalation.
 | Milestone | Scope | Status |
 |---|---|---|
 | M0 | Bring-up: G0 intake, org ratification, branch protection, enforcement self-test green | ✅ **Complete** — G0 passed 2026-08-05 |
-| M1 | Toolchain ADR (E3), build CI instantiation, SPEC-TEMPLATE §4.1 interface regime | **Active** — opened at the G0 flip, 2026-08-05 |
+| M1 | Toolchain ADR (E3), build CI instantiation, SPEC-TEMPLATE §4.1 interface regime | **Active** — ADR-0017 **ACCEPTED** (Lane A, reviewed port tables) and its §11 lane amendment landed with its proving scenario. Remaining: CI instantiation, the committed pin manifests, the R1 spike |
 | P1 | Core CPU — memory, register file, stack, multicycle FSM, non-draw/non-I/O instructions, golden model + lockstep harness | Not started |
 | P2 | Display and draw path — framebuffer, 64-bit barrel shifter, `DXYN` XOR + collision, `00E0`, font ROM + `FX29` | Not started |
 | P3 | I/O, timing, first light — 60 Hz timers, keypad, `FX0A` blocking wait; Pong runs end-to-end | Not started |
@@ -99,23 +99,29 @@ _None open._ Closed this milestone:
 |---|---|---|---|
 | [`WO-0001_g0-retro-audit.md`](../agents/handoffs/WO-0001_g0-retro-audit.md) | orchestrator → auditor | ✅ **ACCEPTED** 2026-08-05 | G0 row A9 — retro-audit of the seed commit range, baseline `fe5dea7`. Verdict PASS WITH FINDINGS (AUD-0001); dispositions in "Audit findings" below |
 
-**Next work order**: the M1 toolchain ADR is an **E3** sponsor escalation,
-prepared decision-ready by the orchestrator before any lead is spawned.
+**Next work order**: the **R1 spike** — validate cocotb driving Verilator
+before the P1 spec freeze (ADR-0017's named risk). Its fallback is already
+written, so the spike retires a risk rather than discovering one.
 
 ## Pending escalations to sponsor
 
-**Live — one, class E3 (toolchain lane and licensing).**
+**None live.** The M1 **E3** was decided 2026-08-05 — see below.
 
-- **M1 toolchain lane** — [ADR-0017](../docs/adr/ADR-0017-toolchain-lane.md),
-  status **PROPOSED**, prepared decision-ready 2026-08-05. Three lanes
-  costed; recommendation **Lane A** (cocotb driving both Icarus and
-  Verilator; Yosys → nextpnr → icetime for synthesis; SymbiYosys + Z3 for
-  formal; Emscripten for the WASM build). Carries one named risk (**R1** —
-  cocotb's Verilator support, with a structural fallback already stated),
-  the interface-regime decision (**reviewed port tables**, with the reason),
-  and a §11 amendment adding two write-scope lanes (`syn/**` → rtl_lead,
-  `web/**` → orchestrator) whose enforcement cost is measured, not guessed.
-  **No M1 artifact is built and no lead is spawned until this is signed.**
+- **E3 DISCHARGED — M1 toolchain lane**
+  ([ADR-0017](../docs/adr/ADR-0017-toolchain-lane.md), **ACCEPTED**
+  2026-08-05, `J-orchestrator-0047`). Sponsor adopted **Lane A** (cocotb
+  driving both Icarus and Verilator; Yosys → nextpnr → icetime; SymbiYosys
+  + Z3; Emscripten) and kept the **reviewed port tables** interface regime.
+  Provenance class *relayed*. Two corrections were made to the accepted
+  text **before anything was built against it**, recorded as ADR-0017
+  Amendment A1 rather than silently: (a) the ADR claimed two new
+  write-scope lanes, but `orchestrator` already returns 0 for every path,
+  so `web/**` was never an amendment — **one** lane, not two; (b) the
+  proposed OSS CAD Suite pin is a third-party archive fetched at run time,
+  violating **R-CI-b** and **R-CI-h**, so it is replaced by
+  distribution install + a version sidecar + two *named* exceptions
+  (SymbiYosys, Emscripten), with the full R-CI walk recorded as
+  `docs/playbooks/ci-evidence.md` §7 requires.
 
 All four G0 E0 contacts are discharged: A6 ratification, A8 branch-flow
 decision, the B1–B6 intake signature, and **A7 branch protection** — all

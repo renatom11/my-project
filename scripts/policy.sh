@@ -131,7 +131,11 @@ agent_may_write() {
       esac ;;
     rtl_lead|rtl_module_dev)
       case "$path" in
-        rtl/*|agents/handoffs/*) return 0 ;;
+        # syn/** added by ADR-0017 (M1 toolchain lane): synthesis scripts and
+        # their resource/timing reports concern the shipped HDL, so they sit
+        # with the agent that owns it — deliberately NOT dv_lead, since
+        # synthesis is not verification and the boundary stays sharp.
+        rtl/*|syn/*|agents/handoffs/*) return 0 ;;
         *) return 1 ;;
       esac ;;
     dv_lead)

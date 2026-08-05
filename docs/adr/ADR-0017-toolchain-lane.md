@@ -1,9 +1,11 @@
 # ADR-0017: Toolchain lane — Verilator + Icarus under cocotb, Yosys/nextpnr for synthesis
 
-- **Status**: **PROPOSED** — awaiting sponsor decision, escalation class **E3**
-  (PROTOCOL §8: toolchain lane and licensing decisions). Nothing in this ADR
-  binds until the sponsor signs it; no M1 artifact is built against it before
-  then.
+- **Status**: **ACCEPTED** — sponsor decision, escalation class **E3**,
+  2026-08-05. **Lane A** adopted; the **reviewed port tables** interface
+  regime kept as proposed. Recorded at `J-orchestrator-0047`; provenance
+  class *relayed* (PROTOCOL §7 — the sponsor holds no journal). See
+  **Amendment A1** below, which corrects two errors in the accepted text
+  before anything was built against them.
 - **Deciders**: sponsor, on orchestrator escalation with options +
   recommendation + cost (PROTOCOL §8, BOOTSTRAP §2.1)
 - **Date proposed**: 2026-08-05
@@ -129,3 +131,83 @@ PASS).
    ADR is precisely the artifact that reading was made to permit, so the
    dependency is named here rather than left implicit: **if the sponsor
    reverses that reading, this ADR does not land.**
+
+---
+
+## Amendment A1 — two corrections, made before instantiation
+
+Adopted 2026-08-05 at `J-orchestrator-0047`, under the same E3 decision.
+Both were found while executing the accepted ADR, by reading the code and
+the playbook the ADR's own claims rested on. Corrections append; the
+original text above is not rewritten (L-A04), so the error and its fix are
+both on the record.
+
+### A1.1 — There is one new write-scope lane, not two
+
+Consequence 4 claims two lanes: `syn/**` → `rtl_lead` and `web/**` →
+`orchestrator`. **`web/**` is not an amendment.** `agent_may_write()` in
+`scripts/policy.sh` opens with
+
+```sh
+case "$agent" in
+  orchestrator)
+    return 0 ;;
+```
+
+— the orchestrator may already stage every path, by construction, because
+its write scope is "everything" (PROTOCOL §6). Naming `web/**` as a lane it
+needed granted was wrong, and stating a law change that is not one is the
+kind of claim AUD-0001 raised four findings about.
+
+**Corrected**: the §11 amendment this ADR carries is **one** pattern —
+`syn/*` added to the `rtl_lead|rtl_module_dev` arm — with **one** proving
+scenario. Half the estimated cost, and the estimate was wrong in the
+direction that flattered the ADR's thoroughness.
+
+### A1.2 — The OSS CAD Suite pin violates R-CI-b and R-CI-h
+
+The Decision section proposes pinning the toolchain to a dated **OSS CAD
+Suite** release. `docs/playbooks/ci-evidence.md` §7 — which the CI template
+defers to by name — says:
+
+> **R-CI-b — distribution install.** Dependencies come from the runner
+> distribution's archive (`apt-get install -y <pkg>`) — no third-party
+> archives, no source builds.
+
+> **R-CI-h — no fetch step.** Reference inputs live in the checkout; a lane
+> that fetches at run time has an unrecorded dependency. State the exception
+> explicitly if one is ever taken, so its absence is a decision rather than
+> an omission.
+
+A dated tarball from a third-party release page, downloaded at job time, is
+a third-party archive **and** a run-time fetch. The proposal violated both
+rules, and it did so while citing BOOTSTRAP §2.1's "pins live in committed
+project files" as its justification — a real requirement, but not one that
+licenses breaking two others.
+
+**Corrected — the R-CI walk, recorded here as §7 requires:**
+
+| Rule | Disposition for this lane |
+|---|---|
+| **R-CI-b** | **Honored by default.** Verilator, Icarus, Yosys, nextpnr, the iCE40 flow and Z3 come from the runner distribution's archive via `apt-get install -y`. A failed install fails the job; never a silent skip. |
+| **R-CI-b / R-CI-h** | **Two named exceptions, taken deliberately.** **SymbiYosys** (formal driver) and **Emscripten** (the WASM build) are not carried by the runner distribution. Each is installed from its upstream project at a pinned revision recorded in a committed manifest — a stated exception, not an omission, exactly as R-CI-h instructs. Both are confined to their own jobs (R-CI-a), so the main `build` job takes neither dependency, and neither is on the P1 critical path: formal lands in P4 and the WASM build in P5. If either exception proves unstable it is a **new E3**, not a quiet re-pin. |
+| **R-CI-c** | Tool versions are recorded into a `.meta` sidecar artifact per lane, not only into the job log, and never inside a compared file. |
+| **R-CI-a** | Each simulator lane, the formal lane and the synthesis lane get their **own job**, reached through one wrapper script in the lane's own write scope. `build` stays attributable and its determinism gate stays clean. |
+| **R-CI-d** | No lane lands non-blocking. If one ever does, its de-gating condition is written at landing and the gate comes off in its own later commit. |
+| **R-CI-e** | Lane artifacts go to `$RUNNER_TEMP` or are `.gitignore`d in the same change. |
+| **R-CI-f** | On failure, adjudication evidence is printed to the log in promotion-block form; any workflow-artifact upload is cited as **ephemeral** in the journal that relies on it. |
+| **R-CI-g** | Every lane runs on the same push trigger as `build`. Never a schedule. |
+
+**Where pins actually live**, reconciling BOOTSTRAP §2.1 with R-CI-b:
+
+- **Python** — `requirements.txt`, exact pins for `cocotb` and `pytest`.
+  Committed, and the P1 critical path depends only on these.
+- **Distribution tools** — installed unpinned by number (pinning an apt
+  version breaks when the archive rotates), with a committed manifest
+  recording the **minimum acceptable version per tool** so a too-old runner
+  fails loudly rather than silently changing behaviour, and the **actual**
+  versions captured to the R-CI-c sidecar on every run. Substance of
+  BOOTSTRAP §2.1 satisfied — the reproducibility condition is in the
+  record and checkable — without breaking R-CI-b.
+- **The two exceptions** — pinned by revision in the same committed
+  manifest.
