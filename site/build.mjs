@@ -8,7 +8,22 @@
 import { readFileSync, writeFileSync, mkdirSync, rmSync, readdirSync, cpSync, existsSync } from 'node:fs';
 import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { marked } from 'marked';
+let marked;
+try {
+  ({ marked } = await import('marked'));
+} catch {
+  console.error(`
+  Missing dependency: marked
+
+  Run the build through npm so dependencies install themselves:
+
+      npm run build          (or: npm run deploy)
+
+  Running \`node build.mjs\` directly skips npm entirely, so nothing
+  installs it. If you prefer that, run \`npm install\` first.
+`);
+  process.exit(1);
+}
 import { site, intro, phases, milestones, backlog, documents, workOrderDir, agents } from './content.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));

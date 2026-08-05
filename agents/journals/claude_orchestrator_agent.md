@@ -5283,3 +5283,80 @@ the obvious fix does not apply are recorded in both `wrangler.toml` and
 ### Files-in-this-commit
 - site/wrangler.toml
 - site/README.md
+
+## [J-orchestrator-0062] 2026-08-05T22:30Z | task:none | Second deploy failure: the build now installs its own dependencies
+
+### Trigger
+The sponsor ran `npm run deploy` and hit
+`ERR_MODULE_NOT_FOUND: Cannot find package 'marked'` on Node 24, from a
+directory under `Downloads` — a ZIP extraction rather than a clone.
+
+### Inputs
+- The sponsor's verbatim stack trace and the path in it.
+- `site/package.json` scripts; `site/build.mjs`'s import block.
+
+### Reasoning
+- **This is the second failure in a row caused by a step the reader had to
+  remember.** The first was `dist/` not existing because nobody ran the
+  build; this is `node_modules` not existing because nobody ran the install.
+  Same defect, different missing step. Fixing them one error message at a
+  time is treating symptoms - the instruction set was fragile, not the user.
+- **So the build now installs its own dependencies.** A `prebuild` script
+  runs `npm install` automatically before `npm run build`, and `deploy` and
+  `dev` both route through `npm run build` rather than calling
+  `node build.mjs`, so the guard cannot be bypassed by using the documented
+  commands. `npm install` is idempotent and near-instant once
+  `node_modules` exists, so the cost of always running it is nil.
+- **Plus a readable failure for the path that still can't self-repair.**
+  Someone running `node build.mjs` directly skips npm entirely, and nothing
+  can install for them at that point. That import is now guarded, and it
+  prints what to run instead of an eleven-frame module-resolution trace. A
+  stack trace tells you what the runtime could not do; it does not tell you
+  what to do.
+- **The path in the trace says ZIP, not clone** - `Downloads\...
+  my-project-... (2)\`. That works for deploying and is worth leaving alone,
+  but it means updates need a fresh download rather than `git pull`, which I
+  will mention once rather than turn into a lecture.
+- **Node 24 is not the problem** and I checked rather than assumed - the
+  failure is dependency resolution, not an engine incompatibility. I added
+  an `engines` floor of Node 20 to make the actual requirement explicit,
+  since the project had never stated one.
+- **Verified by deleting `node_modules` from the real repository** and
+  running the sponsor's exact command, rather than reasoning about what npm
+  would do. Both branches checked: the self-repairing path, and the bare
+  `node build.mjs` path that should fail readably.
+
+### Actions
+- Added `prebuild` (`npm install --no-fund --no-audit --silent`); routed
+  `deploy` and `dev` through `npm run build`; added `engines.node >= 20`.
+- Guarded the `marked` import in `build.mjs` with a message naming the
+  command to run.
+- Updated `site/README.md`: the deploy block no longer lists a separate
+  `npm install`, and the "not this command" note now covers
+  `node build.mjs` as well as `npx wrangler deploy`.
+
+### Evidence
+- `rm -rf node_modules && npm run deploy` in the real repository →
+  `prebuild` ran `npm install`, `build` emitted **9 documents, 9 work
+  orders, 12 backlog items, 91 atlas requirements**, and wrangler 4.119.0
+  started. *Measured.*
+- With no `node_modules`, bare `node build.mjs` → the guard's message,
+  exit 1, no stack trace. *Measured.*
+- **Still not measured**: a completed deploy. No Cloudflare account is
+  reachable from here.
+
+### Outcome
+DoD met. `npm run deploy` is now the single command from a bare copy — clone
+or ZIP — and the one path that cannot self-repair fails with instructions
+instead of a trace. Handoff: the sponsor.
+
+### Open-questions
+- **The deploy past authentication is still unverified**; a Worker-name
+  collision on `chip8-sv` remains the likeliest first-run snag.
+- Unchanged and still owed: S1, AUD-0002-F1's disposition, the outer-hop PR,
+  AUD-0001-F3's closure, three unfiled shell defects.
+
+### Files-in-this-commit
+- site/package.json
+- site/build.mjs
+- site/README.md

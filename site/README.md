@@ -7,12 +7,18 @@ Cloudflare Workers.
 
 ```sh
 cd site
-npm install
 npx wrangler login     # once
-npm run deploy         # builds ./dist, then deploys
+npm run deploy         # installs deps, builds ./dist, then deploys
 ```
 
-**Use `npm run deploy`, not `npx wrangler deploy`.** `dist/` is git-ignored
+`npm run deploy` is self-installing — a `prebuild` script runs `npm install`
+for you, so a missing `node_modules` repairs itself rather than throwing
+`ERR_MODULE_NOT_FOUND: Cannot find package 'marked'`. Node 20 or newer.
+
+**Use `npm run deploy`, not `node build.mjs` and not `npx wrangler deploy`.**
+Running `node build.mjs` directly skips npm entirely, so nothing installs
+`marked` — the build prints a readable message telling you so rather than a
+module-resolution stack trace. `dist/` is git-ignored
 build output, so it does not exist in a fresh clone and wrangler fails with
 *"The directory specified by the assets.directory field ... does not
 exist"*. A `[build]` block in `wrangler.toml` does **not** fix it — wrangler
