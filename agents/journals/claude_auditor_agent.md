@@ -637,3 +637,442 @@ L-A07**, not as a new candidate. **War stories: none.**
 
 ### Files-in-this-commit
 - docs/reports/audit/AUD-0002-sole-committer-violation.md
+
+## [J-auditor-0003] 2026-08-06T02:40Z | task:WO-0010 | The derived requirement artefacts: FAIL, 2 CRITICAL / 8 MAJOR / 5 MINOR — the extraction approach is unsound and nothing the orchestrator publishes has ever been reviewed
+
+### Trigger
+
+Spawned by the orchestrator against
+`agents/handoffs/WO-0010_derived-artefact-audit.md` (OPEN 2026-08-06), issued
+after the sponsor rejected the generated requirement list in their own words
+— *"This is still horrible … would not pass in an official engineering
+inspection. Did the auditor even take a look at this? … Were you audited to
+make sure it was good?"* Baseline SHA pinned at spawn per PROTOCOL §3:
+`43757f17052f1a9219e2e27cf792d5e02a55ed97`. Subject commits `7fab48b`,
+`a729177`, `a5bc7f4` are all the orchestrator's — the agent that issued the
+packet, commits this report and relays it. Third audit of this chain; second
+whose subject is the orchestrator (`AUD-0002` was the first).
+
+Mid-task the orchestrator sent a course correction disclosing that this
+repository is a stripped-down copy of `renatom11/agentic-fpga` and that the
+sponsor's real question is whether the organization reproduces its quality on
+a second project, and made that repository readable at
+`/workspace/renatom11/agentic-fpga` (HEAD `e5c0b11`). It instructed me to
+widen the audit if the evidence warranted and to say so in the report. It
+does, and I did.
+
+### Inputs
+
+- `agents/charters/auditor.md`; `agents/PROTOCOL.md` (§1–§11);
+  `ORG_CHART.md`; `docs/reports/audit/README.md` (severity ladder, verdict
+  vocabulary, marker-check duty).
+- `agents/handoffs/WO-0010_derived-artefact-audit.md`;
+  `agents/handoffs/WO-0003_p1-design-rationale-adr.md` §3;
+  `agents/handoffs/WO-0006_sole-committer-violation-audit.md` (Return log).
+- `docs/reports/audit/AUD-0001-g0-retro-audit.md` and
+  `AUD-0002-sole-committer-violation.md` (grading conventions, F5 precedent,
+  §8's supplied transcription block).
+- At the pin: `docs/specs/REQUIREMENTS-LIST.md` (all 91 entries);
+  `docs/specs/SPEC-P1-core-cpu.md` (all 1636 lines, §4–§9 traced per id);
+  `docs/specs/requirements.md` §1–§3; `docs/specs/SPEC-TEMPLATE.md` §10;
+  `site/requirements.mjs` and `scripts/gen_req_list.mjs` line by line;
+  `site/build.mjs`'s atlas path; `.github/workflows/build.yml` `determinism`;
+  `tasks/BOARD.md`; `docs/gates/P1-spec-freeze-checklist.md`.
+- `agents/journals/claude_orchestrator_agent.md` — `J-orchestrator-0064`
+  through `0069` in full (lines 5414–5965).
+- `agents/journals/claude_architect_docs_lead_agent.md` — the matrix-design
+  section (lines 596–615).
+- `docs/reports/dv/DV-P1-testability.md` §0, §2 (method), §4.5–§4.7;
+  `DV-P1-countersignature.md` (defect table); `DV-P1-countersignature-final.md`
+  §8.3 (the C-11 obligation, discharged in report §9).
+- **Out-of-repo, read-only, not at my pin**: `/workspace/renatom11/agentic-fpga`
+  at `e5c0b11` — `docs/specs/requirements.md` §0.1/§0.2 and rows REQ-001…012,
+  `docs/specs/SPEC-TEMPLATE.md` §10, `agents/PROTOCOL.md` §7,
+  `agents/charters/architect_docs_lead.md`, `agents/charters/dv_lead.md`.
+  **A future reader of a `my-project` checkout cannot re-execute against this
+  tree**; every claim resting on it is marked *(reference repo)* in the report
+  and carries a file-and-line citation.
+- GitHub Actions API: `build` workflow runs for the working branch,
+  in particular run `31047557264` and job `92446727395`.
+
+### Reasoning
+
+**Sampling frame** (charter §8 — an audit whose sample cannot be reconstructed
+is itself vacuous). Full frame in report §2. In short: exhaustive over all 91
+list entries, all 91 ids traced into the spec, all 36 prose entries read and
+adjudicated by hand, both generator files read line by line, all 24
+*Measured*-tagged quantities in `J-orchestrator-0064..0069` triaged with the
+14 load-bearing ones re-executed or declared non-re-executable, R1–R10 over the
+three subject commits, marker check tree-wide and across all refs, and every
+report, journal and packet in the tree grepped for any mention of the audited
+artefacts. Deliberately skipped and said so: the site's presentation layer;
+per-entry hand adjudication of the 55 non-prose entries (their class is
+structural and mechanical, and I spot-checked six); the reference repository's
+history, benches and journals; and **`AUD-0001-F3` and `AUD-0002-F1`, which
+remain open and which I did not re-verify** — closing a finding deserves its
+own sampling frame.
+
+**Method environment, and why it was not optional.** Three of the six
+questions turn on regenerating `docs/specs/REQUIREMENTS-LIST.md`, which is a
+**write** to an audited path. I cloned into the scratchpad and ran everything
+there. Doing it in place would have been both a write-scope violation and a
+contaminated measurement — the same lesson `J-auditor-0001` recorded when the
+live tree had moved off the pin.
+
+**Where I refused to accept the framing I was handed.** The course correction
+arrived with a proposed conclusion: that a standalone requirement statement
+"was never authored in this program", which would make the whole thing a shell
+defect rather than the orchestrator's judgement. It told me to discount that
+framing because it benefits from it. I did, and the framing is **materially
+wrong**: 36 of 91 requirements carry a standalone bold statement and 33 of
+those are good. The corpus is heterogeneous, not empty. More consequentially,
+I traced the instruction that removed the statement's home and it is
+`WO-0003` §3 lines 84–86 — *"Do not renumber or restate REQ ids"* — written by
+the orchestrator to the architect, complied with and disclosed by the
+architect in its own record. So the shell gap (F6) is real and important, and
+it does **not** relocate the fault, and F7 says so with the packet line
+quoted. Had I taken the framing at face value I would have written a report
+that exonerated the party that commissioned it, on evidence that party
+selected. That is the specific failure mode an auditor exists to not have.
+
+**Why the verdict is FAIL and not PASS WITH FINDINGS.** My two prior reports
+both returned PASS WITH FINDINGS, including the one carrying a CRITICAL. The
+difference here is not severity arithmetic. In `AUD-0002` the artefact under
+audit did its job and one claim about it was false. Here the artefact does not
+do the thing its title claims — 63% of the entries in a document called "P1
+requirements — flat list" are not requirements — and the process question the
+packet asked has the answer "nobody looked, and no mechanism existed by which
+anyone would." A `PASS WITH FINDINGS` on that would make the verdict vocabulary
+mean nothing.
+
+**Why F1 is CRITICAL, decided against the arguments for softening it.** Three
+were available and I rejected each in writing inside the finding. (a) The list
+is labelled non-normative — but the disclaimer *"where the two differ the
+specification wins"* only helps a reader who already knows they differ, and
+REQ-046's entry gives a reader no reason to suspect. (b) No RTL exists, so
+nothing has been built wrong yet — but the artefact was produced for a gate
+decision that is **open right now**. (c) The orchestrator commissioned this
+audit against itself and pre-committed to withdrawal — which is mitigation, and
+`AUD-0002` already settled that mitigation is a disposition argument and never
+a severity one. What decided it in the end is that REQ-046's entry states the
+design the specification **rejected**, under the requirement's own id, in
+fluent complete English. That is not a legibility complaint.
+
+**Why F4 is the second CRITICAL, and why I did not fold it into F1.** F1 is
+that a specific artefact is wrong. F4 is that no artefact the orchestrator
+publishes has ever been read by anyone else — 69 of 78 commits, nine
+enumerated classes including a public deployment. They need different remedies:
+F1's is withdrawal, F4's is a gate. And F4 is the actual answer to the
+sponsor's question, which was not "is this list bad" but "how did any of this
+get to me". Folding it into F1 would have answered the smaller question.
+
+**The measurement that turned §3.E from a list into a finding.** I re-executed
+14 load-bearing claims and the failures were not random: **every claim that
+reproduces was produced by an instrument committed to the repository; every
+claim that fails or cannot be re-executed was produced by an ad-hoc script
+that was never committed.** That is a clean mechanical predictor and it is
+worth more than the individual tallies. `J-orchestrator-0066` states *"A claim
+I cannot re-derive on demand is not evidence"* as its own lesson and then
+emits three such claims across the next two entries. PROTOCOL §4.1 requires
+ephemeral artifacts to be declared as such; none was. I graded it MAJOR rather
+than CRITICAL and said why: these claims are *unfalsifiable*, not *refuted* —
+with one exception, "0 flagged across 91 entries", which **is** refuted, and
+which I carried inside F1 rather than double-counting.
+
+**Two findings I went looking for because the packet did not ask.** First, the
+relay-fidelity spot-check my charter requires and which `J-auditor-0001` and
+`J-auditor-0002` both left open for want of a prior relay to diff against.
+There is one now: `WO-0006`'s Return log. It says *"nothing below is
+paraphrased"* and then transcribes text that is not the block `AUD-0002` §8
+supplied, re-voiced in the second person. **No softening occurred** — verdict,
+counts, exoneration, the CRITICAL and its E4 relay are all intact, and the
+orchestrator additionally transcribed F5, a finding against its own packet,
+unprompted. So it is MINOR and I led the finding with the exoneration, because
+a reader who sees "relay fidelity finding" and stops reading would draw exactly
+the wrong conclusion. Second, F11: `J-orchestrator-0067`'s "75 commits" is
+`AUD-0001-F1` recurring — a pre-commit measurement quoted as a property of the
+commit — **after** the orchestrator recorded its own remedy for it at
+`J-orchestrator-0043`. Charter §6.7 makes a repeat of the same class against
+the same agent an org-level finding rather than a re-tally, so it is MAJOR and
+flagged as recurrence evidence rather than a new lesson candidate.
+
+**What I refused to do.** I proposed no fix to the extractor, wrote nothing to
+`site/**`, `scripts/**` or `docs/specs/**`, and named no schedule or owner for
+the withdrawal — the auditor supplies findings and never remedies. I did
+propose the §3.C gate, because the packet asked for it and the orchestrator
+gave the right reason for asking someone else (*"the agent that skipped the
+gate should not design it"*); and I declined the half of §3.C I could not
+answer, tabling the website question as **NV-3** rather than inventing a rule
+about roles that do not exist. I also declined to grade the *substance* of
+`SPEC-P1-core-cpu.md`: `dv_lead` graded it three times, withheld twice, and
+found eleven blocking defects, and none of my findings disturbs that. I said so
+in the verdict box so the form findings are not read as substance findings.
+
+**Who I exonerated, explicitly and unprompted.** `architect_docs_lead` —
+it executed an orchestrator instruction, reasoned about it publicly, and
+recorded the alternative it rejected. `dv_lead` — its method statement
+(`DV-P1-testability.md:80-86`) shows it asked exactly the question the gate
+asks and answered it hard; "testable from this document" simply does not entail
+"stands alone", and no charter, gate or template in this shell asks anyone the
+second question. Manufacturing a finding against either would have been the
+worst available use of the severity ladder, and I said so in F8's text rather
+than leaving it to inference.
+
+**Rejected while auditing, and why.** (a) A finding against the architect for
+`requirements.md`'s index-only shape — the instruction was the orchestrator's
+and the anti-divergence principle behind it is sound; the defect is the
+unchecked consequence, which is F7 against the instructing party. (b) Grading
+F5 CRITICAL — four requirements with no text is a real defect in a frozen
+document, but `dv_lead` dispositioned exactly those four as structural and did
+so honestly, and structural-by-absence is a legitimate category; MAJOR with an
+explicit statement that it bears on S1 is the honest grade. (c) Relying on my
+own supplementary "content is recoverable from the cells" proxy, which puts 22
+of the 49 table entries on the favourable side — **REQ-001 itself lands in that
+bucket** on two verbless fragments, so the proxy is wrong and I recorded it as
+wrong instead of quietly dropping it. (d) Re-deriving `J-orchestrator-0064`'s
+body-length distribution, which carries nothing — declared **NV-4** rather than
+skipped silently (L-D04).
+
+**On disclosure beyond the bars** (L-F06). The most consequential thing this
+audit did was read a repository outside this program. I disclosed it at the top
+of the report, marked its evidence class, verified its three load-bearing
+claims myself rather than accepting them, and wrote nothing to it. I also
+discharged carry-forward **C-11** — an obligation the packet did not route to
+me and which I found by reading the gate checklist — and recorded the routing
+gap rather than quietly closing the row.
+
+### Actions
+
+- Read the charter, PROTOCOL, WO-0010, ORG_CHART, my own chain, both prior
+  reports and the BOARD before touching the tree.
+- Cloned the repository into the session scratchpad; checked out the pin and,
+  separately, `a3fc912`, `b05da82`, `7fab48b`, `a729177`, `a5bc7f4`. **Ran no
+  writing git command against `/home/user/my-project`.**
+- Classified all 91 entries by a mechanical partition (pointer / transcribed
+  table row / prose) and printed all 36 prose bodies in full for hand
+  adjudication; instrumented a copy of the extractor in the clone to recover
+  each entry's winning source line and detect dropped normative blocks.
+- Traced every id's mentions inside the spec's normative body §4–§9 by exact
+  line range (143–1225), which is what surfaced `REQ-101` and `REQ-124` at
+  zero.
+- Measured the multi-candidate cases: REQ-001 is 1 of 9 co-equal traceability
+  rows, REQ-105 is 1 of 8.
+- Re-executed 14 load-bearing measured claims at their own SHAs; regenerated
+  the list and compared sha256; re-ran `test_protocol.sh` and
+  `check_journals.sh --all`; queried the Actions API for the `determinism`
+  job's execution record.
+- Verified R1–R10 over the three subject commits and discharged the
+  marker-check duty (`git log --all --grep 'MUTATION ('` empty; tree grep hits
+  only in documentation of the convention; no `mut/*` branch).
+- Diffed the `WO-0006` Return log against the block `AUD-0002` §8 supplied —
+  the first relay-fidelity spot-check this program has been able to perform.
+- Read the reference repository at `e5c0b11` and independently verified the
+  three comparative claims put to me (its requirements document's form; this
+  repository's opposite topology and where it came from; the byte-identity of
+  the charter clause and the near-identity of PROTOCOL §7 and SPEC-TEMPLATE
+  §10).
+- Wrote `docs/reports/audit/AUD-0003-derived-artefact-audit.md`: verdict, scope
+  and widening declaration, sampling frame, the six answers, fifteen numbered
+  findings, the mechanical-layer table, the five-link causal chain, the
+  NO-VERDICT register, observations, three lesson candidates and a war story,
+  the disposition summary, and the RETURNED verdict for transcription.
+- **Staged nothing.** I did not write the `WO-0010` Return log: `R7` refuses
+  `agents/handoffs/**` and `AUD-0002-F5` recorded that a spawn prompt saying
+  otherwise is the mistake. My spawn prompt correctly told me not to this time.
+
+### Evidence
+
+All commands run in a throwaway clone at the SHA named. Ephemeral-artifact
+disclosure (PROTOCOL §4.1): the reference repository at
+`/workspace/renatom11/agentic-fpga` HEAD `e5c0b11` is **outside this repository
+and outside my pin**; a future reader of a `my-project` checkout cannot
+re-execute anything cited from it, and every such citation is quoted into
+report §4 so the quotation survives.
+
+- **Entry partition**, at the pin, via `extractRequirements(…, {maxLen:
+  Infinity})` (exact command in report §3.A.2): `POINTER 6 · TABLE-ROW 49 ·
+  PROSE 36`. Adjudication of the 36: 33 state a requirement, 1 verbless
+  (`REQ-012`), 2 state the wrong thing (`REQ-029`, `REQ-046`). **34 of 91 read
+  as requirements; 57 do not.** *Measured.*
+- **REQ-001 is 1 of 9.** Spec lines 184, 185, 186, 187, 217, 218, 219, 220,
+  221 all cite `REQ-001` in the traceability column; line 186 (`mem_addr`)
+  wins on `score = l.length / 20` (`site/requirements.mjs:85`). REQ-105 is 1 of
+  8; REQ-102 and REQ-121 are 1 of 2. *Measured.*
+- **REQ-029's normative content is dropped.** Rendered from spec line 1049
+  (the rationale paragraph); the four normative bullets at 1051–1064 are
+  absent from the entry. The colon-continuation rule added at `7fab48b` does
+  not fire because the paragraph ends in a period. *Measured.*
+- **REQ-046 renders the rejected alternative.** Spec line 1214
+  (`**REQ-046's alternative, recorded as rejected.** Wrapping a multi-byte span
+  modulo 4096 instead of faulting was considered and rejected…`) beats the
+  actual requirement at spec line 1194 (`… ERR_ADDR_RANGE … the check precedes
+  the first access | REQ-046 |`), on the +120 bold bonus and +60 line-start
+  bonus versus the fault row's +40. *Measured.*
+- **Mentions inside §4–§9** (spec lines 143–1225): `REQ-101` **0**, `REQ-124`
+  **0**, `REQ-107` 1 (mid-sentence parenthetical), `REQ-096` 3 (all
+  parenthetical citations inside other requirements), `REQ-002` 1 (bold label
+  over a table), `REQ-028` 1 (`**REQ-028** is the table above.`). *Measured.*
+- **`36` bold statements reproduces**; **`55 defined only in tables` does
+  not** — the true composition is 49 table-row renderings plus 6 that are
+  neither, and 55 = 91 − 36 is a subtraction. *Measured / derived.*
+- **Generator determinism**: `node scripts/gen_req_list.mjs` at the pin →
+  `wrote docs/specs/REQUIREMENTS-LIST.md: 91 requirements, 6 not quoted, 7
+  blocks`; sha256 unchanged at `07c5c051f8043063e762c485bc5ec8f2990f487d2350f905d181c96e4d105cdd`
+  before and after. *Measured.*
+- **Atlas pointer counts at their own SHAs**: `a3fc912` → 3 (⇒ 88, reproduces);
+  `b05da82` → 7 (⇒ 84, reproduces); `7fab48b` → 6 (reproduces). **`a5bc7f4` →
+  85 carry text / 6 point**, against the claimed **82** / 6; 82 + 6 = 88 ≠ 91.
+  *Measured.*
+- **`check_journals.sh --all`**: **78** at the pin; **76** at `a729177`; **75**
+  at `7fab48b`. `J-orchestrator-0067` claims 75 with no measurement SHA.
+  *Measured.* `scripts/test_protocol.sh` at the pin → `49 passed, 0 failed`.
+  *Measured.*
+- **Regeneration diff `a729177` → `a5bc7f4`**: exactly two entries, `REQ-069`
+  and `REQ-114`, both as claimed. *Measured.*
+- **The audit script does not exist.** `git ls-files scripts site` at the pin
+  lists `agent_commit.sh`, `check_journals.sh`, `gen_req_list.mjs`,
+  `policy.sh`, `test_protocol.sh` and the site's own sources — no audit script
+  at any commit; a tree-wide grep for its predicates returns nothing outside my
+  scratch work; `site/.gitignore` excludes `dist/`, which
+  `J-orchestrator-0066` names as the re-derivation target. *Measured.*
+- **Zero independent review**: grep for `atlas|REQUIREMENTS-LIST|requirements.mjs|gen_req_list`
+  over `docs/reports/audit/`, `docs/reports/dv/`, `agents/journals/` and
+  `agents/handoffs/` returns **zero** hits outside the orchestrator's own
+  journal and `WO-0010`. *Measured.*
+- **Commit census** at the pin: 78 commits — `orchestrator` 69,
+  `architect_docs_lead` 4, `dv_lead` 3, `auditor` 2. `git log --oneline --
+  site/` → **11**, all orchestrator. *Measured.*
+- **CI**: `build` run **`31047557264`** at `43757f1` — jobs `sim-verilator`,
+  `sim-icarus` and `determinism` all `success`; job **`92446727395`**
+  (`determinism`) reports "Regenerate the flat requirement list" and "Verify
+  nothing was left unpromoted or non-deterministic" `success` individually. The
+  `determinism` job has also run at `a729177` and `a5bc7f4`. **The staleness
+  guard has now executed**, superseding `J-orchestrator-0067`'s honest
+  never-executed disclosure. *Externally verifiable by run and job id.*
+- **R1–R10**: `check_journals.sh --all` green over all 78 commits with volume
+  chains verified at range head; R4 set-equality re-derived from
+  `git show --name-only` for `7fab48b` / `a729177` / `a5bc7f4` against each
+  entry's `Files-in-this-commit`; trailers well-formed
+  (`J-orchestrator-0066/0067/0068`). *Measured.*
+- **Marker check**: `git log --all --grep 'MUTATION ('` → empty;
+  tree grep → hits only in `docs/playbooks/mutation-campaign.md`,
+  `agents/handoffs/templates/CAMPAIGN-template.md`,
+  `docs/reports/audit/README.md`, prior audit reports and their built HTML;
+  `git branch -a` → the working branch and `main` only. **PASS.** *Measured.*
+- **Relay fidelity**: `AUD-0002` §8's supplied block versus `WO-0006`'s Return
+  log — different text, re-voiced in the second person, under the label
+  *"nothing below is paraphrased"*. **Verdict, counts, `dv_lead`'s exoneration,
+  F1's CRITICAL grade and its E4 relay are all present and correct, and F5 — a
+  finding against the transcriber's own packet — was transcribed unprompted.**
+  *Measured.*
+- **Reference repository** *(out-of-repo, `e5c0b11`)*:
+  `docs/specs/requirements.md` is 1003 lines with per-REQ tables headed
+  `| REQ | Kind | Requirement | Verification |`; §0.1 *"Every row here is
+  written to stand alone — a reader who has never seen the design must be able
+  to build a test from a single row"*; §0.2 *"One REQ states **one** testable
+  fact."* `agents/PROTOCOL.md:254`'s spec-freeze row and
+  `agents/charters/architect_docs_lead.md:21` match this repository's
+  (`PROTOCOL.md:329`, charter line 21 **byte-identical**);
+  `docs/specs/SPEC-TEMPLATE.md` §10 is the same table in both, and its only
+  form words are `| REQ-### | one sentence | §6.1 | … |`. *Measured, on an
+  out-of-repo tree.*
+- **The instruction**: `agents/handoffs/WO-0003_p1-design-rationale-adr.md`
+  lines 84–86 — *"**Do not renumber or restate REQ ids.** The matrix cites
+  them; it does not re-specify them."* — orchestrator → architect;
+  `agents/journals/claude_architect_docs_lead_agent.md:602-611` records
+  compliance and the rejected alternative; `docs/specs/requirements.md` §1
+  records the result. *Measured.*
+- **dv_lead's method**: `docs/reports/dv/DV-P1-testability.md:80-86` — *"read
+  … through the section it lives in, not through the §10 registry row"*; *"can
+  a bench be derived from this document alone"*. §4.5–§4.7 disposition
+  `REQ-096`, `REQ-101` and `REQ-107` as structural or performer-unnamed.
+  *Measured.*
+
+### Outcome
+
+**DoD met.** Every question in WO-0010 §3 is answered with a finding or an
+explicit NO-VERDICT; every finding is graded with the criterion applied and
+carries a checkable citation; and §3.F — the question the orchestrator cannot
+grade for itself — is answered by a nine-class enumeration measured from the
+tree rather than asserted.
+
+> **Verdict: FAIL — 2 CRITICAL · 8 MAJOR · 5 MINOR · 5 NO-VERDICT.**
+> The sponsor's charge is upheld and larger than the example: 57 of 91 entries
+> are not requirement statements, and three state something that is not the
+> requirement — `REQ-046`'s entry states the alternative the specification
+> **rejected**. Mechanical extraction is **UNSOUND** for this corpus; the
+> artefact should be withdrawn, not improved. No review gate exists on derived
+> artefacts and **nothing the orchestrator publishes has ever been reviewed by
+> anyone**. Four frozen requirements have no normative statement anywhere in
+> the specification, which **bears on S1**. The artefact standard that made the
+> reference program's output good is project-local text absent from the
+> constitution this copy inherited — a shell defect — but the instruction that
+> removed this project's equivalent was the orchestrator's own.
+
+**F1 and F4 are CRITICAL and their subject is the orchestrator** — the party
+that spawned me, commits this report and relays it. Both reach the sponsor as
+**E4, verbatim**, per PROTOCOL §8 and charter §7, and both block
+`P<n>-phase-accept` until dispositioned by ADR and re-verified by me. Closure
+is mine to grant, not the remediating party's to assert. Neither blocks
+`P1-spec-freeze` procedurally; **F5 and F1 bear on the sponsor's S1 decision on
+the merits**, and the report says so plainly rather than leaving it to be
+inferred.
+
+**`architect_docs_lead` and `dv_lead` bear no fault in any finding of this
+report**, and both are exonerated in the findings' own text rather than by
+omission.
+
+Handoff: `docs/reports/audit/AUD-0003-derived-artefact-audit.md`, to the
+orchestrator — for the E4 relay, for transcription of report §12 **verbatim**
+into `WO-0010`'s Return log under its own trailer (see F14), and for F6's
+shell-defect filing on the canonical shell rather than through the lessons
+pipeline.
+
+**Harvest note** (PROTOCOL §7.1, charter §3): **not owed at this entry** — a
+harvest is a precondition of a gate signature and this is an audit cycle. The
+promise made at `J-auditor-0001` and restated at `J-auditor-0002` stands; the
+span at the next gate carrying a harvest block will be `J-auditor-0001..0003`,
+which tiles exactly. Three candidates are pre-staged in report §10 for that
+span rather than mined here, so no entry is mined twice: **LC-06** (a rendering
+of a normative document is a claim about that document and needs the document
+owner's signature before publication), **LC-07** (a process constitution that
+specifies how work is done but not what its output must look like transports
+its rituals to a fork and not its quality), and **LC-08** (an instrument that
+produces a quantity for the record is part of the record; if it is not
+committed, the quantity is not evidence). **One war story**: improving a metric
+that does not measure the property — kept rather than minted because I cannot
+yet state the rule in a form that passes LH3 in a stranger's repository.
+**F11 is recorded as recurrence evidence for `AUD-0001-F1`**, not as a new
+candidate.
+
+### Open-questions
+
+- **F1's and F4's closure requires my re-verification** in a follow-up report,
+  after the dispositions and their ADRs exist. I pre-approved no remedy and
+  none was proposed to me. F3's recommendation — withdraw rather than improve
+  — is a recommendation and not a remedy I have accepted in advance.
+- **`AUD-0001-F3` and `AUD-0002-F1` remain open** and were not re-verified
+  here; report §1 and §11 say so. Two follow-up audits are now owed, and the
+  backlog of un-re-verified findings is itself becoming a pattern worth a
+  packet.
+- **NV-3 stands**: whether the public website belongs under F4's gate is a
+  scope decision touching roles that do not exist, and it is not the auditor's
+  to make. Owner: orchestrator, with the sponsor for anything E2-shaped.
+- **F5 is the sponsor's to weigh, not mine to settle.** Whether four
+  requirements with no normative text is a signature condition for S1 depends
+  on the standard the sponsor holds this program to, and after reading the
+  reference program I can say what that standard looks like but not that the
+  sponsor holds this project to it.
+- **F6 cannot be filed from here.** The canonical shell is outside this
+  session's authorized repository set and filing is held for sponsor
+  authorization — the same hold three earlier defects sit under. The finding is
+  therefore recorded and undelivered, which is the least useful state a shell
+  defect can be in, and it is now the fourth in that queue.
+- **Relay fidelity is checkable for the first time and was checked (F14).**
+  Whether *this* report reaches the sponsor unedited is still the next audit's
+  question. The compensating control is unchanged and structural: it is a
+  committed file the sponsor can read unmediated, and its §12 block is written
+  to be transcribed verbatim so any edit is diffable.
+
+### Files-in-this-commit
+- docs/reports/audit/AUD-0003-derived-artefact-audit.md
