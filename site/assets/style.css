@@ -268,3 +268,7 @@ table.wo td:first-child a { font-weight: 550; }
 .req-cov.none { background: var(--neutral-bg); color: var(--neutral-ink); }
 .req-cov.some { background: var(--ok-bg); color: var(--ok-ink); }
 .req-block { font-size: .74rem; color: var(--ink-3); }
+.req-handle { margin: 0; font-size: .78rem; color: var(--ink-3); font-weight: 600;
+              text-transform: uppercase; letter-spacing: .04em; line-height: 1.4; }
+.req-text.none { color: var(--ink-3); font-style: italic; }
+.more { white-space: nowrap; font-size: .84rem; }

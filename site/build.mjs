@@ -416,20 +416,100 @@ function buildAtlas() {
   };
   const hooksIn = h => [...new Set((h.match(/\b[DRFSI]\b/g) || []))];
 
-  rows.forEach(r => { r.block = blockOf(r.id); r.hooks = hooksIn(r.hook);
-    r.tests = (cover[r.id] || {}).tests || 'unfilled'; });
+  // §10's column is titled "How P1 satisfies it" — a HANDLE, not the
+  // requirement. Showing it alone made cards read as fragments ("The exact
+  // cycle table"), which is a viewer defect, not a spec defect: the binding
+  // text lives in §4–§9. So pull the definitional mention from the normative
+  // body and show that as the requirement, keeping the handle as a label.
+  const specLines = spec.split('\n');
+  const secLine = n => {
+    const i = specLines.findIndex(l => new RegExp(`^## ${n}\\.`).test(l));
+    return i < 0 ? null : i;
+  };
+  const normFrom = secLine(4), normTo = secLine(10);
+
+  function normativeText(id) {
+    if (normFrom == null || normTo == null) return null;
+    const hits = [];
+    for (let i = normFrom; i < normTo; i++) {
+      const l = specLines[i];
+      if (!l.includes(id)) continue;
+      let score = l.length / 20;
+      if (new RegExp(`^>?\\s*\\*\\*${id}\\.?\\*\\*`).test(l)) score += 100;   // "> **REQ-095.** …"
+      if (new RegExp(`^\\|\\s*\\*?\\*?${id}`).test(l)) score += 80;              // row keyed by the id
+      if (new RegExp(`${id}\\s*\\|\\s*$`).test(l)) score += 40;                    // traceability column
+      hits.push({ i, l, score });
+    }
+    if (!hits.length) return null;
+    hits.sort((a, b) => b.score - a.score);
+    const top = hits[0];
+
+    // A requirement's definition is often a BLOCK, not a line: a blockquote
+    // or paragraph runs on. Taking one line truncated REQ-095 mid-sentence.
+    const l0 = specLines[top.i];
+    if (!l0.trim().startsWith('|')) {
+      const quote = l0.trim().startsWith('>');
+      const out = [l0];
+      for (let j = top.i + 1; j < normTo; j++) {
+        const nx = specLines[j];
+        if (!nx.trim()) break;
+        if (quote !== nx.trim().startsWith('>')) break;
+        if (/^#{2,}\s/.test(nx) || nx.trim().startsWith('|')) break;
+        out.push(nx);
+      }
+      top.l = out.map(x => x.replace(/^\s*>\s?/, '').trim()).join(' ');
+    }
+    return top;
+  }
+
+  // A markdown table row -> readable sentence-ish text; other lines pass through.
+  function readable(line, id) {
+    let t = line.trim();
+    if (t.startsWith('|')) {
+      const cells = t.split('|').slice(1, -1).map(c => c.trim())
+        .filter(c => c && c !== id && c !== `**${id}**` && !/^-+$/.test(c));
+      t = cells.join(' — ');
+    }
+    t = t.replace(/^>\s*/, '').replace(new RegExp(`^\\*\\*${id}\\.?\\*\\*\\s*`), '');
+    return t;
+  }
+
+  rows.forEach(r => {
+    r.block = blockOf(r.id); r.hooks = hooksIn(r.hook);
+    r.tests = (cover[r.id] || {}).tests || 'unfilled';
+    const hit = normativeText(r.id);
+    let body = hit ? readable(hit.l, r.id) : null;
+    // Some requirements ARE a table (e.g. the exact cycle table). Their
+    // definitional line reads "is the table above", which is a fragment out
+    // of context — say what it is instead of showing the fragment.
+    r.tabular = !!(body && body.length < 60 && /\btable\b/i.test(body));
+    if (r.tabular) body = null;
+    // Cap long extracts at a sentence boundary. The card is an index entry,
+    // not a substitute for the spec — the id links to the binding text, and
+    // a truncated extract must LOOK truncated so nobody reads it as whole.
+    r.truncated = false;
+    if (body && body.length > 380) {
+      const cut = body.slice(0, 380);
+      const end = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('; '));
+      body = (end > 160 ? cut.slice(0, end + 1) : cut.trimEnd() + '…');
+      r.truncated = true;
+    }
+    r.body = body;
+  });
 
   const allBlocks = [...new Set(rows.map(r => r.block))];
   const counts = Object.fromEntries(Object.keys(HOOKS).map(k => [k, rows.filter(r => r.hooks.includes(k)).length]));
 
   const cards = rows.map(r => `
     <article class="req" data-id="${esc(r.id)}" data-block="${esc(r.block)}" data-hooks="${esc(r.hooks.join(' '))}"
-             data-text="${esc((r.id + ' ' + r.satisfies + ' ' + r.section + ' ' + r.block).toLowerCase())}">
+             data-text="${esc((r.id + ' ' + r.satisfies + ' ' + (r.body || '') + ' ' + r.section + ' ' + r.block).toLowerCase())}">
       <div class="req-head">
         <a class="req-id" href="/documents/spec-p1-core-cpu/#${sectionAnchor(r.section)}">${esc(r.id)}</a>
         <span class="req-hooks">${r.hooks.map(h => `<abbr class="hook h-${h}" title="${esc(HOOKS[h])}">${h}</abbr>`).join('')}</span>
       </div>
-      <p class="req-text">${mdInline(r.satisfies)}</p>
+      <p class="req-handle">${mdInline(r.satisfies)}</p>
+      ${r.body ? `<p class="req-text">${mdInline(r.body)}${r.truncated ? ` <a class="more" href="/documents/spec-p1-core-cpu/#${sectionAnchor(r.section)}">read in full →</a>` : ''}</p>`
+               : `<p class="req-text none">${r.tabular ? 'This requirement <strong>is a table</strong>' : 'Stated in the spec body'} — read it in ${mdInline(r.section)}.</p>`}
       <div class="req-foot">
         <span class="req-sec">${mdInline(r.section)}</span>
         <span class="req-cov ${/unfilled/i.test(r.tests) ? 'none' : 'some'}">${/unfilled/i.test(r.tests) ? 'no test yet' : esc(r.tests)}</span>

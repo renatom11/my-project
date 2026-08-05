@@ -5410,3 +5410,102 @@ Handoff: none.
 
 ### Files-in-this-commit
 - site/package-lock.json
+
+## [J-orchestrator-0064] 2026-08-05T22:55Z | task:none | Atlas showed handles as requirements; a viewer defect that nearly cost a signature on false grounds
+
+### Trigger
+The sponsor declined S1: *"I dont sign off. some of these are not full
+sentences. at least not in the spec viewer."* Screenshot showed REQ-027 as
+"`S_HALT` is terminal", REQ-028 as "The exact cycle table", REQ-029 as "The
+retire contract".
+
+### Inputs
+- The sponsor's screenshot and words — note "at least not in the spec
+  viewer", which correctly left open which artifact was at fault.
+- `docs/specs/SPEC-P1-core-cpu.md` §10 (column header and rows) and §§4–9.
+- `site/build.mjs` `buildAtlas()`.
+
+### Reasoning
+- **The first question was whose defect it is, and it is mine.** §10's
+  column is headed *"How P1 satisfies it"* — a **handle**, deliberately, and
+  the architect said so explicitly when building the matrix: *"a handle is a
+  restatement whose divergence from the spec nothing in this repository
+  could detect"*, which is why neither §10 nor `requirements.md` restates
+  normative text. The spec defines all three fully: REQ-027 is a state-table
+  row with its exit condition, REQ-028 **is** an entire cycle table, REQ-029
+  is the retire contract in §7.7. **The specification is not fragmentary.
+  My atlas presented an index label as if it were the requirement.**
+- **This nearly cost a gate signature on false grounds, which is the part
+  worth recording.** The sponsor was reasoning correctly from what they were
+  shown; the artifact was lying to them. A viewer that misrepresents the
+  thing it views is worse than no viewer, because it produces confident
+  wrong decisions rather than absent ones. I built it, I shipped it, and I
+  told the sponsor it was "generated from the spec's own registry" — true,
+  and it concealed that the registry column is not the requirement.
+- **The fix pulls the definitional text out of the normative body**, §§4–9,
+  scoring candidate mentions so the definitional one wins: a blockquoted
+  `> **REQ-nnn.**` statement outranks a table row keyed by the id, which
+  outranks a traceability-column mention. 88 of 91 now carry real text.
+- **Two failures I hit while fixing it, both found by looking rather than
+  assuming.** A requirement's definition is often a *block*, not a line —
+  taking one line truncated REQ-095 mid-sentence. And joining blockquote
+  lines left `>` markers inside the text. Both would have shipped as a
+  subtler version of the same defect: text that looks complete and is not.
+- **Three cards still cannot carry text, and they say so rather than showing
+  a fragment.** REQ-028's definition genuinely *is* a table, so the card
+  reads "This requirement **is a table** — read it in §7.1". Two others
+  point at their section. That is honest; a synthesised sentence for a
+  tabular requirement would be a restatement, and a restatement is a second
+  definition site — the exact defect class (`F-2`, `B-2`) the spec lane
+  spent two review rounds removing.
+- **Long extracts are capped at a sentence boundary and marked.** Fifteen
+  cards truncate, each with "read in full →". A truncated extract that does
+  not look truncated is the same defect in miniature.
+- **The card now shows both, in the right order**: the §10 handle small and
+  above, as a label; the normative text as the body. A reader can see it is
+  an index entry pointing at a spec, not a substitute for one.
+- **What this does not change: the sponsor's decision is still theirs.** The
+  spec's quality was never the issue, but withholding a signature is not a
+  claim I get to overturn by fixing my own tooling. I have removed a false
+  reason; whether any true reason remains is for them to say.
+
+### Actions
+- Traced the three cited REQs into the spec body and established the spec
+  states them fully.
+- Rewrote the atlas extractor: scored mention selection, multi-line block
+  capture, blockquote-marker stripping, tabular-requirement detection,
+  sentence-boundary truncation with a "read in full" link.
+- Made the §10 handle a secondary label and the normative text the body.
+- Extended the client-side search to cover the normative text.
+
+### Evidence
+- Spec body, REQ-027: `` | `S_HALT` | From `S_DECODE` (decode fault) or
+  `S_EXEC` (runtime fault) | Holds `obs_halted` high and `obs_err` at the
+  fault code. **Terminal.** | **none**, ever | itself. The **only** exit is
+  `S_RESET` | `` — a complete requirement. *Measured.*
+- After the fix: **88 of 91** cards carry normative text; **3** point at the
+  spec (one of them a genuinely tabular requirement); **15** truncate with a
+  link. Body length min 21, median 152, max 392 characters. *Measured.*
+- Stray blockquote markers after the strip: the remaining `&gt;` occurrences
+  are real content (`I + 2 > 0xFFF`, the `V<x>` register notation), checked
+  by sampling four of them. *Measured.*
+- Horizontal overflow after the change: **0** at 1280px. *Measured.*
+
+### Outcome
+DoD met. The atlas shows requirements rather than index labels. **S1 remains
+unsigned and remains the sponsor's**; one false reason to withhold has been
+removed, and no true one has been created or resolved by this change.
+Handoff: the sponsor.
+
+### Open-questions
+- **Whether the sponsor has a remaining objection** is unknown and is not
+  mine to presume either way.
+- **The extractor is heuristic.** It scores mentions; it does not parse a
+  grammar the spec does not have. A requirement defined in a form I have not
+  anticipated would fall back to the section pointer — visibly, not silently.
+- Unchanged and still owed: AUD-0002-F1's disposition, the outer-hop PR,
+  AUD-0001-F3's closure, three unfiled shell defects, an unverified deploy.
+
+### Files-in-this-commit
+- site/build.mjs
+- site/assets/style.css
