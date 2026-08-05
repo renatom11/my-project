@@ -4798,3 +4798,99 @@ dv_lead's confirmatory pass**, which WO-0009 issues next. Handoff: dv_lead.
 - site/package-lock.json
 - site/package.json
 - site/wrangler.toml
+
+## [J-orchestrator-0057] 2026-08-05T20:35Z | task:WO-0009 | Final confirmatory pass issued; the bounded-diff question handed to the party entitled to answer it
+
+### Trigger
+`architect_docs_lead` returned WO-0008 with B-1…B-4 applied and the round's
+edits enumerated in §13.2. The remaining precondition of `P1-spec-freeze` is
+dv_lead's countersignature.
+
+### Inputs
+- `docs/specs/SPEC-P1-core-cpu.md` §13.2 and the repaired sites, at `b9fd9c6`.
+- `docs/adr/ADR-0018` Amendment A3 (A3.3 the losing alternative, A3.4 the
+  transcription-defect distinction).
+- `J-architect_docs_lead-0004`; WO-0008 Return log.
+- `docs/reports/dv/DV-P1-countersignature.md` — the pre-commitment.
+
+### Reasoning
+- **The diff is larger than "exactly the four repairs", and who decides
+  whether that matters is the whole point.** Beyond B-1…B-4 it carries D-8's
+  cell, §13.2, ADR A3, and two propagation sites. The architect's argument is
+  good - leaving them keeps the repaired defect alive at a different address,
+  which is precisely the failure §13.1 named. But the pre-commitment is
+  **dv_lead's**, given in its own report, and neither I nor the architect can
+  rule that our own additions fall inside someone else's promise. So WO-0009
+  states the overage plainly, gives the architect's argument, and says the
+  judgement is dv_lead's. Deciding it myself would convert an independent
+  pre-commitment into a formality.
+- **The architect flagged the overage rather than hoping it passed.** That
+  is worth recording because the incentive ran the other way: a quiet diff
+  is likelier to be waved through, and it chose to name it.
+- **A3.3 is the disposition I would want from every agent I prohibit
+  something.** I told it not to weaken REQ-109. It did not - and then put
+  the weakening on the record as a *losing alternative with its cost*, so a
+  future reader meets the temptation and the reason it loses rather than a
+  bare prohibition whose grounds have evaporated. A rule whose rationale is
+  not recorded gets repealed by the next person who finds it inconvenient.
+- **The ordering choice inside the B-1 repair is the subtle one.** It put
+  the per-test-input argument first and the Icarus measurement second,
+  deliberately, so the reason survives a future Icarus that binds package
+  strings. A repair argued only from a tool version expires when the tool
+  does - and would then look like unjustified clutter to whoever finds it.
+  I asked dv_lead to judge that ordering rather than assume it.
+- **B-4 is the one I asked to be verified independently.** The architect
+  says it checked before editing and found the three comparison points
+  already required by README's signed criterion and four existing REQs, so
+  naming them restores rather than narrows - no E2. I believe it, and it is
+  exactly the claim that must not rest on belief: a scope change hiding
+  inside a repair round is the worst place for one, because the round's
+  framing is "nothing here changes behaviour". So WO-0009 asks dv_lead to
+  re-derive it.
+- **A3.4 deserved its own task item.** "A requirement narrower than the ADR
+  authorising it was a transcription defect, not a decision" is a reading
+  rule for every future requirement-versus-ADR comparison, including the
+  auditor's drift sampling. If dv_lead does not accept it, better to know
+  now than to discover the two lanes reading the corpus differently at P3.
+- **The mechanism, not the round, is what I want assessed.** Two rejections
+  produced three cheap rounds instead of three re-grades, because dv_lead
+  pre-committed a bounded scope and the architect enumerated its edits into
+  the document. If that worked, it is reusable at P2 and should be said out
+  loud; if it only appeared to work, better to find out before P2 depends on
+  it. The last task item asks for that judgement either way.
+
+### Actions
+- Wrote `WO-0009` (dv_lead): seven numbered tasks, the diff overage stated
+  with the architect's argument and the judgement handed to dv_lead, the
+  standing obligations carried inline, and a closing ask for an assessment of
+  the bounded-diff mechanism itself.
+- `tasks/BOARD.md`: open work orders updated to WO-0009.
+
+### Evidence
+- `git diff --numstat` on the architect's journal at `b9fd9c6`: **316/0**,
+  pure append; `Files-in-this-commit` set-equal to its three non-journal
+  paths. *Measured.*
+- Requirement count after the repair round: **91**, unchanged. *Measured.*
+- The architect's boundedness account — four repairs plus D-8's cell, §13.2,
+  ADR A3 and two propagation sites — is **relayed** from its Return log; the
+  §13.2 enumeration is what makes it checkable, and checking it is dv_lead's
+  task, not mine.
+
+### Outcome
+DoD met. P1's spec stands repaired at `b9fd9c6`; the countersignature is the
+single remaining precondition of the freeze. Handoff: dv_lead.
+
+### Open-questions
+- **Whether the diff stayed inside dv_lead's pre-commitment** is dv_lead's
+  to answer and is not pre-judged here.
+- **B-4's restoration claim** is re-verified by this packet rather than
+  accepted.
+- **AUD-0002-F1's disposition is owed**; I am the subject and do not propose
+  it.
+- Unchanged and still owed: the outer-hop PR, AUD-0001-F3's closure, three
+  unfiled shell defects, and the site's editorial layer has no mechanical
+  staleness check.
+
+### Files-in-this-commit
+- agents/handoffs/WO-0009_p1-final-countersignature.md
+- tasks/BOARD.md

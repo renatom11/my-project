@@ -95,7 +95,7 @@ the rows below are its roadmap view. Changing either is an E2 escalation.
 
 | Packet | From → To | State | Subject |
 |---|---|---|---|
-| [`WO-0008_p1-spec-repair-round-2.md`](../agents/handoffs/WO-0008_p1-spec-repair-round-2.md) | orchestrator → architect_docs_lead | **ISSUED** 2026-08-05 | Four repairs (B-1…B-4) in the text added beyond A-1…A-6, plus D-8's *Closes by* cell — dv_lead's renewed pre-commitment makes this the last round before the freeze if the diff stays exact |
+| [`WO-0009_p1-final-countersignature.md`](../agents/handoffs/WO-0009_p1-final-countersignature.md) | orchestrator → dv_lead | **ISSUED** 2026-08-05 | Final confirmatory pass over §13.2's enumerated surface, then the countersignature — the last precondition of `P1-spec-freeze` |
 
 Closed:
 
