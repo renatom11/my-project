@@ -134,6 +134,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # docs/specs/REQUIREMENTS-LIST.md is generated from the frozen spec.
+      # Regenerating it HERE, before the tree-clean check below, turns that
+      # check into a staleness guard for free: amend the spec without
+      # regenerating and this job fails with the exact diff. A generated list
+      # that has drifted from the specification is worse than no list.
+      - name: Regenerate the flat requirement list
+        run: node scripts/gen_req_list.mjs
       - name: Verify nothing was left unpromoted or non-deterministic
         run: |
           git add -A

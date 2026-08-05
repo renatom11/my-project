@@ -136,8 +136,10 @@ export const backlog = [
 // and must reflect the artifact's own stated state, not its polish.
 export const documents = [
   { group: 'Specifications', items: [
-    { src: 'docs/specs/SPEC-P1-core-cpu.md', slug: 'spec-p1-core-cpu', title: 'SPEC-P1 — Core CPU', status: 'DRAFT · not frozen',
-      blurb: 'The P1 specification. 91 REQ ids, an 8-state multicycle FSM, all 65536 opcode encodings partitioned, five quirk parameters. Graded twice by an independent testability review; not yet countersigned.' },
+    { src: 'docs/specs/REQUIREMENTS-LIST.md', slug: 'requirements-list', title: 'All 91 requirements — flat list', status: 'generated',
+      blurb: 'Every P1 requirement, one per line, grouped by block. Generated from the frozen specification by scripts/gen_req_list.mjs — not hand-maintained, so it cannot drift from the spec. Non-normative: the specification binds.' },
+    { src: 'docs/specs/SPEC-P1-core-cpu.md', slug: 'spec-p1-core-cpu', title: 'SPEC-P1 — Core CPU', status: 'FROZEN at b9fd9c6 · sponsor signature open',
+      blurb: 'The P1 specification, and the binding text. 91 REQ ids, an 8-state multicycle FSM, all 65536 opcode encodings partitioned, five quirk parameters. Graded three times by an independent testability review, rejected twice, countersigned at b9fd9c6. The sponsor gate S1 is still open.' },
     { src: 'docs/specs/requirements.md', slug: 'requirements', title: 'Requirements register & traceability matrix', status: 'live',
       blurb: 'Every REQ id mapped to its spec section, with the test-id and evidence columns left for the verification lane to fill.' },
     { src: 'docs/specs/SPEC-TEMPLATE.md', slug: 'spec-template', title: 'SPEC-TEMPLATE', status: 'template',

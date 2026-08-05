@@ -5709,3 +5709,95 @@ remains the sponsor's**; nothing here touches the frozen spec.
 
 ### Files-in-this-commit
 - site/build.mjs
+
+## [J-orchestrator-0067] 2026-08-06T00:30Z | task:none | A flat requirement list, generated rather than written, and the drift guard that keeps it honest
+
+### Trigger
+The sponsor: *"This is like a living document, but im looking for a straight
+list of requirements"*. Correct reading of the artefact: `SPEC-P1-core-cpu.md`
+carries §11 open questions, §12 a freeze record and §13 a change log with two
+amendment rounds. It is a working document. Nothing in the corpus was a plain
+enumeration of the 91 requirements.
+
+### Inputs
+- `docs/specs/SPEC-P1-core-cpu.md` (FROZEN at `b9fd9c6`)
+- `docs/specs/requirements.md` (block classification, coverage columns)
+- `docs/gates/P1-spec-freeze-checklist.md` (freeze commit and S1 state)
+- `site/build.mjs` at `7fab48b` — the extractor to be shared, not re-written
+
+### Reasoning
+- **The list had to be GENERATED, not authored.** A hand-written list of 91
+  requirements is correct exactly once: the next spec amendment desynchronises
+  it, and a list that disagrees with the frozen text is worse than no list,
+  because a reader cannot tell which one is lying. So the deliverable is a
+  generator plus its output, not a document.
+- **And it had to share the atlas's extractor.** Two independent extractors
+  would eventually disagree about the same REQ id, which is the same failure
+  one level up. I factored the extraction out of `buildAtlas()` into
+  `site/requirements.mjs` and made both callers read through it. **Verified
+  behaviour-neutral**: rendered card bodies diffed against a pre-refactor
+  snapshot — 1 of 91 differed, and that one was REQ-005, the change made
+  deliberately at `7fab48b`. A refactor I cannot show to be inert is a
+  refactor I have not finished.
+- **The atlas's 380-character cap is wrong for a list.** A card is an index
+  entry and truncating it is honest; a flat list is the thing itself, and
+  REQ-014 arrived missing its second clause — the overlay half of the memory
+  image rule. `maxLen` is now a parameter; the list passes `Infinity`.
+- **The id sits inside the bold lead-in**, so slicing it out left a dangling
+  `**` mid-line (`REQ-007 — instruction format.** Instructions are…`). The
+  lead-in is now rebuilt rather than cut through.
+- **The six unquoted requirements are stated as such, at the top.** They are
+  reported by count and by id with their sections, and the reason is given in
+  the file: the spec has no self-contained sentence for them, and writing one
+  would put text in circulation that the frozen document does not contain.
+  **This is the third artefact where I have chosen a visible gap over a
+  plausible filler**, and it is the right ratio.
+- **The drift guard costs one line of CI.** The `determinism` job already
+  fails on any tree change after checkout, so regenerating the list *before*
+  that check turns it into a staleness guard with no new job and no new
+  mechanism: amend the spec without regenerating and CI prints the diff.
+  **MACHINE** enforcement — a named CI step refuses.
+- **Found and fixed while there**: the site listed SPEC-P1 as *"DRAFT · not
+  frozen … not yet countersigned"*. It has been FROZEN at `b9fd9c6` and
+  countersigned since `b7793a4`. The site was understating the program's own
+  state to its only reader.
+
+### Actions
+- Factored extraction into `site/requirements.mjs`; `build.mjs` now imports it.
+- Added `maxLen` (default 380, atlas keeps it; the list disables it).
+- Added `scripts/gen_req_list.mjs` → `docs/specs/REQUIREMENTS-LIST.md`.
+- Added the regeneration step to the `determinism` CI job as a staleness guard.
+- Corrected SPEC-P1's status and blurb in `site/content.mjs`.
+- Listed the flat list first among Specifications on the site.
+
+### Evidence
+- `docs/specs/REQUIREMENTS-LIST.md`: **91** entries, **7** blocks, **6** not
+  quoted. Script-audited for fragments, trailing punctuation, truncation
+  marks and unbalanced bold: **0** flagged other than the 6 intentional
+  pointer lines. *Measured.*
+- Refactor blast radius: **1 of 91** rendered cards differs from the
+  pre-refactor snapshot, and it is the expected one. *Measured.*
+- REQ-014 now carries both clauses including the overlay rule. *Measured.*
+- `scripts/test_protocol.sh`: **49 passed, 0 failed**. *Measured.*
+- `scripts/check_journals.sh --all`: **75 commits** green. *Measured.*
+- The CI staleness guard has **never executed** — it lands with this commit.
+  *Not measured*, and stated as such per ADR-0016.
+
+### Outcome
+The sponsor has a straight list that cannot drift from the specification.
+**S1 remains unsigned and remains the sponsor's.**
+
+### Open-questions
+- **Six requirements have no normative sentence in a frozen spec**, now
+  visible in three places rather than one. Still needs the architect's read;
+  I have not put it to them yet and it should not wait much longer.
+- Unchanged and still owed: AUD-0002-F1's disposition, the outer-hop PR,
+  AUD-0001-F3's closure, three unfiled shell defects, an unverified deploy.
+
+### Files-in-this-commit
+- .github/workflows/build.yml
+- docs/specs/REQUIREMENTS-LIST.md
+- scripts/gen_req_list.mjs
+- site/build.mjs
+- site/content.mjs
+- site/requirements.mjs
