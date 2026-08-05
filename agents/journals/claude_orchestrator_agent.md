@@ -3181,3 +3181,96 @@ outer-hop yes/no. Handoff: the sponsor, for that yes/no.
 - docs/gates/G0-checklist.md
 - docs/federation/outbox/G0.md
 - tasks/BOARD.md
+
+## [J-orchestrator-0044] 2026-08-05T15:22Z | task:none | G0 sponsor signature and outer-hop YES; the inner hop opens
+
+### Trigger
+With every G0 row signed, I put the harvest block's one sponsor question:
+*send this gate's lessons onward to the canonical shell?* (default yes).
+The sponsor answered **"yes"**. This entry journals that signature, which
+is the authority the inner-hop landing runs under
+(`docs/FEDERATION.md` §5, harvest block "Transmission").
+
+### Inputs
+- `docs/gates/G0-checklist.md` Section C, "Export packet and transmission".
+- `docs/FEDERATION.md` §5 (inner hop mandatory and automatic), §5.1 (the
+  org-fence procedure), §5.2 (concurrency), §7 (the outer hop).
+- `tasks/BOARD.md` — outer-hop standing pre-answer line (confirmed unset,
+  so the per-gate question stood and was asked).
+- `docs/federation/outbox/G0.md` at `c6694f5`.
+
+### Reasoning
+- **The question was asked because no standing answer exists.** The board
+  records the outer-hop standing pre-answer as unset, which is exactly the
+  condition under which the per-gate default-yes question is put rather
+  than skipped. Had a standing line been recorded, the block would cite it
+  and the sponsor would not have been asked at all.
+- **Verbatim, because §7's decision is the sponsor's and not mine to
+  paraphrase.** Asked: "Send this gate's lessons onward to the canonical
+  shell? (default yes)". Answered: "**yes**". Provenance class *relayed*
+  (PROTOCOL §7 - the sponsor holds no journal; this transcription is the
+  signature's authority).
+- **What the yes does and does not authorize.** It authorizes two distinct
+  hops. The **inner** hop - landing the packet in this org's own generic -
+  is mandatory and automatic once the gate signature exists, and would
+  have run on a *no* as well; a no only stops the **outer** hop, in which
+  case the packets stay in the org generic. The yes therefore adds the
+  outer hop: one PR per unsent export packet into the canonical shell's
+  inbox. I state the distinction because a sponsor answering this question
+  could reasonably think they were consenting to the landing itself, and
+  they were not - the landing rides the gate signature.
+- **Ordering, stated honestly rather than tidied.** The sponsor's answer
+  preceded everything. I began §5.1 steps 0-2 at the org fence (ledger
+  check, fresh clone, staging the packet on `fed/chip8-sv/G0/1`) before
+  writing this entry, so the *journaling* of the signature trails the
+  staging by minutes. Nothing had touched `docs/LESSONS.md` at the org
+  generic, and nothing will until screening returns - the material act the
+  law gates on has not occurred. But the law says "after the sponsor's
+  signature is journaled", and the strict reading is that the entry should
+  have been written first. Recorded as a deviation rather than left for an
+  auditor to find; the remedy costs nothing next time, which is to journal
+  the signature before the clone.
+- **The outer hop is blocked on access, not on will.** The canonical
+  shell is not in this session's authorized repository set, so the PR the
+  yes authorizes cannot be opened yet. It joins the two shell defects
+  already held on the same blocker. The yes stands recorded and the
+  outer-hop obligation is carried, not dropped.
+
+### Actions
+- Put the harvest block's outer-hop question to the sponsor and recorded
+  the answer verbatim.
+- Opened the inner hop at the org generic per §5.1: fresh clone at
+  `0a60b2a`, step 0 ledger check (clean - no `docs/federation/landed/`,
+  empty sent-ledger, no `chip8-sv` in tree), staging branch
+  `fed/chip8-sv/G0/1`, packet copied verbatim and committed there at
+  `7f7c9e1` under that repository's own `Agent: orchestrator` identity
+  (§5.1 identity rule - the role is per-repository).
+- Spawned the fresh reviewer agent required by §5.1 step 3, briefed on
+  §8's four screens and nothing else.
+
+### Evidence
+- Sponsor's answer, verbatim: **"yes"**. *Relayed.*
+- Org generic fresh clone head: `0a60b2ae001cb62ec017d6f949dda3ef4d388321`.
+  *Measured.*
+- Step 0 ledger check at that head: `docs/federation/landed` absent;
+  `grep -rn "chip8-sv"` no output; board sent-ledger "_none yet_";
+  amendment obligations "_none open_". *Measured.*
+- Staging commit in the org generic: `7f7c9e1`, one work file
+  (`docs/federation/landed/chip8-sv/G0.md`), byte-identical to this
+  repository's `docs/federation/outbox/G0.md` by `diff -q`. *Measured.*
+
+### Outcome
+The gate signature and the outer-hop YES are on the record. The inner hop
+is in motion and paused at §5.1 step 3 pending the reviewer's screening
+report. **G0 is not yet passed**: the harvest block's transmission cells
+cannot be completed until the landing SHAs exist, and the block gates the
+gate. Handoff: none - the reviewer's return is the next event.
+
+### Open-questions
+- **The outer-hop PR cannot be opened** until the canonical shell is in
+  this session's authorized repository set. Obligation carried.
+- The org generic's own `fed/**` ruleset is unconfigured (its Stage 0 step
+  2 is still open), so the staging namespace is unprotected there.
+
+### Files-in-this-commit
+- (none)
