@@ -4665,3 +4665,136 @@ is correct.** Handoff: architect, on WO-0008.
 ### Files-in-this-commit
 - agents/handoffs/WO-0008_p1-spec-repair-round-2.md
 - tasks/BOARD.md
+
+## [J-orchestrator-0056] 2026-08-05T20:20Z | task:none | P1 repair round landed; a project site added as a generator, not a transcription
+
+### Trigger
+Two things: `architect_docs_lead` returned WO-0008 with all four repairs
+applied and the diff bounded; and the sponsor asked for a public site over
+this project's artifacts, modelled on one they built for the framework, to
+deploy to their own Cloudflare account via wrangler.
+
+### Inputs
+- `docs/specs/SPEC-P1-core-cpu.md`, `docs/adr/ADR-0018-...md`, WO-0008
+  Return log, `J-architect_docs_lead-0004` — all at `b9fd9c6`.
+- `https://agentic-fpga.renato-maritato.workers.dev/` — **not retrievable**.
+- The repository's own artifact tree: `docs/specs/`, `docs/adr/`,
+  `docs/reports/`, `agents/handoffs/`, `agents/journals/`.
+
+### Reasoning
+- **On the repair round: the architect checked B-4 before editing, which is
+  the part that mattered.** I had warned that "at retirement and nowhere
+  else" was an E2 shape reached by accident, and told it to stop and
+  escalate if the quantifier could not be fixed without moving scope. It
+  verified that all three comparison points are *already* required by
+  README's signed criterion and by four existing REQs - so naming them
+  **restores** the domain the subordinate clause had narrowed rather than
+  changing it. No E2 was reached. It then wrote the counterfactual into the
+  document: had the quantifier been unfixable without moving scope, the
+  deliverable would have been an escalation packet and not a diff. That is
+  the reasoning surviving in the record rather than in a conversation.
+- **It also refused the cheap B-1 repair on its own account.** I had
+  prohibited weakening REQ-109; it went further and put the weakening on the
+  record as a *losing* alternative with its cost, so the temptation is
+  documented rather than merely resisted. And it ordered the spec's
+  justification per-test-input **first** and the tool measurement second, so
+  the reason survives a future Icarus that binds package strings. A repair
+  argued only from a tool version expires when the tool does.
+- **The one ADR movement was found by the mechanism designed to find it**:
+  A2.7's own falsifier fired, and A3 was appended rather than A2 edited.
+  B-3 moved nothing in the opposite direction - the ADR already stated the
+  general rule and only the normative requirement carried the narrow one,
+  which A3.4 records as a **transcription defect, not a decision**. That
+  distinction is worth more than the fix.
+- **On the site: I could not see the reference.** The proxy returns 403 at
+  the CONNECT tunnel for that host, so I have no idea what the sponsor's
+  framework site looks like. I said so rather than guessing at a house style
+  and presenting the result as a match.
+- **The design decision that matters is generator-not-transcription.** The
+  tempting build is to write nine handsome pages of prose about the
+  specification, the audits and the verification reports. That produces a
+  site that is beautiful on the day it ships and lying within a week - and
+  lying in the specific way this whole program exists to prevent, since the
+  artifacts it describes are under active revision by four agents. So the
+  document pages, the work-order index and the journal entry counts are
+  **read from the tree at build time**. Rebuild and they follow. The spec
+  page rendered 91 REQ ids because the spec has 91, not because I typed 91.
+- **What cannot be generated is labelled, on the site itself.** The
+  overview prose, the phase mirror and the backlog are editorial - the
+  backlog especially, because the board carries those items across several
+  sections and assembling them is a judgement. `site/README.md` carries the
+  split as a table, and the pages carry it as a note. A page that silently
+  mixes generated and curated content is a page whose staleness nobody can
+  detect, which is `L-D12`'s shape applied to a website.
+- **Status badges report each artifact's own stated state, not its
+  polish.** The specification says DRAFT, so its badge says DRAFT. Both
+  verification reports say NOT COUNTERSIGNED, so their cards say so. The
+  CRITICAL finding against me is on the backlog under my own name. A site
+  that presented this program as further along than it is would be the
+  same defect class as an Evidence claim tagged *measured* that was a
+  recollection - and I have already been found for one of those.
+- **I verified the output rather than trusting it.** Built, served, and
+  driven with a headless browser in both colour schemes: zero horizontal
+  overflow at 1280px and at 390px, all pages 200, 91 REQ ids present on the
+  spec page. Screenshots inspected.
+- **Write scope**: `site/**` needs no lane. ADR-0017 Amendment A1.1
+  established that the orchestrator arm of `agent_may_write()` returns 0 for
+  every path - the correction that removed the `web/**` lane I had wrongly
+  claimed was an amendment. This is the same fact being used rather than
+  re-derived.
+- **Attribution**: the architect flagged, unprompted, that `site/` was
+  untracked in its working tree, predated its spawn, and must not be
+  attributed to its commit. It was right, and R1 required the split - its
+  four files landed at `b9fd9c6`, this site lands separately under mine.
+
+### Actions
+- Verified and committed the architect's repair round at `b9fd9c6` under its
+  own trailer, staging only its four paths and excluding `site/`.
+- Built `site/`: a Node generator (`build.mjs`) reading the repository's
+  markdown, an editorial layer (`content.mjs`), a stylesheet, a
+  `wrangler.toml` for Cloudflare Workers static assets, and a README stating
+  which half is generated and which is curated.
+- Ran the build, served `dist/`, and drove it with Playwright in light and
+  dark at desktop and mobile widths.
+
+### Evidence
+- `node build.mjs` → `documents rendered: 9`, `work orders: 8`,
+  `backlog items: 12`; 25 files, 896 KB. *Measured.*
+- HTTP 200 on `/`, `/backlog/`, `/documents/spec-p1-core-cpu/`. *Measured.*
+- `document.documentElement.scrollWidth - clientWidth` on the longest
+  document page: **0** in light, **0** in dark at 1280px, **0** at 390px.
+  *Measured.*
+- Distinct `REQ-###` ids rendered on the spec page: **91**, matching the
+  spec's own count. *Measured.*
+- `curl` to the sponsor's reference site: `CONNECT tunnel failed, response
+  403`. The site was **not** inspected and this build is not a match to it.
+  *Measured, and it is a negative result.*
+- The architect's B-1/B-3 measurements and its B-4 scope check are
+  **relayed** — its work, in its own runs, in `J-architect_docs_lead-0004`.
+
+### Outcome
+DoD met. P1's spec carries all four repairs with a bounded diff; the site
+builds, renders and deploys with two commands. **The freeze still waits on
+dv_lead's confirmatory pass**, which WO-0009 issues next. Handoff: dv_lead.
+
+### Open-questions
+- **The site is not modelled on the sponsor's**, because I could not reach
+  it. Structure and styling are my judgement and are theirs to redirect.
+- **The editorial layer will drift** unless maintained. Nothing mechanical
+  checks it; that is stated on the site and in its README rather than
+  designed around.
+- **Deployment is unverified end to end** — no Cloudflare account is
+  reachable from here, so `wrangler deploy` has never been run. The build is
+  measured; the deploy is not.
+- Unchanged and still owed: AUD-0002-F1's disposition, the outer-hop PR,
+  AUD-0001-F3's closure, three unfiled shell defects.
+
+### Files-in-this-commit
+- site/.gitignore
+- site/README.md
+- site/assets/style.css
+- site/build.mjs
+- site/content.mjs
+- site/package-lock.json
+- site/package.json
+- site/wrangler.toml

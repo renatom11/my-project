@@ -1,0 +1,13 @@
+# Cloudflare Workers static-assets config.
+#
+#   npm install
+#   npm run build      -> emits ./dist
+#   npx wrangler deploy
+#
+# Rename `name` if it collides with an existing Worker in your account.
+name = "chip8-sv"
+compatibility_date = "2024-09-23"
+
+[assets]
+directory = "./dist"
+not_found_handling = "404-page"
