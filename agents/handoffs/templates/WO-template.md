@@ -22,6 +22,45 @@
 - **Out of scope**: <explicit exclusions — what a reasonable assignee might
   do and must not>
 
+## 0. Standing obligations on every assignee (do not delete)
+
+<!-- Added 2026-08-05 after two agents in one cycle returned work products
+     with no journal entry, and after AUD-0002-F7 found that NO spawn prompt
+     had stated the consequence — so the fix belongs here, in the vehicle
+     every packet inherits, not in one prompt's wording (L-F02: the packet
+     template is the real rule-propagation vehicle). -->
+
+These bind you whatever else this packet says. They are not boilerplate;
+each one is machine-enforced and will refuse your work if unmet.
+
+1. **Your journal entry is a hard precondition, not a deliverable you can
+   defer.** `scripts/agent_commit.sh` refuses any commit that stages work
+   products without a pure end-of-file append to *your* journal (**R2 —
+   work without journal**). Your files cannot land at all without it, and
+   **no one can write it for you**: PROTOCOL §4 bars every agent from
+   writing another agent's journal. Append it in the same pass as the work.
+2. **`Files-in-this-commit` must set-equal the commit's changed paths**,
+   excluding your own journal (**R4**, PROTOCOL §4.2). Count the packet's
+   own Return log if you updated it — packet participants execute their own
+   lifecycle (§3), so that edit is yours and it is a changed path.
+3. **Append only.** Nothing above the last byte of your journal may change
+   (**R3**). Corrections append; they never rewrite (**L-A04**).
+4. **Entry ids are strictly monotonic across your whole volume chain**
+   (**R5**, **R10**) — derive the next id from the chain, not from the base
+   file.
+5. **Stay inside your write scope** (**R7**, PROTOCOL §6). A path outside it
+   is refused at commit time. If you believe a file outside your scope must
+   change, that is a finding with a named owner, never an edit.
+6. **You never run git.** The orchestrator is the sole committer
+   (PROTOCOL §2). Read-only inspection (`git log`, `git show`, `git diff`)
+   is expected and encouraged.
+7. **Provenance classes on every claim** (**L-B01**): *measured* (the
+   command is shown), *derived* (the derivation is shown), *relayed* (the
+   source is named). A recollection is **relayed**, never measured —
+   AUD-0002-F1 is a CRITICAL finding issued for exactly that error.
+8. **Header timestamps are not ordering evidence** (**L-A07**); commit order
+   is. Use a plausible current UTC, not a projected one (AUD-0002-F8).
+
 ## 1. Background
 
 <Why this work exists now: the decision, defect, or gate row it serves.

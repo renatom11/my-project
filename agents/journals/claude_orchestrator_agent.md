@@ -4313,3 +4313,105 @@ closure.
 ### Files-in-this-commit
 - agents/handoffs/WO-0006_sole-committer-violation-audit.md
 - tasks/BOARD.md
+
+## [J-orchestrator-0053] 2026-08-05T18:02Z | task:none | The R2 omission recurred; the fix goes in the packet template, per AUD-0002-F7
+
+### Trigger
+A stop-hook reported uncommitted changes. They are `architect_docs_lead`'s
+WO-0005 revision files, returned with **no journal entry** — the second
+agent in two cycles to do so. AUD-0002-F7 had already told me the fix is a
+template, not a prompt.
+
+### Inputs
+- Working tree at `3f56a23`; `agents/journals/claude_architect_docs_lead_agent.md`
+  (byte-identical to HEAD, chain ends at `-0002`).
+- `scripts/agent_commit.sh` R2 refusal, observed.
+- `docs/reports/audit/AUD-0002-sole-committer-violation.md` F7, F8.
+- `agents/handoffs/templates/WO-template.md`; PROTOCOL §2, §3, §4, §6;
+  `docs/LESSONS.md` L-F02, L-A04, L-A07, L-B01.
+
+### Reasoning
+- **I measured the refusal instead of asserting it, deliberately.** The
+  obvious move was to tell the sponsor "that can't be committed, R2". But I
+  have just taken a CRITICAL for stating a recollection as a measurement, so
+  I staged the four files, ran `agent_commit.sh`, captured the refusal
+  verbatim - `PROTOCOL VIOLATION: no staged append to
+  agents/journals/claude_architect_docs_lead_agent.md (R2 — work without
+  journal)` - and reset. Now the claim is *measured*. The cost was one
+  command.
+- **Two automated systems disagreed and the constitution won.** The stop
+  hook asks for a commit; R2 refuses it. That is the right resolution and
+  worth recording, because the tempting workaround - `git commit
+  --no-verify` outside the script - would produce exactly the
+  work-without-journal commit the whole traceability property exists to
+  prevent, and CI would catch it on the full-history re-check anyway.
+- **Second occurrence makes it a pattern, and F7 already named the fix.** I
+  had blamed my own dv_lead spawn prompt for omitting the R2 consequence;
+  the auditor checked and found **no** prompt had ever stated it, including
+  the architect's. So the defect was never in one prompt's wording - it was
+  in the vehicle every packet inherits. L-F02 says the packet template is
+  the real rule-propagation vehicle, and this is that lesson being paid for
+  rather than quoted.
+- **I wrote §0 to state consequences, not rules.** "Append your journal
+  entry" is a rule an agent can read as a deliverable to do last and run out
+  of budget before reaching. "`agent_commit.sh` **refuses** any commit
+  staging work products without an append to *your* journal, your files
+  cannot land at all, and no one can write it for you" is a consequence, and
+  it lands differently. Same for R4's set-equality, which now explicitly
+  names the packet's own Return log as a changed path - both agents that
+  tripped had updated their Return log and one had to be told it counted.
+- **Item 7 exists because of my own CRITICAL.** Every future assignee now
+  reads that a recollection is *relayed*, never *measured*, with the finding
+  id attached. A lesson that cost the org a CRITICAL should not have to be
+  re-learned by the next agent that has a memory and a keyboard.
+- **This is not a §11 amendment and I checked rather than assumed.** §11
+  enumerates what requires an ADR: the protocol, charters, enforcement
+  scripts, `docs/FEDERATION.md`, the **gate** templates
+  (`docs/gates/templates/**`), the playbooks, and the domains law. Packet
+  skeletons under `agents/handoffs/templates/` are named in §3 as templates
+  but are not in §11's list, and this edit changes no enforcement semantics -
+  it restates rules the scripts already enforce. Ordinary orchestrator work.
+- **What I did not do: commit the architect's revision.** It is incomplete
+  by the machine's own judgement, and forcing it would land a spec revision
+  with no record of why any of it was decided - on a document whose whole
+  purpose is to be the thing tests are derived from.
+
+### Actions
+- Staged the four WO-0005 files, ran `agent_commit.sh`, captured the R2
+  refusal, and reset the index — the tree is unchanged.
+- Sent `architect_docs_lead` back for `J-architect_docs_lead-0003` alone,
+  quoting the refusal, listing the exact four paths its
+  `Files-in-this-commit` must set-equal, and carrying F8's timestamp note.
+- Added **§0 "Standing obligations on every assignee"** to
+  `agents/handoffs/templates/WO-template.md`: eight items, each naming the
+  rule that enforces it and the consequence of missing it.
+
+### Evidence
+- R2 refusal, verbatim: `PROTOCOL VIOLATION: no staged append to
+  agents/journals/claude_architect_docs_lead_agent.md (R2 — work without
+  journal)`. *Measured.*
+- `agents/journals/claude_architect_docs_lead_agent.md`: working 47784
+  bytes, HEAD 47784 bytes, chain ends at `J-architect_docs_lead-0002`.
+  *Measured.*
+- `git status --short` after reset: the same four modified paths, nothing
+  staged. *Measured.*
+- AUD-0002-F7, relayed: no spawn prompt stated the R2 consequence, including
+  the architect's; the fix is a template. *Relayed.*
+
+### Outcome
+DoD met. The recurrence has a durable fix in the vehicle every future packet
+inherits, and the immediate blocker is back with its owner. **WO-0005
+remains open**; P1's spec freeze still waits on it and then on dv_lead's
+confirmatory pass.
+
+### Open-questions
+- **WO-0005 is unfinished** pending `J-architect_docs_lead-0003`.
+- **AUD-0002-F1's disposition is owed** — ADR then auditor re-verification;
+  I am the subject and do not propose it.
+- Whether §0 actually stops the recurrence is **unmeasured** until the next
+  packet returns. Stating that rather than claiming the fix works.
+- Unchanged and still owed: the outer-hop PR, AUD-0001-F3's closure, three
+  unfiled shell defects.
+
+### Files-in-this-commit
+- agents/handoffs/templates/WO-template.md
