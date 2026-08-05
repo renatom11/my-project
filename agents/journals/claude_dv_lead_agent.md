@@ -698,3 +698,333 @@ story.** Final ids belong to the landing fence.
 - test/spikes/run_spike.py
 - test/spikes/img_prefix.hex
 - test/spikes/img_sparse.hex
+
+---
+
+## [J-dv_lead-0003] 2026-08-05T21:20Z | task:WO-0009 | P1 testability COUNTERSIGNED at b9fd9c6; the bounded-diff overage ruled inside my pre-commitment; B-4 verified a restoration, no E2; ADR-0018 A3.4 accepted with a discriminator
+
+### Trigger
+
+Spawned by the orchestrator on `agents/handoffs/WO-0009_p1-final-countersignature.md`
+(ISSUED), spawn short-id `WO-0009/2026-08-05T20:35Z`. Third round of the
+`P1-spec-freeze` testability countersignature. The packet put one question to
+me that nobody else could answer: I pre-committed that a revision whose diff is
+*exactly* the four repairs needs no further review round, and the diff is
+larger than that. Whether the overage falls inside my own promise is mine to
+rule, not the orchestrator's and not the architect's.
+
+### Inputs
+
+- `agents/charters/dv_lead.md`; `agents/PROTOCOL.md` (v2)
+- `agents/handoffs/WO-0009_p1-final-countersignature.md` — its §0 standing
+  obligations bind this entry; `agents/handoffs/WO-0008_p1-spec-repair-round-2.md`
+  including its Return log
+- `docs/specs/SPEC-P1-core-cpu.md` at `b9fd9c6` — **§13.2** first (this round's
+  enumerated edits), then the eight changed hunks in full, then the clauses they
+  bear on: §4.A's width note, §4.C, §4.3, §5.0 (REQ-115), §5.1, §5.4, §5.5
+  including REQ-109 ¶1 and its A-5 scope block, §6.1.1 (REQ-013), §7.7
+  (REQ-029), §8 (REQ-120/122/123), §9 (REQ-047/048/049), §10, §11 D-4/D-5/D-8
+- `docs/specs/requirements.md` — all 91 rows, re-diffed mechanically against §10
+- `docs/adr/ADR-0018-p1-core-cpu-design-choices.md` — **Amendment A3** in full
+  (A3.1…A3.6), and A2.2/A2.4/A2.7 for what A3 amends
+- `README.md` line 54 — the signed P1 success criterion (the canonical scope
+  statement, PROTOCOL §1)
+- `docs/reports/dv/DV-P1-countersignature.md` (my own, §1, §7.3, §8, §9, §10,
+  §11, §12) and `docs/reports/dv/DV-P1-testability.md` §8 (the first
+  pre-commitment)
+- `tasks/BOARD.md`; `docs/LESSONS.md` (L-A04, L-A07, L-B01, L-B04, L-B12,
+  L-D04, L-D11, L-D12, L-E03, L-F03)
+- **No RTL read, because none exists**: `rtl/` is absent at `64f4df4`.
+
+### Reasoning
+
+**The ruling on the overage, which was the round's real question.** My
+pre-commitment was that verifying a diff of exactly the four repairs is a
+transcription check. The diff is eight spec hunks plus ADR-0018 A3: the four
+repairs, D-8's cell (my own F-18), §13.2, and two propagation sites.
+
+I considered three readings and rejected two.
+
+*Reading 1 — literal: anything beyond the four repairs breaks the promise, so
+withhold.* Rejected on the counterfactual. Had the architect held to four
+hunks, the spec would ship with two statements about REQ-115 that the repairs
+make false — the exact failure §13.1 named when it propagated A-1 beyond my
+list, and the exact shape of B-2 (the instruction not to read the package
+landed; the thing not to read stayed in it). The alternative to a slightly
+larger diff was not a smaller diff I could verify, it was a smaller diff that
+was **wrong**. A pre-commitment that forces that is defective, and I would
+rather amend the rule than honour it into a defect.
+
+*Reading 2 — permissive: the additions are small, so wave them.* Rejected
+because size is the wrong criterion and would not survive being applied twice.
+A one-word edit to any of the 84 requirements I closed at `54a7221` is small
+and would cost a full re-grade.
+
+*Reading 3, adopted — the bound is on the reviewer's SURFACE, not the applier's
+edit count.* An edit is inside when it is **entailed** by an approved repair (a
+restatement the repair falsifies; a decision record the repair moves), or
+**requested** by the reviewer's own findings, **and** enumerated by the applier
+before the reviewer looks. Anything requiring a re-grade of closed text is
+outside, however small. Under it: the two propagation sites are restatements of
+REQ-115, which my own §1 last round put in scope "by virtue of being new", so
+checking them is two string comparisons; ADR-0018 A3 is entailed, because A2.2
+named `MEM_INIT_FILE` among the values defaulting to their package value and
+B-1 makes that false, so applying B-1 without appending the ADR would leave the
+decision record wrong (PROTOCOL §11, L-A04); D-8's cell and §13.2 were
+requested by my own F-18 and by WO-0008. **Inside, all of it.**
+
+The weakness I state rather than dress up: I am stating the rule *after* seeing
+what it admits. The remedy is forward — the rule is pre-declared for P2/P3 in
+the report's §14.4, so the next applier knows the boundary before it edits.
+
+**B-4, the one I was told to re-derive rather than accept.** A scope change
+landing inside a repair round is the worst place for one to hide, so I derived
+the three comparison points' prior status from the requirement text rather than
+from the architect's account. Point 1 (`obs_*` at retirement): README's signed
+criterion plus REQ-029's snapshot contract. Point 2 (`mem` at that retirement):
+REQ-013's state table lists RAM first, and **REQ-114 says the campaign
+"compares memory as part of the architectural state"** — an existing
+requirement that asserts the comparison itself, not merely observability; plus
+REQ-120. Point 3 (fault observation): REQ-013's table lists `halted`/`err` as
+architectural state; README requires a compare after *every* instruction; a
+faulting instruction never retires (REQ-049), so that compare must happen
+somewhere, and REQ-048's stickiness plus REQ-049's identification are what make
+that somewhere observable; REQ-122 clauses 5 and 7 *require* faulting and
+illegal-space stimulus, which under the old universal had no licensed
+comparison point. So the old "and nowhere else" was a narrowing of README's
+signed criterion by a subordinate clause, and removing it restores rather than
+extends. **No E2.** The architect's non-escalation was correct, and its writing
+down that it *would* have been an E2 had the quantifier been unfixable is the
+right record to leave.
+
+**B-1's argument ordering.** Right, and the test is what the paragraph says
+after the tool fact expires: reason (3) is scoped by a named tool version, so a
+future Icarus that binds package strings makes it *historical*, not false,
+while reasons (1) and (2) are properties of the parameter and carry the
+decision alone. A repair argued only from a tool version would not be falsified
+but would become **unmotivated**, and an unmotivated requirement in a frozen
+spec is one a later phase reverts as obsolete. Provenance, honestly: the
+ordering in the spec paragraph is **mine**, applied verbatim from my §8
+B-1(b) — I decline credit passed to the architect for it. What is the
+architect's is ADR-0018 A3.5 consequence 5, which states the shelf-life
+argument at the decision record, where a future reverter would look. That is
+the right addition in the right file, and the merit in the spec paragraph is
+having applied supplied text verbatim rather than improving it.
+
+**B-3 binds the class.** The new quantifier is class-first, instances-second —
+*any parameter, width expression or array bound* — with the three P1 cases as
+illustration rather than extension. That is the shape that cannot be falsified
+by finding a fourth member, which is exactly how the previous text died. Both
+of my measurements are covered twice over: `obs_stack` by name and by the class
+term *width expression*; the stack array's depth by name and by *array bound*.
+One residual I record rather than repair (F-21): ¶2 binds values *derived from*
+an overridable parameter, not a module reading the overridable value itself
+from the package by explicit scope resolution — which defeats an override with
+the loud failure mode B-3 names. That is not a spec defect (a spec cannot
+enumerate every way an implementation ignores its own parameter); it is
+parameter-loading guard 3's target, and I record it before writing the guard so
+the guard has a named defect to be qualified against (L-B04).
+
+**ADR-0018 A3.4 — accepted, with a discriminator, because unconditional it is
+wrong.** The principle is sound: a decision requires an ADR, a requirement is
+the transcription of a decision, so a divergence cannot itself be a silent
+decision and the non-record side is the defective one. But *narrower* is not
+sufficient: this document contains two legitimate recorded narrowings —
+REQ-111's `THROTTLE_DIV` = 0 (recorded at §11 D-4) and REQ-042's `DC_DEFERRED`
+halt (recorded at D-5). Under A3.4 as written, drift sampling flags both and
+proposes widening them, which would land P2/P3 scope inside P1's frozen spec by
+clerical action — precisely where an E2 can hide. The form I accept adds the
+discriminator (*no record of the narrowing* → defect; *a record* → decision)
+and adds the asymmetry A3.4 does not address: a requirement **wider** than its
+authorising record is never a transcription defect by default — it can create
+obligations no decision authorised and is escalation-shaped. I backtested the
+accepted form over this corpus, including B-4 versus README's canonical
+statement, where it reproduces the adjudication I had already reached
+independently. Recorded in the report's §8.3 so that if the audit lane reads
+the corpus differently the difference surfaces now and not at P3.
+
+**F-20, and why it is a finding and not a fifth round.** Checking the
+propagation claim by search rather than by reading the claim, I found a
+**third** restatement of REQ-115 — inside REQ-109's A-5 scope block — which
+§13.2 asserts does not exist. "Each defaults to its package value" is false of
+`MEM_INIT_FILE` post-B-1, and the following sentence read alone convicts its
+conformant literal default. I graded it by the same test I used to grade B-1
+blocking: does a conformant declaration exist and does any clause forbid it?
+It exists, and nothing forbids it — REQ-109's own named defect is a literal
+duplicating one of *the table's* values, and `MEM_INIT_FILE` is no longer one
+of them, which the paragraph immediately below states and REQ-115 cites. No
+implementer can build the wrong thing from it. Withholding over it would be a
+re-grade, not the transcription check I promised. So: MINOR/CARRIED, exact
+replacement text pre-approved in the report, explicitly **not** a condition on
+the signature. And the omission is **mine** — B-1's defect statement named
+REQ-109's addition as one of its two halves and my §8 text covered three sites,
+not four; the architect applied what it was handed, correctly, and §13.2 then
+promoted my omission into a checked claim.
+
+**Countersigning.** Every blocking defect from both prior rounds is closed and
+verified, three MINOR findings are carried with owners and none needs a spec
+change to be safe, and the freeze's testability question — can a bench derive
+from this document alone and observe what it asserts — is answered yes. I sign.
+
+### Actions
+
+- Read §13.2's enumeration first, then measured the actual diff
+  (`git diff ddc06dc b9fd9c6 -- docs/specs/SPEC-P1-core-cpu.md`) and matched
+  the eight hunks against §13.2's list **in both directions**: no unlisted
+  edit, no listed-but-absent edit.
+- Re-derived B-4's restoration claim from README line 54 and from
+  REQ-013/029/048/049/114/120/122, reading each requirement's own text.
+- Enumerated every REQ-115 site by search (29 mentions; 13 carrying a claim
+  outside §5.0 and §13) and checked each against the repaired requirement —
+  which is how F-20 was found.
+- Re-ran the toolchain measurements at `64f4df4` (B-1's binding failure, and
+  the `STACK_DEPTH = 4` override in both lanes) so this round's claims are
+  measured here rather than relayed from `J-dv_lead-0002` (L-B01).
+- Re-ran the §10-versus-matrix mechanical diff at `b9fd9c6`.
+- Wrote `docs/reports/dv/DV-P1-countersignature-final.md`; appended the
+  RETURNED entry to WO-0009's Return log.
+- Ran no git command (PROTOCOL §2). Staged nothing under `rtl/`.
+
+### Evidence
+
+All commands from a checkout at `64f4df4`; `git status --porcelain` empty
+before and after. Toolchain **measured**: Icarus Verilog 12.0 (stable),
+Verilator 5.020 2024-01-01 rev (Debian 5.020-1), cocotb 1.9.2.
+
+1. **The diff is eight hunks and nothing else.**
+   `git diff --stat fcc6654 b9fd9c6` → four paths: the spec (146 lines
+   changed), `docs/adr/ADR-0018-…` (122), the architect's journal (316),
+   WO-0008 (61). **Nothing under `rtl/**` or `test/**`.**
+   `git diff --stat ddc06dc b9fd9c6 -- docs/specs/requirements.md` → **empty**;
+   the matrix is byte-unchanged.
+2. **B-1 reproduces at this SHA.** `iverilog -g2012 -o a.vvp -s top a.sv` on a
+   package-`string` parameter default →
+   ``a.sv:5: error: Unable to bind variable `S' in `p'`` / `1 error(s) during
+   elaboration.`, **exit 1**. The literal `parameter string … = ""` form
+   elaborates in both lanes — `test/spikes/spike_top.sv:32` declares it and
+   every configuration below builds through it.
+3. **B-2 / B-3 reproduce at this SHA, both lanes.**
+   `python3 test/spikes/run_spike.py`, configuration `C2-stackdepth`
+   (`parameters={"STACK_DEPTH": 4}`):
+   `SP_W  module-derived / package-derived : 3 / 5` and
+   `obs_stack width  module / package : 48 / 192` — **identically in Icarus and
+   Verilator**. The 48-against-192 figure REQ-115 ¶2 now names is the figure
+   the harness prints.
+4. **F-15 reproduces**, configuration `C3-enum`: Verilator needs
+   `-Wno-ENUMVALUE -Wno-WIDTHTRUNC` for an enum-typed parameter from the
+   command line; Icarus does not.
+5. **§10 versus the matrix**, re-parsed at `b9fd9c6`:
+   `spec §10 rows: 91 / matrix rows: 91 / id set equal: True /
+   hook-column mismatches: NONE`. One section-column difference at REQ-124
+   (`§10, §11 D-1` vs `… (landed)`) which pre-dates this round and is not a
+   hook.
+6. **REQ-115 site enumeration**: `grep -c "REQ-115"
+   docs/specs/SPEC-P1-core-cpu.md` → **29**; thirteen carry a claim outside
+   §5.0 and §13's records; three are this round's edit sites, nine are
+   unaffected and verified, one is F-20.
+7. **D-8's cell**, read at `b9fd9c6` §11: "**Before the first P1 `SO-` PASS**,
+   which precedes `P1-module-ready` — **not** the freeze". F-18 discharged.
+
+Ephemeral: the simulation build trees live under a `tempfile.mkdtemp` root and
+are deleted with the run; the committed harness at `test/spikes/` is what
+reproduces them.
+
+### Outcome
+
+**DoD: met.** One unambiguous verdict over the enumerated surface only.
+
+**I sign gate `P1-spec-freeze`, row "dv_lead countersigns testability":
+COUNTERSIGNED at `b9fd9c6`** (PROTOCOL §7, L-E03 — a signature's authority is
+this entry, and this entry states the signature). The orchestrator transcribes
+it into `docs/gates/` and into spec §12's countersignature row, which closes
+§11's **D-6**. My report is
+`docs/reports/dv/DV-P1-countersignature-final.md`.
+
+Carried, none blocking, all with owners: **F-20** (MINOR, exact replacement
+text pre-approved, explicitly not a condition), **F-21** and **F-22** (both
+mine, attack-plan rows), **F-15** (a type choice with rtl_lead at the first RTL
+work order), **F-19** (the four guards).
+
+Owed by me at bench-build time and stated in the report §12: **NV-2**, **NV-4**,
+**F-15**'s decision, the **X-policy guard**, the **four parameter-loading
+guards**, each qualified red against the defect it names in both lanes before
+any test relies on it (L-B04, L-D11).
+
+Handoff: the report to the orchestrator, for the gate transcription and for
+relay to `architect_docs_lead` (F-20's pre-approved text; the accepted form of
+A3.4's reading rule) and to the auditor (§8.3, so the two lanes read the corpus
+the same way).
+
+Harvest, per PROTOCOL §7.1 and charter §3 — a gate signature carries one as a
+precondition. **Span: `J-dv_lead-0003..0003`**, tiling exactly from the previous
+harvest's `0002..0002`. No worker spans: I commissioned none. **Yield: two
+tier-1 candidates, one recurrence note, one war story.** Final ids belong to
+the landing fence.
+
+- **LC-06 (tier 1, general).** *A reviewer's bounded-diff pre-commitment binds
+  the review **surface**, not the applier's edit count: edits entailed by an
+  approved repair — a restatement it falsifies, a decision record it moves —
+  and edits the reviewer's own findings requested are inside the bound, and are
+  enumerated by the applier before the reviewer looks; an edit to text the
+  reviewer graded and closed is outside it however small.* LH2-g: no proper
+  noun of any project or domain. LH3 — what breaks without it: either the
+  applier leaves known-false restatements standing to stay literally inside the
+  bound, so the repaired defect survives at a new address, or the reviewer
+  treats every extra line as a breach and re-grades everything, so the
+  pre-commitment buys nothing. LH1: this entry; report §1 and §14.4;
+  `J-dv_lead-0002`'s pre-commitment; spec §13.1 and §13.2; commit `b9fd9c6`.
+- **LC-07 (tier 1, general).** *Where a normative requirement is narrower than
+  the decision record authorising it and **no record states the narrowing**,
+  the divergence is a transcription defect and the decision record governs;
+  where a record states it, the narrowing is itself a decision and the
+  requirement governs. The reverse — a requirement **wider** than its
+  authorising record — is never a transcription defect by default: it can
+  create obligations no decision authorised and is escalation-shaped. Neither
+  reading licenses editing the requirement to match the record without the
+  review the requirement's text is owed.* LH2-g: no proper nouns; the
+  vocabulary is the org's own (requirement, decision record, escalation). LH3:
+  without the discriminator, a drift sample flags every deliberate phase-scoped
+  narrowing as a defect and proposes widening it, which lands future-phase
+  scope inside a frozen document by clerical action — an unreviewed scope
+  change wearing a correction's clothes. LH1: this entry; report §8;
+  ADR-0018 A3.4; the backtest rows (§11 D-4, D-5, B-4 versus README).
+- **Recurrence note on LC-05** (*"the party applying an approved repair
+  enumerates its own additions"*, minted `J-dv_lead-0002`): **second
+  independent confirmation.** §13.2's enumeration is what made this round a
+  transcription check rather than a hunt, and report §14.2 identifies it as the
+  load-bearing part of the mechanism. Recorded as recurrence evidence per
+  `docs/FEDERATION.md` §8 rather than re-minted as a new candidate — the
+  collision machinery is the meta-lesson detector and I decline to launder a
+  repeat into a new id.
+- **War story (kept, criterion named).** F-20: **exact replacement text
+  transfers the completeness burden from the applier to the reviewer, and the
+  applier's own enumeration then launders the reviewer's omission into a
+  verified claim.** Both records then say the surface is closed and neither
+  party checked what the other assumed was checked. Kept as a war story rather
+  than minted: on one instance I cannot tell whether the fix is the
+  reviewer-supplies-its-search-list remedy (report §14.3) or something else, and
+  LH3 wants a failure statement recognisable in someone else's repo rather than
+  a remedy I have not yet run. A second instance promotes it.
+
+### Open-questions
+
+- **F-20's one-sentence correction is with the architect**, pre-approved and
+  not a condition on the signature. If it lands before the gate transcription
+  it is clerical; after the freeze it is a §13 change-log row.
+- **A3.4's reading rule**: I accept the discriminated form (report §8.3). If
+  the **auditor** reads requirement-versus-ADR divergence by the unconditional
+  form, the two lanes will grade this corpus differently and I would rather
+  that surfaced now than at P3. Routed to the orchestrator.
+- **D-8 stays open and is not mine to close.** It is E3-shaped and it is a
+  precondition of my **first `SO-` PASS**, not of this freeze. I will not issue
+  an `SO-` PASS over an unsettled anchor question.
+- **NV-2 and NV-4 remain open**, both discharged by one spike before the first
+  bench; NV-4's discharge must cite a **CI** run, never a local one.
+- **The R-CI-d sequencing constraint stands**: `build.yml`'s source guard is
+  deleted in the same commit that lands the first `rtl/` module and the first
+  bench. This round again did not trip it.
+
+### Files-in-this-commit
+
+- docs/reports/dv/DV-P1-countersignature-final.md
+- agents/handoffs/WO-0009_p1-final-countersignature.md
