@@ -95,13 +95,15 @@ the rows below are its roadmap view. Changing either is an E2 escalation.
 
 | Packet | From → To | State | Subject |
 |---|---|---|---|
-| [`WO-0002_p1-core-cpu-spec.md`](../agents/handoffs/WO-0002_p1-core-cpu-spec.md) | orchestrator → architect_docs_lead | **ISSUED** 2026-08-05 | P1 core-CPU spec + REQ-### requirements — the org's first product artifact |
+| [`WO-0003_p1-design-rationale-adr.md`](../agents/handoffs/WO-0003_p1-design-rationale-adr.md) | orchestrator → architect_docs_lead | **ISSUED** 2026-08-05 | ADR-0018 for the spec's five non-obvious choices (D-2, a freeze precondition) + the traceability matrix (D-1) |
+| [`WO-0004_p1-testability-countersignature.md`](../agents/handoffs/WO-0004_p1-testability-countersignature.md) | orchestrator → dv_lead | **ISSUED** 2026-08-05 | P1 spec testability countersignature (PROTOCOL §7 freeze precondition) + the OQ-1 adjudication |
 
 Closed:
 
 | Packet | From → To | State | Subject |
 |---|---|---|---|
 | [`WO-0001_g0-retro-audit.md`](../agents/handoffs/WO-0001_g0-retro-audit.md) | orchestrator → auditor | ✅ **ACCEPTED** 2026-08-05 | G0 row A9 — retro-audit of the seed commit range, baseline `fe5dea7`. Verdict PASS WITH FINDINGS (AUD-0001); dispositions in "Audit findings" below |
+| [`WO-0002_p1-core-cpu-spec.md`](../agents/handoffs/WO-0002_p1-core-cpu-spec.md) | orchestrator → architect_docs_lead | ✅ **RETURNED** 2026-08-05 | P1 core-CPU spec — `SPEC-P1-core-cpu.md` at `54a7221`, 90 REQ ids, 8-state FSM, exhaustive decode partition, 5 quirk parameters. Accepted on return; its deferred items are WO-0003 |
 
 **Next work order**: the **P1 spec freeze** — `architect_docs_lead`'s first
 spawn, writing the core-CPU REQ-### requirements. R1 is retired, the
@@ -188,6 +190,24 @@ decision, the B1–B6 intake signature, and **A7 branch protection** — all
   and filing it is an outward-facing action on a third repository, held
   for explicit sponsor authorization, which has not been given. Neither
   blocks M1 work.
+
+## P1 open questions (L-E10 — open questions are board artifacts)
+
+Raised by `architect_docs_lead` in `SPEC-P1-core-cpu.md` §11 and
+`J-architect_docs_lead-0001`. The architect cannot stage this file, so the
+orchestrator carries them here.
+
+| Id | Question | Disposition |
+|---|---|---|
+| **OQ-1** | Does a *deferred* opcode (a P2/P3 instruction met during P1) halt, or no-op and continue? | **Routed to `dv_lead`** at the countersignature, WO-0004 task 3 — it is a testability question before it is a design one. Not an E2: both answers sit inside P1's signed scope. |
+| **OQ-2** | README's scope paragraph sets a 500–1000 instr/s issue rate but assigns the throttle to **no phase row**. | **Decided by the orchestrator: P3.** Not escalated — P3 is literally "I/O, **timing**, first light", the throttle shares the 60 Hz divider's clock domain, and P1's lockstep runs instruction-by-instruction where wall-clock rate is meaningless. This adds no requirement and drops none, so it is a scope *clarification*, not an E2 scope change. The sponsor may override; the spec is correct either way. |
+| **OQ-3** | The 1977 COSMAC VIP quirk defaults are provenance class *relayed*, and **a wrong default is invisible to P1 by construction** — RTL and golden model both derive from this spec, so they would agree about any error in it. | **Accepted as a stated limitation, with a named compensating control**: P4's community test-ROM campaign is external to both artifacts and is the only thing that can catch a wrong default. Recorded here so P4 inherits it as a known duty rather than rediscovering it. This is the sharpest thing in the spec and it is the architect's finding, not mine. |
+
+**Spec deferred items** (`SPEC-P1-core-cpu.md` §11): **D-1** register +
+traceability matrix and **D-2** the design-rationale ADR are WO-0003, and
+**D-2 blocks the freeze**. **D-3** (`rtl/chip8_pkg.sv`, the shared package
+from spec §5.5) is `rtl_lead`'s to author and is correctly not the
+architect's.
 
 ## Audit findings — open dispositions
 

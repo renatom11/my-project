@@ -3911,3 +3911,131 @@ countersignature, then to the sponsor for the P1 spec freeze (**E1**).
 - .github/workflows/build.yml.template
 - agents/handoffs/WO-0002_p1-core-cpu-spec.md
 - tasks/BOARD.md
+
+## [J-orchestrator-0050] 2026-08-05T16:52Z | task:none | P1 spec landed; two packets issued in parallel; OQ-2 decided, OQ-3 carried as a stated limit
+
+### Trigger
+`architect_docs_lead` returned WO-0002. I committed its deliverables under
+its own trailer at `54a7221` and now disposition what it returned: two
+follow-on work orders, three open questions, and three deferred items.
+
+### Inputs
+- `docs/specs/SPEC-P1-core-cpu.md` at `54a7221` — §4 port tables, §6
+  behaviour, §7 timing contract, §10 REQ coverage, §11 deferred/open.
+- `J-architect_docs_lead-0001`; the WO-0002 Return log.
+- `README.md` phase table + scope paragraph; PROTOCOL §7, §8, §11;
+  `docs/LESSONS.md` L-E10, L-B15, L-D11.
+
+### Reasoning
+- **I verified before committing, because I was committing another agent's
+  work under its trailer.** Journal 345 insertions / 0 deletions (pure EOF
+  append, R3); WO packet 38 / 0 (Return log only); `Files-in-this-commit`
+  listing the spec and the packet and correctly excluding the agent's own
+  journal (R4, §4.2). The architect also volunteered that it had touched a
+  third file I had not enumerated in the spawn prompt - its own packet's
+  Return log - and told me to stage it or R4 would fail. That is the packet
+  lifecycle working as §3 intends, and it caught an omission in *my* spawn
+  prompt.
+- **The architect argued the boundary instead of adopting it, which is what
+  I asked for and what makes the number trustworthy.** 25 P1 + 3 P2 + 6 P3
+  + `0NNN` = README's 35, exhaustive and disjoint; the decode space
+  partitions 39745 / 4209 / 21582 = 65536, which I re-summed myself. A
+  boundary that arrives with its own arithmetic is a different artifact
+  from a boundary that arrives agreed.
+- **It found five quirks where my packet named three, and it was right.**
+  `QUIRK_VF_RESET` (`8XY1/2/3`) and `QUIRK_I_OVERFLOW_VF` (`FX1E`) are
+  divergent behaviours my enumeration missed. Its ground was L-B12:
+  README's P4 row says *every* divergent behaviour becomes a parameter, and
+  README is canonical over a work order's summary of it. That is precisely
+  the lesson working - the packet is not the governing requirement, and an
+  agent that treats it as one produces my blind spots at scale.
+- **OQ-2 I decided rather than escalated, and the reasoning belongs on the
+  record.** README fixes a 500-1000 instr/s issue rate but assigns the
+  throttle to no phase row. Escalating would be over-caution: P3 is
+  literally "I/O, timing, first light", the throttle shares the 60 Hz
+  divider's clock domain, and in P1's lockstep - instruction by
+  instruction - wall-clock rate is meaningless. Assigning it to P3 adds no
+  requirement and drops none, so it is a clarification inside signed scope,
+  not an E2. PROTOCOL §8 says everything outside E0-E6 is decided inside
+  the org and recorded; this is that. The sponsor can override.
+- **OQ-3 is the sharpest thing in the spec and it is the architect's
+  finding, not mine.** The VIP quirk defaults are *relayed*, and a wrong
+  one is **invisible to P1 by construction**: the RTL and the golden model
+  both derive from this spec, so they would agree about any error in it.
+  That is the independence rider's limit found from the inside - our own
+  B3 rule stops the model from being ported from another emulator, but it
+  cannot stop both artifacts from inheriting a wrong premise from a shared
+  parent. The compensating control is external by necessity: P4's community
+  test-ROM campaign. I put it on the board so P4 inherits it as a known
+  duty rather than rediscovering it at the worst moment.
+- **D-2 blocks the freeze and the architect declined to self-issue its own
+  work order.** Correct: leads do not commission themselves, and a rationale
+  ADR written under the same breath as the spec it justifies is not an
+  independent record. WO-0003 issues it.
+- **I issued WO-0003 and WO-0004 in parallel deliberately.** They are
+  independent: the ADR records *why* the spec says what it says and changes
+  no behaviour, while the countersignature grades whether what it says is
+  testable. Serialising them would cost a round for no isolation. The one
+  coupling - if writing the rationale convinces the architect a choice was
+  wrong - is handled by telling it to **stop and say so** rather than edit,
+  which turns the coupling into a signal instead of a race.
+- **WO-0004 spends its emphasis on the port tables on purpose.** ADR-0017
+  chose reviewed port tables over compile-checked records knowing the
+  tables would be graded line by line at exactly this countersignature.
+  That grading is the whole compensating control for the weaker regime; a
+  countersignature that skims §4 would quietly convert a considered
+  trade-off into an unchecked one.
+- **I also asked dv_lead a question the spec does not raise**: the decode
+  partition re-sums correctly, but *can a bench cover 21582 illegal
+  encodings meaningfully*, or is sampling the only practical answer? That
+  is a fact the freeze should be taken with rather than discovered inside
+  P1's bench.
+
+### Actions
+- Verified and committed the architect's deliverables at `54a7221` under
+  `Agent: architect_docs_lead`.
+- Wrote `WO-0003` (architect → ADR-0018 for five non-obvious choices, plus
+  the D-1 traceability matrix) and `WO-0004` (dv_lead → testability
+  countersignature + OQ-1 adjudication), both ISSUED.
+- `tasks/BOARD.md`: new "P1 open questions" section carrying OQ-1/2/3 with
+  dispositions (L-E10 — the architect cannot stage the board, so the
+  orchestrator carries its open questions there); open-work-orders table
+  updated; WO-0002 moved to closed with its result.
+- Spawned both leads against their packets.
+
+### Evidence
+- `git diff --numstat` at `54a7221`: architect journal **345/0**, WO-0002
+  **38/0** — both pure appends. *Measured.*
+- `grep -oE '^\| *REQ-[0-9]{3}' | sort -u | wc -l` → **90**. *Measured.*
+- Decode partition: `39745 + 4209 + 21582 = 65536` — re-summed
+  independently, exact. *Measured.*
+- FSM states present in the spec: `S_RESET`, `S_FETCH_HI`, `S_FETCH_LO`,
+  `S_DECODE`, `S_EXEC`, `S_MEM_WR`, `S_MEM_RD`, `S_HALT` — 8. *Measured.*
+- Quirk parameters present: `QUIRK_SHIFT_SRC`, `QUIRK_JUMP_OFFSET`,
+  `QUIRK_MEM_I_MODE`, `QUIRK_VF_RESET`, `QUIRK_I_OVERFLOW_VF` — 5.
+  *Measured.*
+- `scripts/check_journals.sh --all` after the spec commit: **51 commits**
+  green, chains verified. *Measured.*
+
+### Outcome
+DoD met. P1's spec exists in DRAFT with its deferred items dispositioned:
+D-1/D-2 issued as WO-0003, D-3 correctly left to `rtl_lead`. OQ-1 routed,
+OQ-2 decided, OQ-3 carried as a stated limitation with a named control.
+**The P1 spec freeze remains blocked** on D-2's ADR and on dv_lead's
+countersignature - both now in flight. Handoff: both leads.
+
+### Open-questions
+- **The P1 spec freeze is an E1 sponsor signature** and I will put it
+  plainly when its preconditions are met. A standing "keep going" is not a
+  pre-signature for a gate the constitution reserves to the sponsor.
+- **OQ-2's P3 assignment is mine, not the sponsor's** — recorded as
+  overridable.
+- **OQ-3 has no fix, only a compensating control** that lands three phases
+  later.
+- Unchanged and still owed: the outer-hop PR, AUD-0001-F3's closure by
+  follow-up audit, three unfiled shell defects.
+
+### Files-in-this-commit
+- agents/handoffs/WO-0003_p1-design-rationale-adr.md
+- agents/handoffs/WO-0004_p1-testability-countersignature.md
+- tasks/BOARD.md
