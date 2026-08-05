@@ -5127,3 +5127,74 @@ requirement. No gate state changed and no agent was spawned. Handoff: none —
 ### Files-in-this-commit
 - site/build.mjs
 - site/assets/style.css
+
+## [J-orchestrator-0060] 2026-08-05T21:55Z | task:none | Deploy path made real: wrangler pinned as a devDependency, validated by dry run
+
+### Trigger
+The sponsor asked how to push the site. Before answering I checked whether
+the command I was about to give actually works from a clean clone. It did
+not.
+
+### Inputs
+- `site/package.json` scripts and dependency lists.
+- `site/wrangler.toml`; the built `site/dist`.
+
+### Reasoning
+- **The deploy script referenced a tool that was not a dependency.** `npm
+  run deploy` called `wrangler`, but `wrangler` appeared nowhere in
+  `dependencies` or `devDependencies` — so on a clean clone the script would
+  have failed with "command not found" unless the sponsor happened to have
+  it installed globally. I had written that command into `site/README.md`
+  and into a message as if it worked. It is a small defect and it is exactly
+  the class I have already been found for once: an instruction stated with
+  more confidence than its verification supported.
+- **Pinned as a devDependency rather than left to `npx` alone.** `npx
+  wrangler` would fetch whatever is latest at the moment of the deploy,
+  which makes the toolchain unpinned in the one place the project has been
+  careful to pin everything else (`requirements.txt`, `TOOLCHAIN.md`). A
+  devDependency puts the version in the lockfile.
+- **Bumped to v4 because v3 told me to.** 3.114 emits "The version of
+  Wrangler you are using is now out-of-date... Please update to prevent
+  critical errors." Handing the sponsor a tool that greets them with a
+  warning on every deploy is worse than spending one install to move.
+  v4.119 reads the `[assets]` config unchanged.
+- **Validated with `--dry-run`, which needs no account.** That is the most I
+  can verify from here: the config parses, the assets directory resolves,
+  the upload is computed. **The deploy itself remains unverified** — no
+  Cloudflare account is reachable from this container, and I will not claim
+  a path works end to end when I have only run it to the last step before
+  the network.
+
+### Actions
+- Added `wrangler` to `site/devDependencies`, pinned `^4.0.0`; lockfile
+  updated by the install.
+- Changed the `dev` and `deploy` scripts to invoke `npx wrangler` so they
+  resolve the local pin rather than a global install.
+- Rebuilt and ran `npx wrangler deploy --dry-run`.
+
+### Evidence
+- `npx wrangler --version` → **4.119.0**. *Measured.*
+- `npx wrangler deploy --dry-run` → `Read 52 files from the assets directory
+  /home/user/my-project/site/dist`, `Total Upload: 0.31 KiB`, `No bindings
+  found.`, exit 0. *Measured.*
+- `node build.mjs` → 9 documents, 9 work orders, 12 backlog items, 91 atlas
+  requirements. *Measured.*
+- **Not measured**: an actual `wrangler deploy`. No account is reachable
+  from this environment; the path is verified to the last step before the
+  network and no further.
+
+### Outcome
+DoD met. `npm install && npm run deploy` now resolves a pinned wrangler and
+validates against the real config. Handoff: the sponsor, for a deploy I
+cannot perform or verify from here.
+
+### Open-questions
+- **The deploy is unverified end to end.** First real run may surface a
+  Worker-name collision — `name = "chip8-sv"` — which is a one-line edit in
+  `wrangler.toml`.
+- Unchanged and still owed: S1, AUD-0002-F1's disposition, the outer-hop PR,
+  AUD-0001-F3's closure, three unfiled shell defects.
+
+### Files-in-this-commit
+- site/package.json
+- site/package-lock.json
