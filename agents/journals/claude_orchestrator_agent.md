@@ -5360,3 +5360,53 @@ instead of a trace. Handoff: the sponsor.
 - site/package.json
 - site/build.mjs
 - site/README.md
+
+## [J-orchestrator-0063] 2026-08-05T22:40Z | task:none | Lockfile synced with the engines floor added at J-orchestrator-0062
+
+### Trigger
+The stop hook reported uncommitted changes. `git status` showed one modified
+file: `site/package-lock.json`.
+
+### Inputs
+- `git status --short`, `git diff site/package-lock.json`.
+- `site/package.json` as committed at `989c088`.
+
+### Reasoning
+- **I read the diff before committing it.** Three added lines, all one
+  block: npm propagated the `engines: { node: ">=20" }` field I added to
+  `package.json` at `-0062` into the lockfile's root package entry during
+  the verification install. Nothing else moved - no dependency version
+  changed, no integrity hash, no resolved URL. A lockfile diff is exactly
+  the kind that gets waved through on the assumption that npm knows what it
+  is doing, and it is exactly the kind where a supply-chain surprise would
+  hide.
+- **It is a real artifact of a change I made**, not incidental noise, so it
+  belongs in the history rather than being reverted or gitignored. The
+  lockfile's whole purpose is to record the resolved state; a lockfile that
+  disagrees with its `package.json` is a lockfile nobody can trust.
+- **Committed on its own** rather than folded into the next substantive
+  round, because attribution is per-commit here and this is a mechanical
+  sync with no reasoning behind it beyond "npm did this and it is correct".
+
+### Actions
+- Inspected the diff, confirmed it carries only the `engines` block.
+- Committed `site/package-lock.json`.
+
+### Evidence
+- `git diff --stat` → `site/package-lock.json | 3 +++`, one file, three
+  insertions, zero deletions. *Measured.*
+- The diff body adds only `"engines": { "node": ">=20" }` to the root
+  package entry. No `version`, `resolved` or `integrity` line changed.
+  *Measured.*
+
+### Outcome
+DoD met. Working tree clean; the lockfile agrees with `package.json`.
+Handoff: none.
+
+### Open-questions
+- Unchanged: S1, AUD-0002-F1's disposition, the outer-hop PR, AUD-0001-F3's
+  closure, three unfiled shell defects, and a deploy still unverified past
+  authentication.
+
+### Files-in-this-commit
+- site/package-lock.json
