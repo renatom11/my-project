@@ -4894,3 +4894,138 @@ single remaining precondition of the freeze. Handoff: dv_lead.
 ### Files-in-this-commit
 - agents/handoffs/WO-0009_p1-final-countersignature.md
 - tasks/BOARD.md
+
+## [J-orchestrator-0058] 2026-08-05T21:05Z | task:WO-0009 | P1 spec COUNTERSIGNED and frozen at b9fd9c6; the gate opens for the sponsor's E1
+
+### Trigger
+`dv_lead` returned WO-0009: **COUNTERSIGNED at `b9fd9c6`**. Every
+precondition of `P1-spec-freeze` except the sponsor's own signature is now
+met, so I instantiate the gate checklist and put the E1.
+
+### Inputs
+- `docs/reports/dv/DV-P1-countersignature-final.md` and `J-dv_lead-0003` at
+  `b7793a4` — the ruling on boundedness, the B-4 re-derivation, F-20, and
+  the mechanism assessment.
+- `docs/gates/templates/spec-freeze-checklist.md`;
+  `docs/gates/templates/lessons-harvest-block.md`.
+- `docs/specs/SPEC-P1-core-cpu.md` §11/§12/§13.2; `ADR-0018` A3.
+- PROTOCOL §7 (gates, transcription), §7.1 (harvest), §8 (E1).
+
+### Reasoning
+- **The ruling on boundedness is better law than the question I asked.** I
+  framed it as "is the diff exactly the four repairs". dv_lead reframed it
+  correctly: **the bound is on the reviewer's review surface, not the
+  applier's edit count.** Inside it are edits *entailed* by an approved
+  repair, edits its own findings requested, and the enumeration section -
+  each enumerated before it looks. Outside it is any edit to text it graded
+  and closed, however small. That is a rule that survives contact with a
+  fourth round; mine was a rule that would have failed on the first
+  necessary propagation.
+- **It disclosed the weakness in its own ruling, which is the part I would
+  have missed.** It ruled *after* seeing what the rule admits. So it
+  pre-declared the rule for P2/P3 in its report rather than leaving a
+  precedent set by a case it had already seen the answer to. That is the
+  difference between a principle and a rationalisation, and it volunteered
+  the distinction against itself.
+- **B-4 re-derived independently, and it found more than the architect
+  cited.** The decisive text is REQ-114's own words - "the lockstep campaign
+  **compares** memory as part of the architectural state" - an existing
+  requirement asserting the comparison, not merely observability. It then
+  named REQ-013 and REQ-122 clauses 5 and 7 *beyond* the five the architect
+  cited. Two independent derivations reaching the same conclusion by
+  partly-different routes is what I wanted when I refused to accept the
+  claim on belief. **No E2 landed inside a repair round.**
+- **F-20 is the honest kind of finding.** A third restatement of REQ-115
+  exists that the repairs make false, while §13.2 asserts no other
+  restatement exists. dv_lead traced the omission to **its own** §8 text -
+  it covered three sites where B-1's defect statement named four, and the
+  architect applied what it was handed. It graded the finding MINOR,
+  supplied exact replacement text, and explicitly declined to make it a
+  signature condition. An agent that blocks a gate on its own omission would
+  be protecting itself, not the program.
+- **A3.4 accepted with a discriminator rather than wholesale, and the
+  discriminator matters.** Unconditional, "a requirement narrower than its
+  ADR is a transcription defect" would flag this document's own *recorded*
+  narrowings - REQ-111 and REQ-042 - and propose widening them, which would
+  land P2/P3 scope inside a frozen P1 spec **by clerical action**. The
+  accepted form keys on whether the narrowing is recorded. And it added the
+  asymmetry A3.4 omits: a requirement *wider* than its record is never a
+  transcription defect by default and is escalation-shaped. That belongs
+  with the auditor before P3, so it is carry-forward **C-11**.
+- **On the mechanism, its answer corrects mine.** I had credited dv_lead's
+  pre-commitment. It says the load-bearing part is **the applier enumerating
+  its own edits into the document** - that turns "verify the diff is exactly
+  the repairs" from a hunt over 1600 lines into a two-way list comparison,
+  which it ran in both directions. And the failure mode it names is one
+  neither of us saw coming: exact replacement text transfers the
+  completeness burden to the reviewer, and the applier's enumeration then
+  **launders the reviewer's omission into a verified claim** - which is
+  exactly how F-20 survived. Its cheap fix for P2: a reviewer supplying
+  replacement text also supplies the site list it searched, so exhaustiveness
+  becomes a reproducible command rather than a memory.
+- **Why the verdict history is in the checklist.** Three gradings, two
+  withheld signatures, one countersignature. I recorded it in the freeze
+  record because it is the evidence the countersignature means anything: a
+  lane that signs on first presentation has not demonstrated it can withhold,
+  and this one demonstrated it twice.
+- **The harvest opens but does not complete, deliberately.** §7.1 and the
+  block are explicit that the landing rides the sponsor's signature and never
+  precedes it. Four chains take their first harvest here and tile from
+  baseline none; the orchestrator span tiles from G0's `0040`. The mining
+  rounds run once S1 exists.
+- **Clerical fix, disclosed**: WO-0008's header still read ISSUED despite
+  its Return log. `dv_lead` caught it and correctly declined to edit another
+  agent's packet header. I corrected it and said in the file that the
+  correction is mine and why.
+
+### Actions
+- Verified and committed `dv_lead`'s work at `b7793a4` under its own trailer:
+  journal 330/0 pure append, ids 0001→0003, `Files-in-this-commit` set-equal
+  to its two non-journal paths.
+- Instantiated `docs/gates/P1-spec-freeze-checklist.md` from the template:
+  prerequisites (including the explicit "no compile-check run is owed" for
+  the fallback regime), the countersignature transcribed verbatim with its
+  authority entry named, the batch freeze record, **eleven** carry-forward
+  rows each with a named landing site and owner, the harvest block opened
+  with its span table, and S1 OPEN with a "what a signer should know first"
+  section carrying D-8.
+- Corrected WO-0008's header state, clerically and with the correction
+  attributed in the file.
+- `tasks/BOARD.md`: gates table gains the P1-spec-freeze row; P1 roadmap row
+  updated; open work orders emptied; **one live E1 escalation** recorded with
+  D-8 as the thing to know first.
+
+### Evidence
+- `git diff --numstat` on dv_lead's journal at `b7793a4`: **330/0**; three
+  entries in the chain. *Measured.*
+- `J-dv_lead-0003` carries the authority formula in its own text — *"I sign
+  gate `P1-spec-freeze`, row 'dv_lead countersigns testability':
+  COUNTERSIGNED at `b9fd9c6`"* — so the transcription is clerical and the
+  signature does not rest on my paraphrase (PROTOCOL §7, L-E03). *Measured.*
+- Requirement count at the frozen SHA: **91**; spec registry and
+  `requirements.md` hold identical id sets. *Relayed* from the architect's
+  and dv_lead's checks; not re-derived by me.
+- The B-4 re-derivation, F-20's site count, and the boundedness ruling are
+  **relayed** from `DV-P1-countersignature-final.md`.
+
+### Outcome
+DoD met. **`SPEC-P1-core-cpu` is countersigned and frozen at `b9fd9c6`.**
+The gate stands open on **S1 alone** — the sponsor's E1 signature. No RTL and
+no bench exist, by design: nothing is implemented against an unfrozen spec,
+and that constraint is now about to lift. Handoff: the sponsor.
+
+### Open-questions
+- **S1 is the sponsor's** and I will not infer it from a standing "keep
+  going". The harvest cannot complete before it, because the landing rides
+  the signature.
+- **Eleven carry-forwards are open**, none blocking, every one with a named
+  landing site — six of them at the first RTL work order.
+- **AUD-0002-F1's disposition is owed**; I am the subject and do not propose
+  it. It blocks `P1-phase-accept`, not this gate.
+- Unchanged and still owed: the outer-hop PR, AUD-0001-F3's closure, three
+  unfiled shell defects.
+
+### Files-in-this-commit
+- docs/gates/P1-spec-freeze-checklist.md
+- agents/handoffs/WO-0008_p1-spec-repair-round-2.md
+- tasks/BOARD.md

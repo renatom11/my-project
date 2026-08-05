@@ -78,7 +78,7 @@ the rows below are its roadmap view. Changing either is an E2 escalation.
 |---|---|---|
 | M0 | Bring-up: G0 intake, org ratification, branch protection, enforcement self-test green | ✅ **Complete** — G0 passed 2026-08-05 |
 | M1 | Toolchain ADR (E3), build CI instantiation, SPEC-TEMPLATE §4.1 interface regime | ✅ **Complete** 2026-08-05 — ADR-0017 accepted (Lane A) with its §11 lane amendment and proving scenario; R1 retired by measurement (A2); pins committed; `build.yml` instantiated with both simulator lanes, the R-CI-c version sidecars, and one **written de-gating condition** for its source guard |
-| P1 | Core CPU — memory, register file, stack, multicycle FSM, non-draw/non-I/O instructions, golden model + lockstep harness | **Active** — spec work order WO-0002 issued to architect_docs_lead |
+| P1 | Core CPU — memory, register file, stack, multicycle FSM, non-draw/non-I/O instructions, golden model + lockstep harness | **Active** — specification **countersigned and frozen at `b9fd9c6`**, pending the sponsor's spec-freeze signature (E1). No RTL and no bench exist yet, by design: nothing is implemented against an unfrozen spec |
 | P2 | Display and draw path — framebuffer, 64-bit barrel shifter, `DXYN` XOR + collision, `00E0`, font ROM + `FX29` | Not started |
 | P3 | I/O, timing, first light — 60 Hz timers, keypad, `FX0A` blocking wait; Pong runs end-to-end | Not started |
 | P4 | Quirks, compatibility, formal — quirk parameters, test-ROM suite in multiple configs, formal properties | Not started |
@@ -89,13 +89,14 @@ the rows below are its roadmap view. Changing either is an E2 escalation.
 | Gate | Status | Checklist |
 |---|---|---|
 | G0 | ✅ **PASSED 2026-08-05.** All Section A and B rows signed; A9 retro-audit returned **PASS WITH FINDINGS, 0 CRITICAL** (AUD-0001); Section C harvest complete — `LC-01` landed in the org generic as `L-D16` at `849843f`, fast-forward, attempt 1. Outer-hop **YES** recorded, its PR owed and blocked on repository access | [docs/gates/G0-checklist.md](../docs/gates/G0-checklist.md) |
-| P1..P5 | Instantiated from [templates](../docs/gates/templates/) at each phase's spec freeze | — |
+| **P1-spec-freeze** | **OPEN on S1 — the sponsor's signature (E1).** Batch A **FROZEN at `b9fd9c6`** pending it; `dv_lead` **COUNTERSIGNED** (`J-dv_lead-0003`) after three gradings and two withheld signatures; eleven carry-forward rows, each with a named landing site | [docs/gates/P1-spec-freeze-checklist.md](../docs/gates/P1-spec-freeze-checklist.md) |
+| P1-module-ready, P1-phase-accept, P2..P5 | Instantiated from [templates](../docs/gates/templates/) at each phase's spec freeze | — |
 
 ## Open work orders
 
 | Packet | From → To | State | Subject |
 |---|---|---|---|
-| [`WO-0009_p1-final-countersignature.md`](../agents/handoffs/WO-0009_p1-final-countersignature.md) | orchestrator → dv_lead | **ISSUED** 2026-08-05 | Final confirmatory pass over §13.2's enumerated surface, then the countersignature — the last precondition of `P1-spec-freeze` |
+_None open._ The gate is with the sponsor.
 
 Closed:
 
@@ -118,7 +119,20 @@ Floors and the two named R-CI exceptions: [`TOOLCHAIN.md`](../TOOLCHAIN.md).
 
 ## Pending escalations to sponsor
 
-**None live.** The M1 **E3** was decided 2026-08-05 — see below.
+**Live — one, class E1 (phase-gate approval).**
+
+- **`P1-spec-freeze` — the sponsor's signature.** Everything else on the
+  checklist is done: batch A frozen at `b9fd9c6`, `dv_lead` countersigned at
+  `J-dv_lead-0003`, eleven carry-forward rows each with a named landing site.
+  **What a signer should know first is C-3 / D-8**: a P1 PASS proves the RTL
+  implements *this specification* and nothing about whether the specification
+  describes CHIP-8 — the RTL and the golden model both derive from this
+  document and would agree about any error in it. Signing the freeze is
+  signing that the spec is *internally* sound and testable, which three
+  gradings established; not that it is faithful to the platform.
+  Checklist: [docs/gates/P1-spec-freeze-checklist.md](../docs/gates/P1-spec-freeze-checklist.md).
+
+The M1 **E3** was decided 2026-08-05 — see below.
 
 - **E3 DISCHARGED — M1 toolchain lane**
   ([ADR-0017](../docs/adr/ADR-0017-toolchain-lane.md), **ACCEPTED**

@@ -1,6 +1,6 @@
 # WO-0008: P1 spec — four repairs in the added text, and one D-8 cell
 
-- **State**: ISSUED
+- **State**: **RETURNED** 2026-08-05 (see Return log) — header corrected by the orchestrator, clerically; the packet's author had already written its Return log and could not amend the header after returning
 - **From** / **To**: orchestrator → architect_docs_lead
 - **Spec basis**: `docs/specs/SPEC-P1-core-cpu.md` at `ddc06dc`;
   `docs/reports/dv/DV-P1-countersignature.md` at `9f4e03b` (defects B-1…B-4).
