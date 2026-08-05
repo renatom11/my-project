@@ -448,6 +448,12 @@ function buildAtlas() {
       const firstCell = (l.match(/^\|\s*([^|]*)\|/) || [, ''])[1] || '';
       const keyed = firstCell.match(/REQ-\d{3}/);
       if (keyed && keyed[0] !== id) score -= 200;
+      // A line that opens mid-sentence is the tail of a paragraph, not a
+      // definition — the quality bar below rejects it anyway, so it must not
+      // outscore a real one. REQ-005 is defined by a state-table row exactly
+      // as REQ-003/4/6 are, but lost its card to "...is never entered
+      // (REQ-005)" and fell through to a pointer.
+      if (!l.trim().startsWith('|') && /^[a-z]/.test(l.trim().replace(/^[>*_`(]+/, ''))) score -= 100;
       hits.push({ i, l, score });
     }
     if (!hits.length) return null;
@@ -460,16 +466,81 @@ function buildAtlas() {
     if (!l0.trim().startsWith('|')) {
       const quote = l0.trim().startsWith('>');
       const out = [l0];
-      for (let j = top.i + 1; j < normTo; j++) {
+      let j = top.i + 1;
+      for (; j < normTo; j++) {
         const nx = specLines[j];
         if (!nx.trim()) break;
         if (quote !== nx.trim().startsWith('>')) break;
         if (/^#{2,}\s/.test(nx) || nx.trim().startsWith('|')) break;
         out.push(nx);
       }
-      top.l = out.map(x => x.replace(/^\s*>\s?/, '').trim()).join(' ');
+      let text = out.map(x => x.replace(/^\s*>\s?/, '').trim()).join(' ');
+
+      // A statement that ends in a colon is not finished: the spec's next
+      // element completes it, and the blank-line break above discards it —
+      // leaving a card that trails off. Five requirements state themselves
+      // this way and each continues differently, so pull whichever element
+      // follows: a fenced block (REQ-103's LFSR step), a list (REQ-040's
+      // three decode classes, REQ-122's stimulus classes) or a table
+      // (REQ-008's reset values).
+      if (/:\s*$/.test(text)) {
+        const cont = continuation(j, normTo);
+        if (cont) text = text.replace(/:\s*$/, ': ') + cont;
+      }
+      top.l = text;
     }
     return top;
+  }
+
+  // The element a colon-ended statement points at, flattened into one line.
+  // Returns null when the next element is ordinary prose — a paragraph that
+  // merely follows is not the completion of the sentence, and appending it
+  // would invent a requirement rather than quote one.
+  function continuation(from, to) {
+    let k = from;
+    while (k < to && !specLines[k].trim()) k++;
+    if (k >= to) return null;
+    const l = specLines[k];
+
+    if (/^\s*(```|~~~)/.test(l)) {                                // fenced block
+      const code = [];
+      for (let m = k + 1; m < to; m++) {
+        if (/^\s*(```|~~~)/.test(specLines[m])) break;
+        if (specLines[m].trim()) code.push(specLines[m].trim());
+      }
+      return code.length ? '`' + code.join('; ') + '`' : null;
+    }
+
+    if (/^\s*(?:[-*+]|\d+\.)\s/.test(l)) {                        // bullet / numbered list
+      const items = [];
+      for (let m = k; m < to; m++) {
+        const nx = specLines[m];
+        if (!nx.trim()) break;
+        const start = nx.match(/^\s*(?:[-*+]|\d+\.)\s+(.*)$/);
+        if (start) items.push(start[1].trim());
+        else if (items.length && /^\s+\S/.test(nx)) items[items.length - 1] += ' ' + nx.trim();
+        else break;
+      }
+      return items.length ? items.join(' · ') : null;
+    }
+
+    if (l.trim().startsWith('|') && /^\|[\s:|-]+\|\s*$/.test((specLines[k + 1] || '').trim())) {
+      const hdr = l.trim().split('|').slice(1, -1).map(c => c.trim());
+      const out = [];
+      for (let m = k + 2; m < to; m++) {
+        const nx = specLines[m];
+        if (!nx.trim().startsWith('|')) break;
+        const cells = nx.trim().split('|').slice(1, -1).map(c => c.trim());
+        // A two-column table is a mapping and reads as one; anything wider
+        // needs its headers to stay legible.
+        out.push(cells.length === 2
+          ? `${cells[0]} → ${cells[1]}`
+          : cells.map((c, q) => (hdr[q] ? `**${hdr[q]}:** ${c}` : c)).filter(Boolean).join(' '));
+      }
+      return out.length ? out.join(' · ') : null;
+    }
+
+    return null;
   }
 
   // Find the header row of the table a given line sits in.
@@ -539,8 +610,14 @@ function buildAtlas() {
     r.truncated = false;
     if (body && body.length > 380) {
       const cut = body.slice(0, 380);
-      const end = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('; '));
-      body = (end > 160 ? cut.slice(0, end + 1) : cut.trimEnd() + '…');
+      // Cut at a sentence end if there is one. A cut at "; " leaves the card
+      // ending on a semicolon, which reads as a sentence that got severed —
+      // so those become an ellipsis, which reads as what it is.
+      const dot = cut.lastIndexOf('. ');
+      const semi = cut.lastIndexOf('; ');
+      body = dot > 160 ? cut.slice(0, dot + 1)
+           : semi > 160 ? cut.slice(0, semi) + '…'
+           : cut.trimEnd().replace(/[;:,·]$/, '') + '…';
       r.truncated = true;
     }
     r.body = body;
@@ -556,7 +633,7 @@ function buildAtlas() {
         <a class="req-id" href="/documents/spec-p1-core-cpu/#${sectionAnchor(r.section)}">${esc(r.id)}</a>
         <span class="req-hooks">${r.hooks.map(h => `<abbr class="hook h-${h}" title="${esc(HOOKS[h])}">${h}</abbr>`).join('')}</span>
       </div>
-      <p class="req-handle">${mdInline(r.satisfies)}</p>
+      <p class="req-handle" title="Short handle from the spec's §10 registry — a label, not the requirement. The requirement is the text below.">${mdInline(r.satisfies)}</p>
       ${r.body ? `<p class="req-text">${mdInline(r.body)}${r.truncated ? ` <a class="more" href="/documents/spec-p1-core-cpu/#${sectionAnchor(r.section)}">read in full →</a>` : ''}</p>`
                : `<p class="req-text none">${r.tabular ? 'This requirement <strong>is a table</strong>' : 'Stated in the spec body'} — read it in ${mdInline(r.section)}.</p>`}
       <div class="req-foot">
@@ -581,6 +658,20 @@ function buildAtlas() {
   <ul class="legend">${legend}</ul>
   <p class="note"><strong>The <code>I</code> hooks owe a named performer and do not yet have one</strong> —
   carry-forward <code>C-4</code> on the spec-freeze gate.</p>
+</section>
+
+<section class="callout subtle">
+  <h2>How to read a card</h2>
+  <div class="prose"><p>The small uppercase line is a <strong>handle</strong> — the short label the
+  specification's §10 registry uses to refer to the requirement in tables. It is not the requirement and
+  is not binding. The paragraph beneath it is the requirement, quoted from the normative body (§4–§9),
+  which is the text that binds. Where a requirement is defined as a table row, the card pairs each cell
+  with its column heading so the row reads as a statement.</p>
+  <p><strong>${rows.filter(r => !r.body).length} of ${rows.length} cards do not quote their requirement</strong>
+  and point into the spec instead. Those requirements are stated in the specification as a label over a
+  table, or as a citation inside another requirement's prose, and there is no self-contained sentence to
+  quote — inventing one here would put text on the site that the frozen spec does not contain. The id
+  links to the binding section.</p></div>
 </section>
 
 <div class="atlas-controls">

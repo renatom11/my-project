@@ -5611,3 +5611,101 @@ points at the spec. **S1 remains unsigned and remains the sponsor's.**
 
 ### Files-in-this-commit
 - site/build.mjs
+
+## [J-orchestrator-0066] 2026-08-05T23:55Z | task:none | Re-audited all 91 atlas cards; five trailed off at a colon, one lost its card to a fragment
+
+### Trigger
+The sponsor: *"Is everything fixed? SHow me"*. J-orchestrator-0065 claimed 84
+of 91 cards showed requirement text. That claim was produced by a hand
+classification, so the first act here was to re-derive it with a script that
+could disagree with me.
+
+### Inputs
+- `site/dist/atlas/index.html` at `b05da82`
+- `docs/specs/SPEC-P1-core-cpu.md` (FROZEN at `b9fd9c6`) — read for the
+  definitional form of every card the audit flagged
+
+### Reasoning
+- **The stricter audit found defects the hand pass missed.** Re-running with
+  explicit predicates (mid-sentence start, ends in `: ; ,`, shows another
+  requirement's id, under 28 characters) gave **ok=76, POINTER=7,
+  TRAILS-OFF=5** — not the 83/7/1 I reported at 0065. The earlier count was
+  not fabricated but it was not reproducible either, and the difference is
+  entirely cards ending mid-thought, which my eye had passed over. *A claim I
+  cannot re-derive on demand is not evidence.* That is the lesson candidate
+  here, not the extractor bug.
+- **Five cards ended on a colon because the spec completes the sentence with
+  a block element.** REQ-103's LFSR step is a fenced code block, REQ-008's
+  reset values are a table, REQ-040's decode classes and REQ-122's stimulus
+  classes are lists, REQ-014's two clauses are a numbered list. The block
+  collector stopped at the blank line before each one, so the card showed the
+  setup and dropped the rule. Fixed generally: a statement ending in a colon
+  now pulls whichever element follows — fence, list, or table — flattened to
+  one line. **Prose is deliberately not pulled**: a paragraph that merely
+  follows is not the completion of the sentence, and appending it would put
+  a requirement on the site that the spec does not state.
+- **REQ-115 ended on a semicolon from the 380-character cap**, not from the
+  spec. The cap cut at `"; "` and kept the semicolon. Now an ellipsis, which
+  reads as truncation rather than as a severed sentence.
+- **REQ-005 was a scoring defect, not an unrenderable requirement.** It has a
+  state-table row identical in form to REQ-003/4/6 (`| PC | 12 bit | Program
+  counter |`), but the mid-sentence prose tail *"...is never entered
+  (REQ-005)"* outscored it and then failed the quality bar, so the card fell
+  through to a pointer. Lines opening mid-sentence are now penalised at
+  scoring time, so a structured definition can win. Regression-checked: this
+  changed **exactly one** card.
+- **The six remaining pointers are a property of the spec, not of the
+  viewer.** REQ-002 is a label over a table; REQ-096, REQ-107 and REQ-124
+  appear only as parenthetical citations inside other requirements' prose;
+  REQ-101 is defined in a §4.B table with no sentence; REQ-028 genuinely *is*
+  a table. There is no self-contained sentence to quote for any of them.
+  **This is worth the sponsor's attention before S1**: six of 91 requirements
+  in a frozen specification have no normative sentence of their own. Whether
+  that is a defect is the architect's call, not mine — I am recording it, not
+  ruling on it.
+- **The handle line stays, labelled.** 0065 left open whether to delete it. I
+  am not deleting information the sponsor has not asked me to delete; instead
+  the card now carries a "How to read a card" note saying in plain words that
+  the uppercase line is §10's short label, is not binding, and that the
+  paragraph beneath it is the requirement. If that still does not answer
+  *"I dont know where that doc is"*, deletion remains available.
+
+### Actions
+- Added `continuation()` to the extractor: fenced block, bullet/numbered
+  list, or table, pulled only after a colon-terminated statement.
+- Fixed the truncation cut so it never ends on `;` `:` `,` `·`.
+- Penalised mid-sentence line starts in the scorer.
+- Labelled the handle line (hover title) and added a "How to read a card"
+  section stating the pointer count and why those cards point.
+
+### Evidence
+- Script-derived audit of all 91 cards, before → after:
+  **ok 76 → 82**, **POINTER 7 → 6**, **TRAILS-OFF 5 → 0**. *Measured*, and
+  re-derivable by re-running the audit against `site/dist`.
+- Cards showing a different requirement's id up front: **0**. *Measured.*
+- The three cards the sponsor named by hand now read: REQ-004 "Element: I ·
+  Size: 12 bit · Notes: Index register"; REQ-044 "Condition: 2NNN with
+  SP = STACK_DEPTH · Strobe: obs_halted rises; obs_err = ERR_STACK_OVERFLOW ·
+  Effect: Halt from S_EXEC; the push does not happen"; REQ-103 its full LFSR
+  step including the formula. *Measured.*
+- Scoring change blast radius: **1** card differs from the pre-change build
+  (REQ-005). *Measured* by diffing rendered card bodies.
+- The three `CITES-OTHER` flags (REQ-060, REQ-062, REQ-082) are audit
+  false positives — opcode rows correctly showing their own instruction,
+  whose effect text cites a sibling requirement. *Derived*, by reading the
+  spec rows.
+
+### Outcome
+Every card that trailed off now states its rule. **S1 remains unsigned and
+remains the sponsor's**; nothing here touches the frozen spec.
+
+### Open-questions
+- **Six requirements have no normative sentence in a frozen spec.** Recorded
+  above; needs the architect's read, and plausibly a carry-forward row.
+- **Whether the "How to read a card" note answers the sponsor's "I dont know
+  where that doc is"**, or whether the handle should simply go.
+- Unchanged and still owed: AUD-0002-F1's disposition, the outer-hop PR,
+  AUD-0001-F3's closure, three unfiled shell defects, an unverified deploy.
+
+### Files-in-this-commit
+- site/build.mjs
