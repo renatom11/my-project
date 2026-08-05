@@ -48,8 +48,11 @@ item 1):
 - Sections that do not apply are answered "not applicable" **with one sentence
   of why**, never deleted.
 - The template's references to `docs/specs/requirements.md` are answered by
-  **§10 of this document**, which is P1's REQ registry. `requirements.md` does
-  not exist; see §11 D-1.
+  **§10 of this document**, which is P1's authoritative REQ registry.
+  `docs/specs/requirements.md` exists (§11 D-1, landed) and is the
+  program-wide **index and traceability matrix** over that registry — it cites
+  ids and carries the verification bookkeeping, and deliberately restates no
+  requirement text.
 
 **Interface regime**: **reviewed port tables** (ADR-0017 Consequence 1). There
 is no compile-checked interface-record lane in this program. §4.1 states the
@@ -112,7 +115,10 @@ constraint.
 
 ## 3. Programme invariants that bind this module
 
-`docs/specs/requirements.md` does not exist (§11 D-1), so there is no
+`docs/specs/requirements.md` exists (§11 D-1, landed) but **mints no
+requirement ids and holds no programme-invariant REQ block** — it is an index
+over the per-spec registries, and creating programme-invariant ids would be a
+scope act (E2), not a bookkeeping one. There is therefore still no
 programme-invariant REQ registry to cite ids from. The binding programme-level
 statements are therefore cited at their canonical home — **README.md's phase
 table and the scope-parameter paragraph beneath it** (PROTOCOL §1) — and
@@ -969,8 +975,10 @@ behaviour of a 12-bit register and no span is crossed.
 
 ## 10. REQ coverage
 
-Every REQ this specification owns. This table is the source of P1's rows in
-the traceability matrix (§11 D-1). DV hooks: **D** = directed vector,
+Every REQ this specification owns, and the **authoritative registry** for
+them: this table is the source of P1's rows in `docs/specs/requirements.md`
+(§11 D-1, landed), which indexes these ids and never restates them. DV hooks:
+**D** = directed vector,
 **R** = constrained-random stream with full-state compare, **F** = formal
 property (P4), **S** = structural — guaranteed by the interface or a
 construction rule and not assertable by a bench, **I** = inspection at
@@ -1067,7 +1075,7 @@ countersignature or review.
 | REQ-121 | Divergence localisation via `obs_instr` / `obs_instr_addr` | §4.A, §7.7 | D |
 | REQ-122 | Stimulus classes the campaign covers | §8 | I |
 | REQ-123 | Determinism for a given image, parameters and seed | §8 | R |
-| REQ-124 | Every REQ above has a row in this table and, from `P1-module-ready`, a row in the traceability matrix | §10, §11 D-1 | I |
+| REQ-124 | Every REQ above has a row in this table and a row in `docs/specs/requirements.md`, whose test-id and evidence cells are filled by `P1-module-ready` | §10, §11 D-1 | I |
 
 **Count: 90 requirements.** Written as an enumeration, not as a count that
 would go stale — the table above is the registry, and this sentence is a
@@ -1078,20 +1086,29 @@ reading of it (L-D12).
 ## 11. Deferred items and open questions
 
 **This specification is a DRAFT.** Per SPEC-TEMPLATE §11 a DRAFT may carry
-open questions and a FROZEN spec may not; the three OQ rows below must be
-resolved — or converted into deferred items with a stated
-what-a-reader-assumes-meanwhile — before `P1-spec-freeze` can sign.
+open questions and a FROZEN spec may not; **every** OQ row below must be
+resolved — or converted into a deferred item with a stated
+what-a-reader-assumes-meanwhile — before `P1-spec-freeze` can sign. The rows
+are the enumeration; a sentence counting them would go stale (L-D12).
+
+**Changed by WO-0003** (`J-architect_docs_lead-0002`, 2026-08-05): **D-1** and
+**D-2** are landed; **D-7** and **OQ-4** are new, both raised by
+[`ADR-0018`](../adr/ADR-0018-p1-core-cpu-design-choices.md) while writing the
+rationale for choices already made. **No specified behaviour changed** — OQ-4
+in particular is recorded rather than answered, because answering it is a spec
+revision and a separate work order. **OQ-4 is the one that blocks the freeze.**
 
 ### Deferred items
 
 | # | Item | Status · what a reader assumes meanwhile | Tracked as | Owner | Closes by |
 |---|---|---|---|---|---|
-| D-1 | `docs/specs/requirements.md` and the requirement→test traceability matrix do not exist. WO-0002 scoped this deliverable to one spec file. | **DEFERRED** · §10 of this document **is** P1's REQ registry and is authoritative today; cite `REQ-###` against this file. | Carry-forward row in `docs/gates/P1-spec-freeze-checklist.md` (to be instantiated) | architect_docs_lead | Matrix by `P1-module-ready` (charter §6); registry pointer by `P1-spec-freeze` |
-| D-2 | An ADR is owed for the five non-obvious choices this spec embodies: halt-on-illegal-opcode; fault-rather-than-wrap on multi-byte address spans; the specified deterministic RNG; the fully-specified reset of all architectural state; and the observation interface as a specification-mandated port set. Charter §5 makes an ADR a freeze precondition. | **DEFERRED** · every one of the five is stated normatively in this document with its rejected alternative beside it (§6.3 REQ-043, §9 REQ-046 note, §6.5, §6.1.1 REQ-008, §3); an implementer or test writer needs nothing further today. | Carry-forward row; needs an orchestrator work order (the architect does not self-issue) | architect_docs_lead | `P1-spec-freeze` |
+| D-1 | `docs/specs/requirements.md` and the requirement→test traceability matrix do not exist. WO-0002 scoped this deliverable to one spec file. | ✅ **LANDED** 2026-08-05 (WO-0003, `J-architect_docs_lead-0002`) · `docs/specs/requirements.md` carries all 90 P1 rows with `dv_lead`'s test-id and evidence columns unfilled, as expected at spec time. **§10 of this document remains the authoritative registry**; the matrix indexes it and restates nothing. | — | architect_docs_lead | Test-id and evidence cells filled by `P1-module-ready` (charter §6) |
+| D-2 | An ADR is owed for the five non-obvious choices this spec embodies: halt-on-illegal-opcode; fault-rather-than-wrap on multi-byte address spans; the specified deterministic RNG; the fully-specified reset of all architectural state; and the observation interface as a specification-mandated port set. Charter §5 makes an ADR a freeze precondition. | ✅ **LANDED** 2026-08-05 (WO-0003, `J-architect_docs_lead-0002`) · [`ADR-0018`](../adr/ADR-0018-p1-core-cpu-design-choices.md) records all five with alternatives, costs, the PROTOCOL §11 corpus verdict, and a falsifier each. It **changes no specified behaviour**; the two problems it surfaced are D-7 and OQ-4 below. | — | architect_docs_lead | Closed |
 | D-3 | `rtl/chip8_pkg.sv` is authored by `rtl_lead`; `rtl/**` is outside this author's write scope (PROTOCOL §6). | **DEFERRED** · §5.5 is the normative content; the file must match it exactly and adds nothing. | The first P1 RTL work order | rtl_lead | `P1-module-ready` |
 | D-4 | The 500–1000 instruction/second throttle is not implemented in P1. | **DEFERRED** · `THROTTLE_DIV = 0`, the core issues instructions back-to-back, and REQ-111 already fixes where the mechanism may be inserted so it cannot disturb anything frozen here. | Carry-forward row; P3 scope | architect_docs_lead | `P3-spec-freeze` |
 | D-5 | The 4209 `DC_DEFERRED` encodings become implemented in P2 and P3, which changes §6.3 of this frozen spec. | **DEFERRED** · in P1 they halt with `ERR_DEFERRED_OPCODE`; the change is a **spec diff plus an ADR** recorded in §13, never an edit. | §13 of this file | architect_docs_lead | `P2-spec-freeze`, `P3-spec-freeze` |
 | D-6 | No compile-checked interface evidence exists, by ADR-0017 Consequence 1. | **DEFERRED** · §4's port tables are the normative interface; the compensating controls are the line-by-line countersignature and the single-definition-site package (§5.5). | §12 freeze record | dv_lead (countersignature) | `P1-spec-freeze` |
+| D-7 | The quirk-parameter set of §5.2 may be short by one: interpreter behaviour on unknown opcodes is divergent across the population, and README's P4 row requires "**every** divergent CHIP-8 behaviour" to be a compile-time parameter. Raised by ADR-0018 §7.1. | **DEFERRED** · P1 halts (REQ-041/REQ-042) and no such parameter exists; the requirements are unambiguous and nobody is blocked. The reading is arguable — the community quirk tables enumerate divergences in the semantics of CHIP-8 *instructions*, and these encodings are not instructions — and the evidence that would settle it (a conformant test ROM needing no-op) does not exist before P4. | ADR-0018 §7.1; board line owed | architect_docs_lead | `P4-spec-freeze` |
 
 ### Open questions (must be closed before freeze)
 
@@ -1100,11 +1117,14 @@ what-a-reader-assumes-meanwhile — before `P1-spec-freeze` can sign.
 | OQ-1 | Should `DC_DEFERRED` encodings **halt** (this spec's decision) or behave as a no-operation so that partially-covered programs can run further in P1? | It is a verification-strategy question that belongs to the party who writes the lockstep campaign, and it is cheap to change **before** freeze and expensive after. This spec carries "halt" as its default and states the argument in REQ-042. | `dv_lead`, at the testability countersignature |
 | OQ-2 | Which phase owns the instruction-issue throttle? README records the rate in the scope parameters but assigns it to no phase row. | Assigning intake-recorded work to a phase is a scope statement, and this author does not invent one. This spec assumes **P3** (the timing phase) and is correct either way, since P1 is unaffected. If the sponsor intends P1, that is an **E2**. | orchestrator → sponsor if P1 is intended |
 | OQ-3 | The five quirk defaults, and the CHIP-8 behavioural facts generally, are provenance class **relayed** — from the intake's consult-only references, none of which was retrieved during authorship. **A wrong default here is invisible to P1 by construction**: the RTL and the Python golden model are both derived from this document (the intake independence rider), so they would agree with each other about any error it contains. | Verifying them requires the community test-ROM suite, which README assigns to P4. There is no P1 experiment that can settle it. | Recorded here as a standing risk; **P4's test-ROM campaign is the compensating control**, and it is the point at which these values become *measured*. `dv_lead` may wish to note it in the countersignature |
+| OQ-4 | **What are the contents of memory at the first fetch when `MEM_INIT_FILE` names an image shorter than 4096 bytes?** REQ-014 and §5.4 state the all-zero guarantee only for `MEM_INIT_FILE = ""`; for a partial image — which is every realistic P1 image — neither clause says what the remaining bytes hold, and §6.6 frees M02's realisation among three mechanisms that differ precisely in their answer. | Answering it is a change to specified behaviour, which is a spec revision and therefore a new work order — WO-0003 (which raised it) expressly excludes changing what this document specifies, and an edit smuggled through an ADR is the thing that packet was drafted to prevent. **The consequences are stated so nobody has to rediscover them**: (a) **REQ-123 is falsified as written** — it claims no uninitialised storage anywhere in P1, and 32768 bits have no specified initial value; (b) Verilator is 2-state and reads unwritten locations as `0`, so the fast lane where the long campaigns run is green while Icarus reads `X`; (c) the Python golden model has no `X` and will zero-fill, so the first read of unwritten memory in the Icarus lane is a **false divergence caused by this document**, not by the RTL. | **Blocks `P1-spec-freeze`** (SPEC-TEMPLATE §11 bars freezing a spec carrying an open question). Raised in ADR-0018 §7.2; routed to the orchestrator for a board line and a spec-revision packet. `dv_lead` should read it before the countersignature — it bears directly on the lockstep's first instruction |
 
 Per **L-E10**, open questions are artifacts on the program board, not items
 buried in a document. This author cannot stage `tasks/BOARD.md` (PROTOCOL §6);
-OQ-1, OQ-2 and OQ-3 are handed to the orchestrator for a board line in the
-return of WO-0002.
+OQ-1, OQ-2 and OQ-3 were handed to the orchestrator in the return of WO-0002
+and carry board lines. **OQ-4 and D-7 are handed over in the return of
+WO-0003** and owe board lines of their own — OQ-4 as a freeze blocker with a
+spec-revision packet behind it, D-7 as a P4 carry-forward.
 
 ---
 
